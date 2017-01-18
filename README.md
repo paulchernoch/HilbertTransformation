@@ -15,7 +15,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
  
   B. Hilbert Index to HilbertPoint to N-Dimensional coordinates
    
-      int bits = ???;       // Pick so that 2^bits exceeds the larges value in any coordinate.
+      int bits = ???;       // Pick so that 2^bits exceeds the largest value in any coordinate.
       int dimensions = ???; // Number of dimensions for the point.
       var index1 = new BigInteger(...);
       var hPoint1 = new HilbertPoint(index1, dimensions, bits);
@@ -26,7 +26,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
       var hPoint2 = new HilbertPoint(coordinates, bits);
       BigInteger index2 = hPoint2.Index;
 
- ##The Four Transformations
+##The Four Transformations
 
  There are really four transformations that occur:
 
