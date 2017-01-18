@@ -1,0 +1,41 @@
+﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
+    <Files>
+      <File FileName="HilbertTransformation/FastHilbert.cs" Line="55" Column="17" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="244" Column="35" />
+      <File FileName="HilbertTransformation/IntegerPoint.cs" Line="186" Column="3" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="174" Column="18" />
+      <File FileName="HilbertTransformation Status" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="HilbertTransformation" expanded="True">
+            <Node name="HilbertTransformation" expanded="True" />
+            <Node name="HilbertTransformationTests" expanded="True">
+              <Node name="References" expanded="True" />
+              <Node name="HilbertPointTests.cs" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.UnitTesting.TestPad">
+        <State name="__root__">
+          <Node name="HilbertTransformation" expanded="True">
+            <Node name="HilbertTransformationTests" expanded="True">
+              <Node name="HilbertTransformationTests" expanded="True">
+                <Node name="HilbertPointTests" expanded="True" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.HilbertTransformationTests PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>
