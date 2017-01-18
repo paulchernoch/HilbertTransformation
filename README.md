@@ -41,7 +41,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
  However, only the BigInteger index and the Hilbert Axes (multi-dimensional coordinate form) are useful to library users 
  in their analysis. The HilbertPoint class provides the interface to these operations.
 
- ##Modeling Floating point data
+##Modeling Floating point data
 
  This transform is most suitable for non-negative integer data. To apply it to floating point numbers, you need to do the following:
 
