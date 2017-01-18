@@ -50,6 +50,15 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
 
  2. Write methods to perform a two-way mapping from your coordinate system to the non-negative integers.
     This transform may require shifting and scaling each dimension a different amount in order to yield a desirable
-    distance metric and origin.
+    distance metric and origin. 
+
+ Example.
+
+    This mapping will have to quantize values. For example, if your numbers range from -10 to +20 and you want 
+    to resolve to 0.1 increments, then perform these transformations:
+       a. translate by +10 (so all numbers are positive)
+       b. scale by x10 (so all numbers are integers)
+       c. Since the range is now from zero to 300, the next highest power of two is 512, so choose nine bits of resolution 
+          for your HilbertPoints.
 
  
