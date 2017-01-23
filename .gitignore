@@ -2,4 +2,4 @@ bin/
 bin/Debug/
 obj/
 obj/Debug/
-
+.DS_Store
