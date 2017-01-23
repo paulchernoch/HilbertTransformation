@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{65093B83-5D70-4FE8-869D-CA2894477DE4}</ProjectGuid>
+    <ProjectGuid>{BF3FC391-2AB2-424B-A924-731055FD6F5E}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>HilbertTransformationTests</RootNamespace>
-    <AssemblyName>HilbertTransformationTests</AssemblyName>
+    <RootNamespace>Clustering</RootNamespace>
+    <AssemblyName>Clustering</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -17,32 +17,24 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HilbertPointTests.cs" />
-    <Compile Include="CartesianDistanceTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">
-      <Project>{8105A344-A241-4CAB-979E-6290E01E97D6}</Project>
-      <Name>HilbertTransformation</Name>
-    </ProjectReference>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Classification.cs" />
+    <Compile Include="ClusterMetric.cs" />
+    <Compile Include="RandomPermutation.cs" />
+    <Compile Include="FastRandom.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

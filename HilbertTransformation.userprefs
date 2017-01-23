@@ -1,19 +1,23 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation/Interleaver.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation/IntegerPoint.cs">
     <Files>
-      <File FileName="HilbertTransformation/FastHilbert.cs" Line="339" Column="34" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="108" Column="52" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="174" Column="18" />
-      <File FileName="README.md" Line="38" Column="66" />
-      <File FileName="HilbertTransformation/Interleaver.cs" Line="196" Column="27" />
+      <File FileName="HilbertTransformationTests/CartesianDistanceTests.cs" Line="217" Column="4" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="7" Column="1" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="27" Column="1" />
+      <File FileName="Clustering/Classification.cs" Line="209" Column="3" />
+      <File FileName="Clustering/ClusterMetric.cs" Line="21" Column="82" />
+      <File FileName="Clustering/RandomPermutation.cs" Line="1" Column="1" />
+      <File FileName="Clustering/FastRandom.cs" Line="217" Column="31" />
+      <File FileName="HilbertTransformation/IntegerPoint.cs" Line="13" Column="30" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="HilbertTransformation" expanded="True">
             <Node name="Solution Items" expanded="True" />
+            <Node name="Clustering" expanded="True" />
             <Node name="HilbertTransformation" expanded="True">
-              <Node name="Interleaver.cs" selected="True" />
+              <Node name="IntegerPoint.cs" selected="True" />
             </Node>
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="References" expanded="True" />
@@ -23,7 +27,7 @@
       </Pad>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
         <State name="__root__">
-          <Node name="HilbertTransformation" expanded="True" selected="True" />
+          <Node name="HilbertTransformation" expanded="True" />
         </State>
       </Pad>
     </Pads>

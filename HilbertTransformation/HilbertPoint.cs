@@ -2,18 +2,67 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text;
+using System.Threading;
 
 namespace HilbertTransformation
 {
+
+	/// <summary>
+	/// A vector for which one can get integer coordinate values and compute the largest value across all of its dimensions.
+	/// This mapping may require scaling, translating, or loss of precision.
+	/// </summary>
+	public interface IHaveIntegerCoordinates
+	{
+		/// <summary>
+		/// Largest value among all coordinates.
+		/// </summary>
+		/// <returns></returns>
+		int Range();
+
+		/// <summary>
+		/// Number of dimensions.
+		/// </summary>
+		/// <returns></returns>
+		int GetDimensions();
+
+		IEnumerable<int> GetCoordinates();
+	}
+
     /// <summary>
     /// Maps an immutable, N-dimensional point to a 1-Dimensional Hilbert index.
     /// 
     /// These points can be sorted by the HilbertIndex or their Cartesian distance to a given reference point.
     /// By sorting points by their HilbertIndex, the Nearest Neighbor problem can be solved more efficiently,
     /// since items whose 1-Dimensional HilbertIndex values are close are also close in N-Dimensional space.
+	/// 
+	/// To permit HilbertPoints to be added to collections and multiple points at the same coordinate to be distinguished
+	/// from one another, a unique Id is maintained for each point, which is used as a tie-breaker in sorting.
     /// </summary>
-	public class HilbertPoint : IEquatable<HilbertPoint>, IComparable<HilbertPoint>
-    {
+	public class HilbertPoint : IEquatable<HilbertPoint>, IComparable<HilbertPoint>, 
+								ICloneable, IHaveIntegerCoordinates,
+								IMeasurable<HilbertPoint, long>
+
+	{
+
+		#region Unique Id
+
+		/// <summary>
+		/// Auto-incrementing counter to use for generating unique ids.
+		/// 
+		/// This is incremented in a thread-safe manner.
+		/// </summary>
+		private static int _counter;
+
+		/// <summary>
+		/// Unique id for point.
+		/// </summary>
+		public int UniqueId { get; } = NextId();
+
+		private static int NextId() { return Interlocked.Increment(ref _counter); }
+
+		#endregion
+
         #region Properties (HilbertIndex, Coordinates, DimensionDefinitions, BitsPerDimension)
 
         /// <summary>
@@ -37,6 +86,22 @@ namespace HilbertTransformation
         /// Number of bits used to encode each individual coordinate when converting it into a Hilbert index.
         /// </summary>
         public int BitsPerDimension { get; private set; }
+
+		/// <summary>
+		/// Maximum value in the Coordinates array.
+		/// </summary>
+		private long MaxCoordinate { get; set; }
+
+		/// <summary>
+		/// Square of the distance from the point to the origin.
+		/// </summary>
+		private long SquareMagnitude { get; set; }
+
+		private void InitInvariants()
+		{
+			MaxCoordinate = Coordinates.Max();
+			SquareMagnitude = Coordinates.Sum(x => x * (long)x);
+		}
 
         #endregion
 
@@ -106,7 +171,7 @@ namespace HilbertTransformation
             Dimensions = Coordinates.Length;
             BitsPerDimension = bitsPerDimension;
             HilbertIndex = coordinates.HilbertIndex(BitsPerDimension);
-            _hashCode = ComputeHashCode();
+			InitInvariants();
         }
 
         /// <summary>
@@ -247,23 +312,39 @@ namespace HilbertTransformation
             Coordinates = HilbertIndex.HilbertAxes(bitsPerDimension, dimensions);
             Dimensions = Coordinates.Length;
             BitsPerDimension = bitsPerDimension;
-            _hashCode = ComputeHashCode();
+			InitInvariants();
         }
+
+		#region Implement Clone interface
+
+		/// <summary>
+		/// Clone constructor.
+		/// </summary>
+		private HilbertPoint(HilbertPoint original)
+		{
+			Coordinates = (uint[])original.Coordinates.Clone();
+			Dimensions = original.Dimensions;
+			BitsPerDimension = original.BitsPerDimension;
+			HilbertIndex = original.HilbertIndex;
+			MaxCoordinate = original.MaxCoordinate;
+			SquareMagnitude = original.SquareMagnitude;
+		}
+
+		public object Clone() { return new HilbertPoint(this); }
+
+		#endregion
 
         #endregion
 
         #region Equality and Hash Code
 
-        private readonly int _hashCode;
+        public override int GetHashCode() { return UniqueId; }
 
-        public override int GetHashCode() { return _hashCode; }
-
-        private int ComputeHashCode()
-        {
-            var hash = HilbertIndex.GetHashCode();
-            return hash;
-        }
-
+		/// <summary>
+		/// A HilbertPoint only equals a second point if they share the same UniqueId.
+		/// </summary>
+		/// <param name="obj">The <see cref="object"/> to compare with the current <see cref="T:HilbertTransformation.HilbertPoint"/>.</param>
+		/// <returns>True if the objects are both HilbertPoints and share the same id and false otherwise.</returns>
         public override bool Equals(object obj)
         {
             var p = obj as HilbertPoint;
@@ -272,7 +353,7 @@ namespace HilbertTransformation
 
         public bool Equals(HilbertPoint other)
         {
-            return HilbertIndex.Equals(other.HilbertIndex);
+			return UniqueId == other.UniqueId;
         }
 
         #endregion
@@ -280,7 +361,7 @@ namespace HilbertTransformation
         #region Comparing, Measuring Distance and Sorting
 
         /// <summary>
-        /// Compare the HilbertIndex values of the two points.
+        /// Compare the HilbertIndex values of the two points, but use the UniqueId as a tie-breaker.
         /// 
         /// This permits sorting by HilbertIndex.
         /// </summary>
@@ -288,7 +369,10 @@ namespace HilbertTransformation
         /// <returns>-1 if this has a lower index, 0 if they match, and +1 if this has a higher index.</returns>
         public int CompareTo(HilbertPoint other)
         {
-            return HilbertIndex.CompareTo(other.HilbertIndex);
+            var cmp = HilbertIndex.CompareTo(other.HilbertIndex);
+			if (cmp == 0)
+				cmp = UniqueId.CompareTo(other.UniqueId);
+			return cmp;
         }
 
         /// <summary>
@@ -298,44 +382,94 @@ namespace HilbertTransformation
         /// <returns>The square of the distance between the two points.</returns>
         public long SquareDistance(HilbertPoint other)
         {
-            long squareDistanceLoopUnrolled;
-            if (true)
-            {
-                // Unroll the loop partially to improve speed. (2.7x improvement!)
-                var x = Coordinates;
-                var y = other.Coordinates;
-                var distance = 0UL;
-                var leftovers = x.Length%4;
-                var dimensions = x.Length;
-                var roundDimensions = dimensions - leftovers;
-
-                for (var i = 0; i < roundDimensions; i += 4)
-                {
-                    var x1 = x[i];
-                    var y1 = y[i];
-                    var x2 = x[i + 1];
-                    var y2 = y[i + 1];
-                    var x3 = x[i + 2];
-                    var y3 = y[i + 2];
-                    var x4 = x[i + 3];
-                    var y4 = y[i + 3];
-                    var delta1 = x1 > y1 ? x1 - y1 : y1 - x1;
-                    var delta2 = x2 > y2 ? x2 - y2 : y2 - x2;
-                    var delta3 = x3 > y3 ? x3 - y3 : y3 - x3;
-                    var delta4 = x4 > y4 ? x4 - y4 : y4 - x4;
-                    distance += delta1*delta1 + delta2*delta2 + delta3*delta3 + delta4*delta4;
-                }
-                for (var i = roundDimensions; i < dimensions; i++)
-                {
-                    var xi = x[i];
-                    var yi = y[i];
-                    var delta = xi > yi ? xi - yi : yi - xi;
-                    distance += delta*delta;
-                }
-                squareDistanceLoopUnrolled = (long)distance;
-            }
-            return squareDistanceLoopUnrolled;
+			return SquareDistanceDotProduct(
+				Coordinates, other.Coordinates, SquareMagnitude, other.SquareMagnitude, MaxCoordinate, other.MaxCoordinate
+			);
         }
+
+		/// <summary>
+		/// Squares the distance dot product.
+		/// </summary>
+		/// <returns>The square distance.</returns>
+		/// <param name="x">First point.</param>
+		/// <param name="y">Second point.</param>
+		/// <param name="xMag2">Distance from x to the origin, squared.</param>
+		/// <param name="yMag2">Distance from y to the origin, squared.</param>
+		/// <param name="xMax">Maximum value of any coordinate in x.</param>
+		/// <param name="yMax">Maximum value of any coordinate in y.</param>
+		private static long SquareDistanceDotProduct(uint[] x, uint[] y, long xMag2, long yMag2, long xMax, long yMax)
+		{
+			const int unroll = 4;
+			if (xMax * yMax * unroll < (long)uint.MaxValue)
+				return SquareDistanceDotProductNoOverflow(x, y, xMag2, yMag2);
+
+			// Unroll the loop partially to improve speed. (2.7x improvement!)
+			var dotProduct = 0UL;
+			var leftovers = x.Length % unroll;
+			var dimensions = x.Length;
+			var roundDimensions = dimensions - leftovers;
+
+			for (var i = 0; i < roundDimensions; i += unroll)
+			{
+				var x1 = x[i];
+				ulong y1 = y[i];
+				var x2 = x[i + 1];
+				ulong y2 = y[i + 1];
+				var x3 = x[i + 2];
+				ulong y3 = y[i + 2];
+				var x4 = x[i + 3];
+				ulong y4 = y[i + 3];
+				dotProduct += x1 * y1 + x2 * y2 + x3 * y3 + x4 * y4;
+			}
+			for (var i = roundDimensions; i < dimensions; i++)
+				dotProduct += x[i] * (ulong)y[i];
+			return xMag2 + yMag2 - 2L * (long)dotProduct;
+		}
+
+		/// <summary>
+		/// Compute the square of the Cartesian distance using the dotproduct method,
+		/// assuming that calculations wont overflow uint.
+		/// 
+		/// This permits us to skip some widening conversions to ulong, making the computation faster.
+		/// 
+		/// Algorithm:
+		/// 
+		///    2         2       2
+		///   D    =  |x|  +  |y|  -  2(x·y)
+		/// 
+		/// Using the dot product of x and y and precomputed values for the square magnitudes of x and y
+		/// permits us to use two operations (multiply and add) instead of three (subtract, multiply and add)
+		/// in the main loop, saving one third of the time.
+		/// </summary>
+		/// <returns>The square distance.</returns>
+		/// <param name="x">First point.</param>
+		/// <param name="y">Second point.</param>
+		/// <param name="xMag2">Distance from x to the origin, squared.</param>
+		/// <param name="yMag2">Distance from y to the origin, squared.</param>
+		private static long SquareDistanceDotProductNoOverflow(uint[] x, uint[] y, long xMag2, long yMag2)
+		{
+			// Unroll the loop partially to improve speed. (2.7x improvement!)
+			const int unroll = 4;
+			var dotProduct = 0UL;
+			var leftovers = x.Length % unroll;
+			var dimensions = x.Length;
+			var roundDimensions = dimensions - leftovers;
+			for (var i = 0; i < roundDimensions; i += unroll)
+				dotProduct += (x[i] * y[i] + x[i + 1] * y[i + 1] + x[i + 2] * y[i + 2] + x[i + 3] * y[i + 3]);
+			for (var i = roundDimensions; i < dimensions; i++)
+				dotProduct += x[i] * y[i];
+			return xMag2 + yMag2 - 2L * (long)dotProduct;
+		}
+
+		/// <summary>
+		/// Measure the square of the Cartesian distance between two points.
+		/// </summary>
+		/// <param name="reference">Second point for comparison.</param>
+		/// <returns>Square of the Cartesian distance between the two points.</returns>
+		public long Measure(HilbertPoint reference)
+		{
+			return SquareDistance(reference);
+		}
 
         /// <summary>
         /// Cartesian distance between two points.
@@ -348,6 +482,17 @@ namespace HilbertTransformation
             return Math.Sqrt(squareDistance);
         }
 
+		/// <summary>
+		/// Compute the distance along the Hilbert curve between the two points,
+		/// which is the absolute difference in their Hilbert indices.
+		/// </summary>
+		/// <returns>The distance between the two points.</returns>
+		/// <param name="other">The second point for the comparison.</param>
+		public BigInteger HilbertDistance(HilbertPoint other)
+		{
+			return BigInteger.Abs(HilbertIndex - other.HilbertIndex);
+		}
+
         /// <summary>
         /// In-place sort of the points by their HilbertIndex.
         /// </summary>
@@ -357,7 +502,73 @@ namespace HilbertTransformation
             points.Sort();
         }
 
-
         #endregion
-    }
+
+		#region IHaveIntegerCoordinates interface
+
+		/// <summary>
+		/// Get the largest value from among all the coordinates.
+		/// </summary>
+		/// <returns>The largest coordinate value.</returns>
+		public int Range()
+		{
+			return (int) Coordinates.Max();
+		}
+
+
+		public int GetDimensions()
+		{
+			return Dimensions;
+		}
+
+		public IEnumerable<int> GetCoordinates()
+		{
+			return Coordinates.Select(u => (int) u);
+		}
+
+		#endregion
+
+		#region ToString
+
+		/// <summary>
+		/// When calling the parameterless ToString method, use only show this many coordinates.
+		/// </summary>
+		public static readonly int MaxCoordinatesToShow = 10;
+
+		/// <summary>
+		/// Compose a possibly abbreviated string representation of the point including at most dimensions zero through MaxCoordinatesToShow - 1.
+		/// </summary>
+		/// <returns>Possibly abbreviated string representation of the point.</returns>
+		public override string ToString()
+		{
+			return AsString(MaxCoordinatesToShow);
+		}
+
+		/// <summary>
+		/// Compose a string representation of the point but only show dimensions zero through maxCoordinatesToShow - 1.
+		/// </summary>
+		/// <param name="maxCoordinatesToShow">Number of coordinates to include in string.
+		/// If there are more than this number, put "..." at the end.
+		/// If zero, then include all dimensions.</param>
+		/// <returns>Possibly abbreviated string representation of the point.</returns>
+		public string AsString(int maxCoordinatesToShow = 0)
+		{
+			var sb = new StringBuilder();
+			sb.Append('[');
+			var limit = Math.Min(maxCoordinatesToShow == 0 ? Dimensions : maxCoordinatesToShow, Dimensions);
+			for (var dim = 0; dim < limit; dim++)
+			{
+				if (dim > 0) sb.Append(',');
+				sb.Append(Coordinates[dim]);
+			}
+			if (limit < Dimensions)
+				sb.Append(",...");
+			sb.Append(']');
+			return sb.ToString();
+		}
+
+		#endregion
+
+
+	}
 }
