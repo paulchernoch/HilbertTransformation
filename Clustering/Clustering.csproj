@@ -35,6 +35,15 @@
     <Compile Include="ClusterMetric.cs" />
     <Compile Include="RandomPermutation.cs" />
     <Compile Include="FastRandom.cs" />
+    <Compile Include="HilbertIndex.cs" />
+    <Compile Include="BinaryHeap.cs" />
+    <Compile Include="MeasuredItem.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">
+      <Project>{8105A344-A241-4CAB-979E-6290E01E97D6}</Project>
+      <Name>HilbertTransformation</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

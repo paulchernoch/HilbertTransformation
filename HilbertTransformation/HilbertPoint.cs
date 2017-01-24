@@ -2,32 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading;
 
 namespace HilbertTransformation
 {
-
-	/// <summary>
-	/// A vector for which one can get integer coordinate values and compute the largest value across all of its dimensions.
-	/// This mapping may require scaling, translating, or loss of precision.
-	/// </summary>
-	public interface IHaveIntegerCoordinates
-	{
-		/// <summary>
-		/// Largest value among all coordinates.
-		/// </summary>
-		/// <returns></returns>
-		int Range();
-
-		/// <summary>
-		/// Number of dimensions.
-		/// </summary>
-		/// <returns></returns>
-		int GetDimensions();
-
-		IEnumerable<int> GetCoordinates();
-	}
 
     /// <summary>
     /// Maps an immutable, N-dimensional point to a 1-Dimensional Hilbert index.
@@ -39,31 +16,11 @@ namespace HilbertTransformation
 	/// To permit HilbertPoints to be added to collections and multiple points at the same coordinate to be distinguished
 	/// from one another, a unique Id is maintained for each point, which is used as a tie-breaker in sorting.
     /// </summary>
-	public class HilbertPoint : IEquatable<HilbertPoint>, IComparable<HilbertPoint>, 
-								ICloneable, IHaveIntegerCoordinates,
-								IMeasurable<HilbertPoint, long>
-
+	public class HilbertPoint : UnsignedPoint,
+		IEquatable<HilbertPoint>, IComparable<HilbertPoint>, 
+		IMeasurable<HilbertPoint, long>
 	{
-
-		#region Unique Id
-
-		/// <summary>
-		/// Auto-incrementing counter to use for generating unique ids.
-		/// 
-		/// This is incremented in a thread-safe manner.
-		/// </summary>
-		private static int _counter;
-
-		/// <summary>
-		/// Unique id for point.
-		/// </summary>
-		public int UniqueId { get; } = NextId();
-
-		private static int NextId() { return Interlocked.Increment(ref _counter); }
-
-		#endregion
-
-        #region Properties (HilbertIndex, Coordinates, DimensionDefinitions, BitsPerDimension)
+        #region Properties (HilbertIndex, Dimensions, BitsPerDimension, etc)
 
         /// <summary>
         /// This point's distance from the origin along the Hilbert curve.
@@ -73,46 +30,9 @@ namespace HilbertTransformation
         public BigInteger HilbertIndex { get; private set; }
 
         /// <summary>
-        /// Coordinates of the point in N-space.
-        /// </summary>
-        public uint[] Coordinates { get; private set; }
-
-        /// <summary>
-        /// Number of dimensions for the point.
-        /// </summary>
-        public int Dimensions { get; private set; }
-
-        /// <summary>
         /// Number of bits used to encode each individual coordinate when converting it into a Hilbert index.
         /// </summary>
         public int BitsPerDimension { get; private set; }
-
-		/// <summary>
-		/// Maximum value in the Coordinates array.
-		/// </summary>
-		private long MaxCoordinate { get; set; }
-
-		/// <summary>
-		/// Square of the distance from the point to the origin.
-		/// </summary>
-		private long SquareMagnitude { get; set; }
-
-		private void InitInvariants()
-		{
-			MaxCoordinate = Coordinates.Max();
-			SquareMagnitude = Coordinates.Sum(x => x * (long)x);
-		}
-
-        #endregion
-
-        #region Indexers
-
-        /// <summary>
-        /// Access the coordinate values as signed integers.
-        /// </summary>
-        /// <param name="i">Index, which must be between zero and DimensionDefinitions - 1, inclusive.</param>
-        /// <returns>Corrdinate value as an integer.</returns>
-        public int this[int i] { get { return (int) Coordinates[i]; } }
 
         #endregion
 
@@ -165,14 +85,15 @@ namespace HilbertTransformation
         /// </summary>
         /// <param name="coordinates">Coordinate values as unsigned integers.</param>
         /// <param name="bitsPerDimension">Number of bits with which to encode each coordinate value.</param>
-        public HilbertPoint(uint[] coordinates, int bitsPerDimension)
+		public HilbertPoint(uint[] coordinates, int bitsPerDimension) : base(coordinates)
         {
-            Coordinates = coordinates;
-            Dimensions = Coordinates.Length;
             BitsPerDimension = bitsPerDimension;
             HilbertIndex = coordinates.HilbertIndex(BitsPerDimension);
-			InitInvariants();
         }
+
+		public HilbertPoint(IList<uint> coordinates, int bitsPerDimension) : this(coordinates.ToArray(), bitsPerDimension)
+		{
+		}
 
         /// <summary>
         /// Construct a HilbertPoint when you have signed coordinate values and their maximum ranges.
@@ -231,6 +152,12 @@ namespace HilbertTransformation
             return (max+1).SmallestPowerOfTwo();
         }
 
+		public static int FindBitsPerDimension(int max)
+		{
+			// Add one, because if the range is 0 to N, we need to represent N+1 different values.
+			return (max + 1).SmallestPowerOfTwo();
+		}
+
         /// <summary>
         /// Find the number of bits needed to encode the largest value in any coordinate of any point in the collection.
         /// </summary>
@@ -252,85 +179,97 @@ namespace HilbertTransformation
         }
 
         /// <summary>
-        /// Convert signed integers into unsigned ones.
-        /// </summary>
-        /// <param name="p">List of signed integers.</param>
-        /// <returns>Array of unsigned integers.</returns>
-        public static uint[] MakeUnsigned(IList<int> p)
-        {
-            var dimensions = p.Count;
-            var coordinates = new uint[dimensions];
-            for (var i = 0; i < dimensions; i++)
-                coordinates[i] = (uint)p[i];
-            return coordinates;
-        }
-
-        /// <summary>
-        /// Convert unsigned integers into signed ones.
-        /// </summary>
-        /// <param name="p">List of unsigned integers.</param>
-        /// <returns>Array of signed integers.</returns>
-        public static int[] MakeSigned(IList<uint> p)
-        {
-            var dimensions = p.Count;
-            var coordinates = new int[dimensions];
-            for (var i = 0; i < dimensions; i++)
-                coordinates[i] = (int)p[i];
-            return coordinates;
-        }
-
-        /// <summary>
-        /// Convert signed integers into unsigned ones while permuting the dimensions.
-        /// 
-        /// Such permutation is useful for when mapping the same points to many different Hilbert Curves with 
-        /// alterred orientation.
-        /// </summary>
-        /// <param name="p">List of signed integers.</param>
-        /// <param name="permutation">Maps from target coordinates to source coordinates:
-        ///    target[i] = source[permutation[i]]
-        /// </param>
-        /// <returns>Array of unsigned integers.</returns>
-        private static uint[] PermuteAndMakeUnsigned(IList<int> p, int[] permutation)
-        {
-            var dimensions = p.Count;
-            var coordinates = new uint[dimensions];
-            for (var i = 0; i < dimensions; i++)
-                coordinates[i] = (uint)p[permutation[i]];
-            return coordinates;
-        }
-
-        /// <summary>
         /// Create a HilbertPoint given its Hilbert Index.
         /// </summary>
         /// <param name="hilbertIndex">Distance from the origin along the Hilbert Curve to the desired point.</param>
         /// <param name="dimensions">Number of dimensions for the point.</param>
         /// <param name="bitsPerDimension">Number of bits used to encode each dimension.
         /// This is also the number of fractal iterations of the Hilbert curve.</param>
-        public HilbertPoint(BigInteger hilbertIndex, int dimensions, int bitsPerDimension)
+        public HilbertPoint(BigInteger hilbertIndex, int dimensions, int bitsPerDimension) 
+			: base(hilbertIndex.HilbertAxes(bitsPerDimension, dimensions))
         {
             HilbertIndex = hilbertIndex;
-            Coordinates = HilbertIndex.HilbertAxes(bitsPerDimension, dimensions);
-            Dimensions = Coordinates.Length;
             BitsPerDimension = bitsPerDimension;
-			InitInvariants();
         }
+
+
+		public HilbertPoint(uint[] coordinates, int bitsPerDimension, long maxCoordinate, long squareMagnitude) : base(coordinates, maxCoordinate, squareMagnitude)
+		{
+			BitsPerDimension = bitsPerDimension;
+			HilbertIndex = coordinates.HilbertIndex(BitsPerDimension);
+		}
+
+		/// <summary>
+		/// If the point is already a HilbertPoint, return it unchanged, otherwise create a new one
+		/// that contains the same coordinates yet has a Hilbert index.
+		/// </summary>
+		/// <returns>The or convert.</returns>
+		/// <param name="uPoint">U point.</param>
+		/// <param name="bitsPerDimension">Bits per dimension.</param>
+		public static HilbertPoint CastOrConvert(UnsignedPoint uPoint, int bitsPerDimension)
+		{
+			HilbertPoint hPoint = uPoint as HilbertPoint;
+			if (hPoint == null || hPoint.BitsPerDimension != bitsPerDimension)
+				hPoint = new HilbertPoint(uPoint.Coordinates, bitsPerDimension, uPoint.MaxCoordinate, uPoint.SquareMagnitude);
+			return hPoint; 
+		}
+
+		/// <summary>
+		/// Create a new point that has the same coordinates as the original, but reordered by a permutation.
+		/// </summary>
+		/// <param name="point">Point to permute.</param>
+		/// <param name="permutation">Permutation.</param>
+		private HilbertPoint(HilbertPoint point, int[] permutation)
+			: base(Permute(point.Coordinates, permutation), point.MaxCoordinate, point.SquareMagnitude, point.UniqueId)
+		{
+			BitsPerDimension = point.BitsPerDimension;
+			HilbertIndex = Coordinates.HilbertIndex(BitsPerDimension);
+		}
+
+		/// <summary>
+		/// Permute the coordinates (reorder them).
+		/// 
+		/// Such permutation is useful when mapping the same points to many different Hilbert Curves with 
+		/// altered orientation.
+		/// </summary>
+		/// <param name="coordinates">Coordinates before the permutation.</param>
+		/// <param name="permutation">Maps from target coordinates to source coordinates:
+		///    target[i] = source[permutation[i]]
+		/// The array must contain all numbers from zero to Dimensions - 1 exactly once, in any order.
+		/// </param>
+		/// <returns>Array of unsigned integers containing all values from coordinates, but reordered.</returns>
+		public static uint[] Permute(uint[] coordinates, int[] permutation)
+		{
+			var dimensions = coordinates.Length;
+			var permutedCoordinates = new uint[dimensions];
+			for (var i = 0; i < dimensions; i++)
+				permutedCoordinates[i] = coordinates[permutation[i]];
+			return permutedCoordinates;
+		}
+
+		/// <summary>
+		/// Create a new point by permuting the coordinates of the original.
+		/// 
+		/// The new point will share the same UniqueId as the original.
+		/// </summary>
+		/// <param name="permutation">Permutation.</param>
+		public HilbertPoint Permute(int[] permutation)
+		{
+			return new HilbertPoint(this, permutation);
+		}
 
 		#region Implement Clone interface
 
 		/// <summary>
-		/// Clone constructor.
+		/// Clone constructor. The cloned object will have a different UniqueId.
 		/// </summary>
-		private HilbertPoint(HilbertPoint original)
+		private HilbertPoint(HilbertPoint original): base(original)
 		{
-			Coordinates = (uint[])original.Coordinates.Clone();
-			Dimensions = original.Dimensions;
 			BitsPerDimension = original.BitsPerDimension;
 			HilbertIndex = original.HilbertIndex;
-			MaxCoordinate = original.MaxCoordinate;
-			SquareMagnitude = original.SquareMagnitude;
 		}
 
-		public object Clone() { return new HilbertPoint(this); }
+		public override object Clone() { return new HilbertPoint(this); }
 
 		#endregion
 
@@ -338,10 +277,13 @@ namespace HilbertTransformation
 
         #region Equality and Hash Code
 
-        public override int GetHashCode() { return UniqueId; }
+		/// <summary>
+		/// This is to silence compiler warnings about not overriding GetHashCode.
+		/// </summary>
+		public override int GetHashCode() { return base.GetHashCode(); }
 
 		/// <summary>
-		/// A HilbertPoint only equals a second point if they share the same UniqueId.
+		/// A HilbertPoint only equals a second point if they share the same UniqueId and are both HilbertPoints.
 		/// </summary>
 		/// <param name="obj">The <see cref="object"/> to compare with the current <see cref="T:HilbertTransformation.HilbertPoint"/>.</param>
 		/// <returns>True if the objects are both HilbertPoints and share the same id and false otherwise.</returns>
@@ -353,7 +295,7 @@ namespace HilbertTransformation
 
         public bool Equals(HilbertPoint other)
         {
-			return UniqueId == other.UniqueId;
+			return base.Equals(other);
         }
 
         #endregion
@@ -373,113 +315,6 @@ namespace HilbertTransformation
 			if (cmp == 0)
 				cmp = UniqueId.CompareTo(other.UniqueId);
 			return cmp;
-        }
-
-        /// <summary>
-        /// Square of the cartesian distance between two points.
-        /// </summary>
-        /// <param name="other">Second point for distance computation.</param>
-        /// <returns>The square of the distance between the two points.</returns>
-        public long SquareDistance(HilbertPoint other)
-        {
-			return SquareDistanceDotProduct(
-				Coordinates, other.Coordinates, SquareMagnitude, other.SquareMagnitude, MaxCoordinate, other.MaxCoordinate
-			);
-        }
-
-		/// <summary>
-		/// Squares the distance dot product.
-		/// </summary>
-		/// <returns>The square distance.</returns>
-		/// <param name="x">First point.</param>
-		/// <param name="y">Second point.</param>
-		/// <param name="xMag2">Distance from x to the origin, squared.</param>
-		/// <param name="yMag2">Distance from y to the origin, squared.</param>
-		/// <param name="xMax">Maximum value of any coordinate in x.</param>
-		/// <param name="yMax">Maximum value of any coordinate in y.</param>
-		private static long SquareDistanceDotProduct(uint[] x, uint[] y, long xMag2, long yMag2, long xMax, long yMax)
-		{
-			const int unroll = 4;
-			if (xMax * yMax * unroll < (long)uint.MaxValue)
-				return SquareDistanceDotProductNoOverflow(x, y, xMag2, yMag2);
-
-			// Unroll the loop partially to improve speed. (2.7x improvement!)
-			var dotProduct = 0UL;
-			var leftovers = x.Length % unroll;
-			var dimensions = x.Length;
-			var roundDimensions = dimensions - leftovers;
-
-			for (var i = 0; i < roundDimensions; i += unroll)
-			{
-				var x1 = x[i];
-				ulong y1 = y[i];
-				var x2 = x[i + 1];
-				ulong y2 = y[i + 1];
-				var x3 = x[i + 2];
-				ulong y3 = y[i + 2];
-				var x4 = x[i + 3];
-				ulong y4 = y[i + 3];
-				dotProduct += x1 * y1 + x2 * y2 + x3 * y3 + x4 * y4;
-			}
-			for (var i = roundDimensions; i < dimensions; i++)
-				dotProduct += x[i] * (ulong)y[i];
-			return xMag2 + yMag2 - 2L * (long)dotProduct;
-		}
-
-		/// <summary>
-		/// Compute the square of the Cartesian distance using the dotproduct method,
-		/// assuming that calculations wont overflow uint.
-		/// 
-		/// This permits us to skip some widening conversions to ulong, making the computation faster.
-		/// 
-		/// Algorithm:
-		/// 
-		///    2         2       2
-		///   D    =  |x|  +  |y|  -  2(x·y)
-		/// 
-		/// Using the dot product of x and y and precomputed values for the square magnitudes of x and y
-		/// permits us to use two operations (multiply and add) instead of three (subtract, multiply and add)
-		/// in the main loop, saving one third of the time.
-		/// </summary>
-		/// <returns>The square distance.</returns>
-		/// <param name="x">First point.</param>
-		/// <param name="y">Second point.</param>
-		/// <param name="xMag2">Distance from x to the origin, squared.</param>
-		/// <param name="yMag2">Distance from y to the origin, squared.</param>
-		private static long SquareDistanceDotProductNoOverflow(uint[] x, uint[] y, long xMag2, long yMag2)
-		{
-			// Unroll the loop partially to improve speed. (2.7x improvement!)
-			const int unroll = 4;
-			var dotProduct = 0UL;
-			var leftovers = x.Length % unroll;
-			var dimensions = x.Length;
-			var roundDimensions = dimensions - leftovers;
-			for (var i = 0; i < roundDimensions; i += unroll)
-				dotProduct += (x[i] * y[i] + x[i + 1] * y[i + 1] + x[i + 2] * y[i + 2] + x[i + 3] * y[i + 3]);
-			for (var i = roundDimensions; i < dimensions; i++)
-				dotProduct += x[i] * y[i];
-			return xMag2 + yMag2 - 2L * (long)dotProduct;
-		}
-
-		/// <summary>
-		/// Measure the square of the Cartesian distance between two points.
-		/// </summary>
-		/// <param name="reference">Second point for comparison.</param>
-		/// <returns>Square of the Cartesian distance between the two points.</returns>
-		public long Measure(HilbertPoint reference)
-		{
-			return SquareDistance(reference);
-		}
-
-        /// <summary>
-        /// Cartesian distance between two points.
-        /// </summary>
-        /// <param name="other">Second point for distance computation.</param>
-        /// <returns>The distance between the two points.</returns>
-        public double Distance(HilbertPoint other)
-        {
-            var squareDistance = SquareDistance(other);
-            return Math.Sqrt(squareDistance);
         }
 
 		/// <summary>
@@ -502,73 +337,41 @@ namespace HilbertTransformation
             points.Sort();
         }
 
-        #endregion
+		#endregion
 
-		#region IHaveIntegerCoordinates interface
+		#region IMeasurable implementation
 
 		/// <summary>
-		/// Get the largest value from among all the coordinates.
+		/// Measure the square of the Cartesian distance between two points.
 		/// </summary>
-		/// <returns>The largest coordinate value.</returns>
-		public int Range()
+		/// <param name="reference">Second point for comparison.</param>
+		/// <returns>Square of the Cartesian distance between the two points.</returns>
+		public long Measure(HilbertPoint reference)
 		{
-			return (int) Coordinates.Max();
-		}
-
-
-		public int GetDimensions()
-		{
-			return Dimensions;
-		}
-
-		public IEnumerable<int> GetCoordinates()
-		{
-			return Coordinates.Select(u => (int) u);
+			return base.Measure(reference);
 		}
 
 		#endregion
 
-		#region ToString
-
 		/// <summary>
-		/// When calling the parameterless ToString method, use only show this many coordinates.
+		/// Create a new point that has an extra dimension tacked on whose coordinate value is as given.
+		/// 
+		/// This recomputes the Hilbert index.
 		/// </summary>
-		public static readonly int MaxCoordinatesToShow = 10;
-
-		/// <summary>
-		/// Compose a possibly abbreviated string representation of the point including at most dimensions zero through MaxCoordinatesToShow - 1.
-		/// </summary>
-		/// <returns>Possibly abbreviated string representation of the point.</returns>
-		public override string ToString()
+		/// <returns>The new point.</returns>
+		/// <param name="coordinate">Coordinate value for new dimension.
+		/// If this value is too great to be accomodated by BitsPerDimension, an exception is thrown.</param>
+		public override UnsignedPoint AppendCoordinate(uint coordinate)
 		{
-			return AsString(MaxCoordinatesToShow);
+			int limit = 1 << BitsPerDimension;
+			if (limit <= coordinate)
+				throw new ArgumentOutOfRangeException(
+					nameof(coordinate), 
+					$"Value must be smaller than 2^BitsPerDimension, which is {limit}");
+			var p = Coordinates.ToList();
+			p.Add(coordinate);
+			return new HilbertPoint(p, BitsPerDimension);
 		}
-
-		/// <summary>
-		/// Compose a string representation of the point but only show dimensions zero through maxCoordinatesToShow - 1.
-		/// </summary>
-		/// <param name="maxCoordinatesToShow">Number of coordinates to include in string.
-		/// If there are more than this number, put "..." at the end.
-		/// If zero, then include all dimensions.</param>
-		/// <returns>Possibly abbreviated string representation of the point.</returns>
-		public string AsString(int maxCoordinatesToShow = 0)
-		{
-			var sb = new StringBuilder();
-			sb.Append('[');
-			var limit = Math.Min(maxCoordinatesToShow == 0 ? Dimensions : maxCoordinatesToShow, Dimensions);
-			for (var dim = 0; dim < limit; dim++)
-			{
-				if (dim > 0) sb.Append(',');
-				sb.Append(Coordinates[dim]);
-			}
-			if (limit < Dimensions)
-				sb.Append(",...");
-			sb.Append(']');
-			return sb.ToString();
-		}
-
-		#endregion
-
 
 	}
 }

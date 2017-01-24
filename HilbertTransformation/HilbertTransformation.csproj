@@ -37,6 +37,7 @@
     <Compile Include="UnsignedPoint.cs" />
     <Compile Include="Interleaver.cs" />
     <Compile Include="IMeasureable.cs" />
+    <Compile Include="IHaveIntegerCoordinates.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

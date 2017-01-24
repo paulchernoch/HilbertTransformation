@@ -1,24 +1,24 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation/IntegerPoint.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/BinaryHeap.cs">
     <Files>
+      <File FileName="Clustering/HilbertIndex.cs" Line="191" Column="10" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="455" Column="28" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="308" Column="41" />
+      <File FileName="HilbertTransformation/IHaveIntegerCoordinates.cs" Line="19" Column="17" />
       <File FileName="HilbertTransformationTests/CartesianDistanceTests.cs" Line="217" Column="4" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="7" Column="1" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="27" Column="1" />
-      <File FileName="Clustering/Classification.cs" Line="209" Column="3" />
-      <File FileName="Clustering/ClusterMetric.cs" Line="21" Column="82" />
-      <File FileName="Clustering/RandomPermutation.cs" Line="1" Column="1" />
-      <File FileName="Clustering/FastRandom.cs" Line="217" Column="31" />
-      <File FileName="HilbertTransformation/IntegerPoint.cs" Line="13" Column="30" />
+      <File FileName="HilbertTransformation/IMeasureable.cs" Line="1" Column="1" />
+      <File FileName="Clustering/Classification.cs" Line="6" Column="21" />
+      <File FileName="Clustering/BinaryHeap.cs" Line="113" Column="9" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="HilbertTransformation" expanded="True">
             <Node name="Solution Items" expanded="True" />
-            <Node name="Clustering" expanded="True" />
-            <Node name="HilbertTransformation" expanded="True">
-              <Node name="IntegerPoint.cs" selected="True" />
+            <Node name="Clustering" expanded="True">
+              <Node name="BinaryHeap.cs" selected="True" />
             </Node>
+            <Node name="HilbertTransformation" expanded="True" />
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="References" expanded="True" />
             </Node>
@@ -27,7 +27,14 @@
       </Pad>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
         <State name="__root__">
-          <Node name="HilbertTransformation" expanded="True" />
+          <Node name="HilbertTransformation" expanded="True">
+            <Node name="HilbertTransformationTests" expanded="True">
+              <Node name="HilbertTransformationTests" expanded="True" selected="True">
+                <Node name="CartesianDistanceTests" expanded="True" />
+                <Node name="HilbertPointTests" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
         </State>
       </Pad>
     </Pads>

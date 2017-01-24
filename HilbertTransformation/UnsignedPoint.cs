@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading;
 
 namespace HilbertTransformation
 {
-
 	/// <summary>
 	/// A multi-dimensional point where all coordinates are positive values.
 	/// </summary>
 	public class UnsignedPoint : IEquatable<UnsignedPoint>, IComparable<UnsignedPoint>,
 								ICloneable, IHaveIntegerCoordinates,
 								IMeasurable<UnsignedPoint, long>
-
 	{
-
 		#region Unique Id
 
 		/// <summary>
@@ -29,15 +25,13 @@ namespace HilbertTransformation
 		/// <summary>
 		/// Unique id for point.
 		/// </summary>
-		public int UniqueId { get; } = NextId();
+		public int UniqueId { get; private set; }
 
 		private static int NextId() { return Interlocked.Increment(ref _counter); }
 
 		#endregion
 
 		#region Properties (Coordinates, Dimensions, etc)
-
-
 
 		/// <summary>
 		/// Coordinates of the point in N-space.
@@ -52,12 +46,28 @@ namespace HilbertTransformation
 		/// <summary>
 		/// Maximum value in the Coordinates array.
 		/// </summary>
-		protected long MaxCoordinate { get; set; }
+		public long MaxCoordinate { get; private set; }
 
 		/// <summary>
 		/// Square of the distance from the point to the origin.
 		/// </summary>
-		protected long SquareMagnitude { get; set; }
+		public long SquareMagnitude { get; private set; }
+
+		double _magnitude = double.NaN;
+
+		/// <summary>
+		/// Cartesian distance from the point to the origin.
+		/// </summary>
+		/// <value>The magnitude.</value>
+		public double Magnitude { 
+			get
+			{
+				// Lazy computation.
+				if (double.IsNaN(_magnitude))
+					_magnitude = Math.Sqrt(SquareMagnitude);
+				return _magnitude;
+			}
+		}
 
 		private void InitInvariants()
 		{
@@ -84,11 +94,46 @@ namespace HilbertTransformation
 		/// Construct a UnsignedPoint given its N-dimensional coordinates.
 		/// </summary>
 		/// <param name="coordinates">Coordinate values as unsigned integers.</param>
-		public UnsignedPoint(uint[] coordinates)
+		public UnsignedPoint(uint[] coordinates): this(coordinates, 0L, 0L)
 		{
+			InitInvariants();
+		}
+
+		public UnsignedPoint(IList<uint> coordinates): this(coordinates.ToArray())
+		{
+		}
+
+		/// <summary>
+		/// Conversion constructor used when converting from UnsignedPoint to HilbertPoint.
+		/// </summary>
+		/// <param name="coordinates">Coordinates of the point.</param>
+		/// <param name="maxCoordinate">Maximum value of all items in Coordinates array.</param>
+		/// <param name="squareMagnitude">Square of the distance to the origin.</param>
+		protected UnsignedPoint(uint[] coordinates, long maxCoordinate, long squareMagnitude)
+		{
+			UniqueId = NextId();
 			Coordinates = coordinates;
 			Dimensions = Coordinates.Length;
-			InitInvariants();
+			MaxCoordinate = maxCoordinate;
+			SquareMagnitude = squareMagnitude;
+		}
+
+		/// <summary>
+		/// Construct an UnsignedPoint by supplying all its attributes, even its UniqueId.
+		/// 
+		/// This is useful when permuting a HilbertPoint.
+		/// </summary>
+		/// <param name="coordinates">Coordinates.</param>
+		/// <param name="maxCoordinate">Max value of any coordinate.</param>
+		/// <param name="squareMagnitude">Square magnitude of distance to origin.</param>
+		/// <param name="uniqueId">Unique identifier.</param>
+		protected UnsignedPoint(uint[] coordinates, long maxCoordinate, long squareMagnitude, int uniqueId)
+		{
+			UniqueId = uniqueId;
+			Coordinates = coordinates;
+			Dimensions = Coordinates.Length;
+			MaxCoordinate = maxCoordinate;
+			SquareMagnitude = squareMagnitude;
 		}
 
 		/// <summary>
@@ -130,7 +175,7 @@ namespace HilbertTransformation
 		///    target[i] = source[permutation[i]]
 		/// </param>
 		/// <returns>Array of unsigned integers.</returns>
-		private static uint[] PermuteAndMakeUnsigned(IList<int> p, int[] permutation)
+		protected static uint[] PermuteAndMakeUnsigned(IList<int> p, int[] permutation)
 		{
 			var dimensions = p.Count;
 			var coordinates = new uint[dimensions];
@@ -144,15 +189,16 @@ namespace HilbertTransformation
 		/// <summary>
 		/// Clone constructor.
 		/// </summary>
-		private UnsignedPoint(UnsignedPoint original)
+		/// <param name="original">Source from which to copy.</param>
+		protected UnsignedPoint(UnsignedPoint original)
+			:this((uint[])original.Coordinates.Clone(), original.MaxCoordinate, original.SquareMagnitude)
 		{
-			Coordinates = (uint[])original.Coordinates.Clone();
-			Dimensions = original.Dimensions;
-			MaxCoordinate = original.MaxCoordinate;
-			SquareMagnitude = original.SquareMagnitude;
 		}
 
-		public object Clone() { return new UnsignedPoint(this); }
+		/// <summary>
+		/// Clone this instance, but generate a new UniqueId.
+		/// </summary>
+		public virtual object Clone() { return new UnsignedPoint(this); }
 
 		#endregion
 
@@ -187,7 +233,7 @@ namespace HilbertTransformation
 		/// </summary>
 		/// <param name="other">Second point in comparison.</param>
 		/// <returns>-1 if this has a lower index, 0 if they match, and +1 if this has a higher index.</returns>
-		public int CompareTo(UnsignedPoint other)
+		public virtual int CompareTo(UnsignedPoint other)
 		{
 			return UniqueId.CompareTo(other.UniqueId);
 		}
@@ -205,7 +251,8 @@ namespace HilbertTransformation
 		}
 
 		/// <summary>
-		/// Squares the distance dot product.
+		/// Computes the square of the distance between two points using the dot product and precomputed square distances
+		/// from the points to the origin.
 		/// </summary>
 		/// <returns>The square distance.</returns>
 		/// <param name="x">First point.</param>
@@ -217,7 +264,7 @@ namespace HilbertTransformation
 		private static long SquareDistanceDotProduct(uint[] x, uint[] y, long xMag2, long yMag2, long xMax, long yMax)
 		{
 			const int unroll = 4;
-			if (xMax * yMax * unroll < (long)uint.MaxValue)
+			if (xMax * yMax * unroll < uint.MaxValue)
 				return SquareDistanceDotProductNoOverflow(x, y, xMag2, yMag2);
 
 			// Unroll the loop partially to improve speed. (2.7x improvement!)
@@ -279,6 +326,56 @@ namespace HilbertTransformation
 		}
 
 		/// <summary>
+		/// Compare whether the distance between two points is less than, equal to, or greater than a given square distance.
+		/// </summary>
+		/// <returns>-1 if the square Distance is less than squareDistance.
+		/// 0 if the square Distance matches squareDistance.
+		/// +1 if the square Distance is greater than squareDistance. </returns>
+		/// <param name="other">Other.</param>
+		/// <param name="squareDistance">Square distance.</param>
+		public int SquareDistanceCompare(UnsignedPoint other, long squareDistance)
+		{
+			// If two points are on a one-dimensional number line, then if they are both on the same side of the origin
+			// (both positive, for example), then the difference between their distances from the origin 
+			// equals their distance from each other.
+			// Contrariwise, if they are on opposite sides of the origin, their distance from each other is the sum
+			// of their distances from the origin. Thus the possible range for their distance from each other is:
+			//
+			//    |A-B| <= Distance <= A+B
+			// 
+			// where A is the magnitude of the first vector and B is the magnitude of the second vector.
+			// If two points are in N-dimensional space and we exclude points in the negative quadrants, 
+			// the extreme distance is when each point lies along an axis and the two axes are different:
+			//                           ________
+			//                          / 2    2
+			//    |A-B| <= Distance <= √(A  + B )
+			//
+			// The compensation for not permitting negtive values is this:
+			//
+			//           2     2    2
+			//    (A + B)  - (A  + B ) = 2AB
+			//
+			// By using precomputed values for the magnitudes of points A and B, we can sometimes deduce
+			// whether their distance is less than, equal to, or greater than a given threshhold distance
+			// without having to compute the actual distance.
+			// Because of the poor contrast in distances between points in high-dimensional space, this
+			// optimization is likely to become less useful as the number of dimensions increases.
+			var delta = Magnitude - other.Magnitude;
+			var low = (long)Math.Floor(delta * delta);
+			if (squareDistance < low)
+				return 1;
+
+			var high = SquareMagnitude + other.SquareMagnitude;
+			if (squareDistance > high)
+				return -1;
+
+			var trueSquareDistance = SquareDistance(other);
+			return trueSquareDistance.CompareTo(squareDistance);
+		}
+
+		#region IMeasurable implementation
+
+		/// <summary>
 		/// Measure the square of the Cartesian distance between two points.
 		/// </summary>
 		/// <param name="reference">Second point for comparison.</param>
@@ -287,6 +384,8 @@ namespace HilbertTransformation
 		{
 			return SquareDistance(reference);
 		}
+
+		#endregion
 
 		/// <summary>
 		/// Cartesian distance between two points.
@@ -365,6 +464,19 @@ namespace HilbertTransformation
 		}
 
 		#endregion
+
+		/// <summary>
+		/// Create a new point that has an extra dimension tacked on whose coordinate value is as given.
+		/// </summary>
+		/// <returns>The new point.</returns>
+		/// <param name="point">Point to extend.</param>
+		/// <param name="coordinate">Coordinate value for new dimension.</param>
+		public virtual UnsignedPoint AppendCoordinate(uint coordinate)
+		{
+			var p = Coordinates.ToList();
+			p.Add(coordinate);
+			return new UnsignedPoint(p);
+		}
 
 
 	}
