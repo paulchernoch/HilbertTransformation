@@ -38,6 +38,7 @@
     <Compile Include="Interleaver.cs" />
     <Compile Include="IMeasureable.cs" />
     <Compile Include="IHaveIntegerCoordinates.cs" />
+    <Compile Include="Permutation.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,14 +1,16 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/BinaryHeap.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/RandomPermutation.cs">
     <Files>
-      <File FileName="Clustering/HilbertIndex.cs" Line="191" Column="10" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="455" Column="28" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="308" Column="41" />
+      <File FileName="HilbertTransformation/Permutation.cs" Line="44" Column="26" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="179" Column="9" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="178" Column="34" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="237" Column="44" />
       <File FileName="HilbertTransformation/IHaveIntegerCoordinates.cs" Line="19" Column="17" />
       <File FileName="HilbertTransformationTests/CartesianDistanceTests.cs" Line="217" Column="4" />
       <File FileName="HilbertTransformation/IMeasureable.cs" Line="1" Column="1" />
       <File FileName="Clustering/Classification.cs" Line="6" Column="21" />
-      <File FileName="Clustering/BinaryHeap.cs" Line="113" Column="9" />
+      <File FileName="Clustering/BinaryHeap.cs" Line="270" Column="86" />
+      <File FileName="Clustering/RandomPermutation.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -16,7 +18,7 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="Solution Items" expanded="True" />
             <Node name="Clustering" expanded="True">
-              <Node name="BinaryHeap.cs" selected="True" />
+              <Node name="RandomPermutation.cs" selected="True" />
             </Node>
             <Node name="HilbertTransformation" expanded="True" />
             <Node name="HilbertTransformationTests" expanded="True">
