@@ -23,7 +23,9 @@ namespace HilbertTransformation.Random
 		/// </summary>
 		public int[] Mapping { get; private set; }
 
-		#region Constructors and Validation
+		public int Dimensions { get { return Mapping.Length; } }
+
+		#region Constructors, Factory methods and Validation
 
 		/// <summary>
 		/// Create either an identity transformation or a randomly generated one.
@@ -58,6 +60,17 @@ namespace HilbertTransformation.Random
 		}
 
 		/// <summary>
+		/// Convert a Permutation that expects one type of input to one that expects a different type of input,
+		/// but will reorder coordinates the same way.
+		/// </summary>
+		/// <param name="original">Original permutation.</param>
+		/// <typeparam name="TNew">Type of input data for new Permutation.</typeparam>
+		public static Permutation<TNew> Convert<TNew>(Permutation<T> original) 
+		{
+			return new Permutation<TNew>(original.Mapping);
+		}
+
+		/// <summary>
 		/// Throw an exception if the mapping has values out of range or duplicates.
 		/// </summary>
 		/// <param name="mapping">Mapping list, which must contain all the numbers zero to N-1 exactly once.</param>
@@ -77,14 +90,18 @@ namespace HilbertTransformation.Random
 
 		#endregion
 
+		#region Apply the Permutation Transformation
+
 		/// <summary>
 		/// Transform the source into the target by permuting the order of items according to the mapping.
 		/// </summary>
 		/// <param name="source">Source data before the transformation.</param>
 		/// <returns>Transformed array of data taken from the source but rearranged.</returns>
-		public T[] ToArray(IList<T> source)
+		public T[] ApplyToArray(IList<T> source)
 		{
 			var dimensions = source.Count();
+			if (dimensions != Dimensions)
+				throw new ArgumentException("Permutation and data have different dimensionality", nameof(source));
 			var target = new T[dimensions];
 			for (var i = 0; i < dimensions; i++)
 				target[i] = source[Mapping[i]];
@@ -95,15 +112,36 @@ namespace HilbertTransformation.Random
 		/// Transform the source into the target by permuting the order of items according to the mapping.
 		/// </summary>
 		/// <param name="source">Source data before the transformation.</param>
-		/// <returns>Transformed array of data taken from the source but rearranged.</returns>
-		public List<T> ToList(IList<T> source)
+		/// <returns>Transformed list of data taken from the source but rearranged.</returns>
+		public List<T> ApplyToList(IList<T> source)
 		{
 			var dimensions = source.Count();
+			if (dimensions != Dimensions)
+				throw new ArgumentException("Permutation and data have different dimensionality", nameof(source));
 			var target = new List<T>(dimensions);
 			for (var i = 0; i < dimensions; i++)
 				target.Add(source[Mapping[i]]);
 			return target;
 		}
+
+		/// <summary>
+		/// Transform the source into the target by permuting the order of items according to the mapping
+		/// and also applying a change of type using a converter delegate.
+		/// </summary>
+		/// <param name="source">Source data before the transformation.</param>
+		/// <returns>Transformed array of data taken from the source and converted to a new type as well as rearranged.</returns>
+		public TOut[] ApplyToArray<TOut>(IList<T> source, Func<T,TOut> converter)
+		{
+			var dimensions = source.Count();
+			if (dimensions != Dimensions)
+				throw new ArgumentException("Permutation and data have different dimensionality", nameof(source));
+			var target = new TOut[dimensions];
+			for (var i = 0; i < dimensions; i++)
+				target[i] = converter(source[Mapping[i]]);
+			return target;
+		}
+
+		#endregion
 
 	}
 }

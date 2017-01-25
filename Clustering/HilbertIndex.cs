@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using HilbertTransformation;
+using HilbertTransformation.Random;
 
 namespace Clustering
 {
@@ -181,7 +182,7 @@ namespace Clustering
 		/// </summary>
 		/// <param name="original">Original.</param>
 		/// <param name="permutation">Permutation.</param>
-		public HilbertIndex(HilbertIndex original, int[] permutation)
+		public HilbertIndex(HilbertIndex original, Permutation<uint> permutation)
 		{
 			UnsortedPoints = original.UnsortedPoints.Select(p => p.Permute(permutation)).ToList();
 			InitIndexing();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using HilbertTransformation.Random;
 
 namespace HilbertTransformation
 {
@@ -69,12 +70,12 @@ namespace HilbertTransformation
         /// permutation must have as many elements as there are dimensions to the coordinates.
         /// </param>
         /// <returns>A new list of HilberPoints, where each corresponds to one of the original points.</returns>
-        public static List<HilbertPoint> Transform(IList<IList<int>> points, int bitsPerDimension, int[] permutation)
+        public static List<HilbertPoint> Transform(IList<IList<int>> points, int bitsPerDimension, Permutation<int> permutation)
         {
             return points.Select(point => new HilbertPoint(point, bitsPerDimension, permutation)).ToList();
         }
 
-        public static List<HilbertPoint> Transform(IList<IList<int>> points, int[] permutation)
+        public static List<HilbertPoint> Transform(IList<IList<int>> points, Permutation<int> permutation)
         {
             var bitsPerDimension = FindBitsPerDimension(points);
             return points.Select(point => new HilbertPoint(point, bitsPerDimension, permutation)).ToList();
@@ -126,7 +127,7 @@ namespace HilbertTransformation
         ///   target[i] = source[permutation[i]]
         /// permutation must have as many elements as there are dimensions to the coordinates.
         /// </param>
-        public HilbertPoint(IList<int> coordinates, int bitsPerDimension, int[] permutation)
+        public HilbertPoint(IList<int> coordinates, int bitsPerDimension, Permutation<int> permutation)
             : this(PermuteAndMakeUnsigned(coordinates, permutation), bitsPerDimension)
         {
         }
@@ -203,7 +204,7 @@ namespace HilbertTransformation
 		/// If the point is already a HilbertPoint, return it unchanged, otherwise create a new one
 		/// that contains the same coordinates yet has a Hilbert index.
 		/// </summary>
-		/// <returns>The or convert.</returns>
+		/// <returns>A HilbertPoint.</returns>
 		/// <param name="uPoint">U point.</param>
 		/// <param name="bitsPerDimension">Bits per dimension.</param>
 		public static HilbertPoint CastOrConvert(UnsignedPoint uPoint, int bitsPerDimension)
@@ -219,7 +220,7 @@ namespace HilbertTransformation
 		/// </summary>
 		/// <param name="point">Point to permute.</param>
 		/// <param name="permutation">Permutation.</param>
-		private HilbertPoint(HilbertPoint point, int[] permutation)
+		private HilbertPoint(HilbertPoint point, Permutation<uint> permutation)
 			: base(Permute(point.Coordinates, permutation), point.MaxCoordinate, point.SquareMagnitude, point.UniqueId)
 		{
 			BitsPerDimension = point.BitsPerDimension;
@@ -238,13 +239,9 @@ namespace HilbertTransformation
 		/// The array must contain all numbers from zero to Dimensions - 1 exactly once, in any order.
 		/// </param>
 		/// <returns>Array of unsigned integers containing all values from coordinates, but reordered.</returns>
-		public static uint[] Permute(uint[] coordinates, int[] permutation)
+		public static uint[] Permute(uint[] coordinates, Permutation<uint> permutation)
 		{
-			var dimensions = coordinates.Length;
-			var permutedCoordinates = new uint[dimensions];
-			for (var i = 0; i < dimensions; i++)
-				permutedCoordinates[i] = coordinates[permutation[i]];
-			return permutedCoordinates;
+			return permutation.ApplyToArray(coordinates);
 		}
 
 		/// <summary>
@@ -253,7 +250,7 @@ namespace HilbertTransformation
 		/// The new point will share the same UniqueId as the original.
 		/// </summary>
 		/// <param name="permutation">Permutation.</param>
-		public HilbertPoint Permute(int[] permutation)
+		public HilbertPoint Permute(Permutation<uint> permutation)
 		{
 			return new HilbertPoint(this, permutation);
 		}

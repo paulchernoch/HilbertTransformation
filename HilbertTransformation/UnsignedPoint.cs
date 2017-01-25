@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using HilbertTransformation.Random;
 
 namespace HilbertTransformation
 {
@@ -175,13 +176,9 @@ namespace HilbertTransformation
 		///    target[i] = source[permutation[i]]
 		/// </param>
 		/// <returns>Array of unsigned integers.</returns>
-		protected static uint[] PermuteAndMakeUnsigned(IList<int> p, int[] permutation)
+		protected static uint[] PermuteAndMakeUnsigned(IList<int> p, Permutation<int> permutation)
 		{
-			var dimensions = p.Count;
-			var coordinates = new uint[dimensions];
-			for (var i = 0; i < dimensions; i++)
-				coordinates[i] = (uint)p[permutation[i]];
-			return coordinates;
+			return permutation.ApplyToArray<uint>(p, (int x) => (uint) x);
 		}
 
 		#region Implement Clone interface

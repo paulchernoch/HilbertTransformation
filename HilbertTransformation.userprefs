@@ -1,17 +1,13 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/HilbertIndex.cs" Line="179" Column="9" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="178" Column="34" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="237" Column="44" />
-      <File FileName="HilbertTransformation/IHaveIntegerCoordinates.cs" Line="19" Column="17" />
-      <File FileName="HilbertTransformationTests/CartesianDistanceTests.cs" Line="217" Column="4" />
-      <File FileName="HilbertTransformation/IMeasureable.cs" Line="1" Column="1" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="187" Column="66" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="164" Column="32" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="8" Column="2" />
       <File FileName="Clustering/Classification.cs" Line="111" Column="3" />
-      <File FileName="Clustering/BinaryHeap.cs" Line="270" Column="86" />
       <File FileName="HilbertTransformation/Random/FastRandom.cs" Line="23" Column="39" />
       <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="11" Column="61" />
-      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="90" Column="36" />
+      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="115" Column="18" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
