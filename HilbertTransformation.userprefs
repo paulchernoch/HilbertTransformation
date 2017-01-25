@@ -11,7 +11,7 @@
       <File FileName="Clustering/BinaryHeap.cs" Line="270" Column="86" />
       <File FileName="HilbertTransformation/Random/FastRandom.cs" Line="23" Column="39" />
       <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="11" Column="61" />
-      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="3" Column="19" />
+      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="90" Column="36" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -19,11 +19,11 @@
         <State name="__root__">
           <Node name="HilbertTransformation" expanded="True">
             <Node name="Solution Items" expanded="True" />
-            <Node name="Clustering" expanded="True">
-              <Node name="Classification.cs" selected="True" />
-            </Node>
+            <Node name="Clustering" expanded="True" />
             <Node name="HilbertTransformation" expanded="True">
-              <Node name="Random" expanded="True" />
+              <Node name="Random" expanded="True">
+                <Node name="Permutation.cs" selected="True" />
+              </Node>
             </Node>
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="References" expanded="True" />

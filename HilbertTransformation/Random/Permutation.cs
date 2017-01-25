@@ -23,6 +23,8 @@ namespace HilbertTransformation.Random
 		/// </summary>
 		public int[] Mapping { get; private set; }
 
+		#region Constructors and Validation
+
 		/// <summary>
 		/// Create either an identity transformation or a randomly generated one.
 		/// </summary>
@@ -41,7 +43,7 @@ namespace HilbertTransformation.Random
 					Mapping[i] = i;
 			}
 			else {
-				//Mapping = dimensions.CreateRandomPermutation();
+				Mapping = dimensions.CreateRandomPermutation();
 			}
 		}
 
@@ -72,5 +74,36 @@ namespace HilbertTransformation.Random
 				found[i] = true;
 			}
 		}
+
+		#endregion
+
+		/// <summary>
+		/// Transform the source into the target by permuting the order of items according to the mapping.
+		/// </summary>
+		/// <param name="source">Source data before the transformation.</param>
+		/// <returns>Transformed array of data taken from the source but rearranged.</returns>
+		public T[] ToArray(IList<T> source)
+		{
+			var dimensions = source.Count();
+			var target = new T[dimensions];
+			for (var i = 0; i < dimensions; i++)
+				target[i] = source[Mapping[i]];
+			return target;
+		}
+
+		/// <summary>
+		/// Transform the source into the target by permuting the order of items according to the mapping.
+		/// </summary>
+		/// <param name="source">Source data before the transformation.</param>
+		/// <returns>Transformed array of data taken from the source but rearranged.</returns>
+		public List<T> ToList(IList<T> source)
+		{
+			var dimensions = source.Count();
+			var target = new List<T>(dimensions);
+			for (var i = 0; i < dimensions; i++)
+				target.Add(source[Mapping[i]]);
+			return target;
+		}
+
 	}
 }
