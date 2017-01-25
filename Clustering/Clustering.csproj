@@ -36,6 +36,7 @@
     <Compile Include="HilbertIndex.cs" />
     <Compile Include="BinaryHeap.cs" />
     <Compile Include="MeasuredItem.cs" />
+    <Compile Include="ClusterCounter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

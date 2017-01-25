@@ -7,7 +7,8 @@
       <File FileName="Clustering/Classification.cs" Line="111" Column="3" />
       <File FileName="HilbertTransformation/Random/FastRandom.cs" Line="23" Column="39" />
       <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="11" Column="61" />
-      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="115" Column="18" />
+      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="125" Column="4" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="15" Column="98" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -15,11 +16,11 @@
         <State name="__root__">
           <Node name="HilbertTransformation" expanded="True">
             <Node name="Solution Items" expanded="True" />
-            <Node name="Clustering" expanded="True" />
+            <Node name="Clustering" expanded="True">
+              <Node name="ClusterCounter.cs" selected="True" />
+            </Node>
             <Node name="HilbertTransformation" expanded="True">
-              <Node name="Random" expanded="True">
-                <Node name="Permutation.cs" selected="True" />
-              </Node>
+              <Node name="Random" expanded="True" />
             </Node>
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="References" expanded="True" />
