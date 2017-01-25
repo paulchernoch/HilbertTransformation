@@ -20,7 +20,7 @@
 // ENHANCEMENT: Replace usages of this class with the superceding version from Math.Net.
 using System;
 
-namespace Clustering
+namespace HilbertTransformation.Random
 {
     /// <summary>
     /// A fast random number generator for .NET

@@ -33,8 +33,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Classification.cs" />
     <Compile Include="ClusterMetric.cs" />
-    <Compile Include="RandomPermutation.cs" />
-    <Compile Include="FastRandom.cs" />
     <Compile Include="HilbertIndex.cs" />
     <Compile Include="BinaryHeap.cs" />
     <Compile Include="MeasuredItem.cs" />

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace Clustering
+namespace HilbertTransformation.Random
 {
     /// <summary>
     /// Some utilitiy methods for generating random permutations  or picking random subsets.
@@ -16,7 +16,7 @@ namespace Clustering
         /// <summary>
         /// Random number generator used for generating random permutations.
         /// </summary>
-        private static readonly Random RandomNumbers = new Random(DateTime.Now.Millisecond);
+        private static readonly System.Random RandomNumbers = new System.Random(DateTime.Now.Millisecond);
 
         /// <summary>
         /// Create a random permutation array, consisting of one each of the numbers 0..count-1 in random order.

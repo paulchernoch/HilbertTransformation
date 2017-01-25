@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using Clustering;
-
-namespace HilbertTransformation
+namespace HilbertTransformation.Random
 {
 	/// <summary>
 	/// Defines a one-to-one permutation of dimensional indices that can be used to scramble the order of items in a list.
