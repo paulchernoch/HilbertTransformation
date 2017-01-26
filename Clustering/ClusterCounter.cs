@@ -45,9 +45,17 @@ namespace Clustering
 			/// <value>The median square distance.</value>
 			public long MedianSquareDistance { get; set; }
 
+			/// <summary>
+			/// Approximate number of outlying points. 
+			/// 
+			/// Once the points are divvied up into provisional clusters, if that cluster's size does not exceed OutlierSize,
+			/// it's members are tallied as outliers. 
+			/// </summary>
+			public int Outliers { get; set; }
+
 			public override string ToString()
 			{
-				return $"[ClusterCount. Excluding outliers={CountExcludingOutliers}, Including outliers={CountIncludingOutliers}. Square Distance: Maximum={MaximumSquareDistance}, Median={MedianSquareDistance}]"; 
+				return $"[ClusterCount. Excluding outliers={CountExcludingOutliers}, Including outliers={CountIncludingOutliers}. Square Distance: Maximum={MaximumSquareDistance}, Median={MedianSquareDistance}]. Outliers={Outliers}"; 
 			}
 		}
 
@@ -147,12 +155,14 @@ namespace Clustering
 			// to only count a gap as making a new cluster if the previous cluster size was big enough to make it
 			// NOT an outlier.
 			var currentSize = 1;
+			var outliers = 0;
 			var upperBoundCountExcludingOutliers = 0;
 			foreach (var distance in neighborDistances)
 			{
 				if (distance >= maximumSquareDistance)
 					currentSize++;
 				else {
+					outliers += currentSize;
 					if (currentSize > OutlierSize)
 						upperBoundCountExcludingOutliers++;
 					currentSize = 1;
@@ -166,7 +176,8 @@ namespace Clustering
 				CountExcludingOutliers = upperBoundCountExcludingOutliers,
 				CountIncludingOutliers = upperBoundCount,
 				MaximumSquareDistance = maximumSquareDistance,
-				MedianSquareDistance = sortedDistances[indexToUse / 2]
+				MedianSquareDistance = sortedDistances[indexToUse / 2],
+				Outliers = outliers
 			};
 
 		}
