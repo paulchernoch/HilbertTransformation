@@ -34,6 +34,13 @@
   <ItemGroup>
     <Compile Include="HilbertPointTests.cs" />
     <Compile Include="CartesianDistanceTests.cs" />
+    <Compile Include="Data\GaussianClustering.cs" />
+    <Compile Include="Data\TestDataHelper.cs" />
+    <Compile Include="Data\ZigguratGaussianSampler.cs" />
+    <Compile Include="Data\CoordinateGenerator.cs" />
+    <Compile Include="Data\PolyChromaticClosestPoint.cs" />
+    <Compile Include="PolyChromaticClosestPointTests.cs" />
+    <Compile Include="KeySorterTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -43,6 +50,13 @@
       <Project>{8105A344-A241-4CAB-979E-6290E01E97D6}</Project>
       <Name>HilbertTransformation</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Clustering\Clustering.csproj">
+      <Project>{BF3FC391-2AB2-424B-A924-731055FD6F5E}</Project>
+      <Name>Clustering</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

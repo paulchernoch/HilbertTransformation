@@ -143,5 +143,19 @@ namespace HilbertTransformation.Random
 
 		#endregion
 
+		#region Mutate a Permutation randomly
+
+		/// <summary>
+		/// Randomly swap the given number of dimensions
+		/// </summary>
+		/// <param name="dimsToScramble">Dims to scramble.</param>
+		public Permutation<T> Scramble(int dimsToScramble)
+		{
+			var newPermutation = Mapping.PartialShuffle(dimsToScramble);
+			return new Permutation<T>(newPermutation);
+		}
+
+		#endregion
+
 	}
 }

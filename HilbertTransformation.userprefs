@@ -1,38 +1,31 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/HilbertIndex.cs" Line="187" Column="66" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="164" Column="32" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="8" Column="2" />
-      <File FileName="Clustering/Classification.cs" Line="111" Column="3" />
-      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="125" Column="4" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="52" Column="45" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="190" Column="4" />
+      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="118" Column="5" />
+      <File FileName="HilbertTransformationTests/Data/CoordinateGenerator.cs" Line="469" Column="1" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="245" Column="17" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="6" Column="21" />
+      <File FileName="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" Line="72" Column="11" />
+      <File FileName="HilbertTransformationTests/Data/GaussianClustering.cs" Line="139" Column="1" />
+      <File FileName="Clustering/Classification.cs" Line="272" Column="23" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="49" Column="71" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="497" Column="4" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="186" Column="4" />
+      <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="31" Column="46" />
+      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="1" Column="1" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
-      <Pad Id="ProjectPad">
-        <State name="__root__">
-          <Node name="HilbertTransformation" expanded="True">
-            <Node name="Solution Items" expanded="True" />
-            <Node name="Clustering" expanded="True">
-              <Node name="ClusterCounter.cs" selected="True" />
-            </Node>
-            <Node name="HilbertTransformation" expanded="True">
-              <Node name="Random" expanded="True" />
-            </Node>
-            <Node name="HilbertTransformationTests" expanded="True">
-              <Node name="References" expanded="True" />
-            </Node>
-          </Node>
-        </State>
-      </Pad>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
         <State name="__root__">
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
-              <Node name="HilbertTransformationTests" expanded="True" selected="True">
-                <Node name="CartesianDistanceTests" expanded="True" />
-                <Node name="HilbertPointTests" expanded="True" />
+              <Node name="HilbertTransformationTests" expanded="True">
+                <Node name="KeySorterTests" expanded="True" />
+                <Node name="PolyChromaticClosestPointTests" expanded="True">
+                  <Node name="ClosestOfFiftyClusters" selected="True" />
+                </Node>
               </Node>
             </Node>
           </Node>
@@ -42,7 +35,12 @@
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/PolyChromaticClosestPointTests.cs" line="112" column="45" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/PolyChromaticClosestPointTests.cs" line="113" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/PolyChromaticClosestPointTests.cs" line="114" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="373" column="1" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.ItemProperties.HilbertTransformationTests PreferredExecutionTarget="MonoDevelop.Default" />

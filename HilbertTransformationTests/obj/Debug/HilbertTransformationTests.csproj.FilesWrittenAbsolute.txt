@@ -1,11 +1,3 @@
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformationTests.dll.mdb
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformationTests.dll
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/obj/Debug/HilbertTransformationTests.dll
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/obj/Debug/HilbertTransformationTests.dll.mdb
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/bin/Debug/nunit.framework.dll
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformation.dll
-/Users/pchernoc/Projects/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformation.dll.mdb
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformationTests.dll.mdb
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformationTests.dll
@@ -14,3 +6,5 @@
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/nunit.framework.dll
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformation.dll
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformation.dll.mdb
+/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll
+/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll.mdb

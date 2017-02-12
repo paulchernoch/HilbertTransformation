@@ -92,7 +92,7 @@ namespace HilbertTransformation
 		#region Constructors and helpers
 
 		/// <summary>
-		/// Construct a UnsignedPoint given its N-dimensional coordinates.
+		/// Construct a UnsignedPoint given its N-dimensional coordinates as unsigned integers.
 		/// </summary>
 		/// <param name="coordinates">Coordinate values as unsigned integers.</param>
 		public UnsignedPoint(uint[] coordinates): this(coordinates, 0L, 0L)
@@ -101,6 +101,14 @@ namespace HilbertTransformation
 		}
 
 		public UnsignedPoint(IList<uint> coordinates): this(coordinates.ToArray())
+		{
+		}
+
+		/// <summary>
+		/// Construct a UnsignedPoint given its N-dimensional coordinates as signed integers.
+		/// </summary>
+		/// <param name="coordinates">Coordinate values as signed integers.</param>
+		public UnsignedPoint(int[] coordinates) : this(coordinates.Select(i => (uint)i).ToArray())
 		{
 		}
 
@@ -261,30 +269,33 @@ namespace HilbertTransformation
 		private static long SquareDistanceDotProduct(uint[] x, uint[] y, long xMag2, long yMag2, long xMax, long yMax)
 		{
 			const int unroll = 4;
+			long sqDist;
 			if (xMax * yMax * unroll < uint.MaxValue)
-				return SquareDistanceDotProductNoOverflow(x, y, xMag2, yMag2);
+				sqDist = SquareDistanceDotProductNoOverflow(x, y, xMag2, yMag2);
+			else {
+				// Unroll the loop partially to improve speed. (2.7x improvement!)
+				var dotProduct = 0UL;
+				var leftovers = x.Length % unroll;
+				var dimensions = x.Length;
+				var roundDimensions = dimensions - leftovers;
 
-			// Unroll the loop partially to improve speed. (2.7x improvement!)
-			var dotProduct = 0UL;
-			var leftovers = x.Length % unroll;
-			var dimensions = x.Length;
-			var roundDimensions = dimensions - leftovers;
-
-			for (var i = 0; i < roundDimensions; i += unroll)
-			{
-				var x1 = x[i];
-				ulong y1 = y[i];
-				var x2 = x[i + 1];
-				ulong y2 = y[i + 1];
-				var x3 = x[i + 2];
-				ulong y3 = y[i + 2];
-				var x4 = x[i + 3];
-				ulong y4 = y[i + 3];
-				dotProduct += x1 * y1 + x2 * y2 + x3 * y3 + x4 * y4;
+				for (var i = 0; i < roundDimensions; i += unroll)
+				{
+					var x1 = x[i];
+					ulong y1 = y[i];
+					var x2 = x[i + 1];
+					ulong y2 = y[i + 1];
+					var x3 = x[i + 2];
+					ulong y3 = y[i + 2];
+					var x4 = x[i + 3];
+					ulong y4 = y[i + 3];
+					dotProduct += x1 * y1 + x2 * y2 + x3 * y3 + x4 * y4;
+				}
+				for (var i = roundDimensions; i < dimensions; i++)
+					dotProduct += x[i] * (ulong)y[i];
+				sqDist = xMag2 + yMag2 - 2L * (long)dotProduct;
 			}
-			for (var i = roundDimensions; i < dimensions; i++)
-				dotProduct += x[i] * (ulong)y[i];
-			return xMag2 + yMag2 - 2L * (long)dotProduct;
+			return sqDist;
 		}
 
 		/// <summary>
@@ -473,6 +484,35 @@ namespace HilbertTransformation
 			var p = Coordinates.ToList();
 			p.Add(coordinate);
 			return new UnsignedPoint(p);
+		}
+
+		/// <summary>
+		/// Compute the Centroid of a collection of points.
+		/// </summary>
+		/// <param name="points">Points whose centroid is sought.</param>
+		/// <returns>The centroid of the collection of points, or null if the collection is empty.
+		/// If the points are a subtype of UnsignedPoint, this will NOT preserve the type of the result.
+		/// </returns>
+		public static UnsignedPoint Centroid(IEnumerable<UnsignedPoint> points)
+		{
+			double[] sums = null;
+			var numPoints = 0;
+			foreach (var p in points)
+			{
+				if (sums == null)
+				{
+					sums = new double[p.Dimensions];
+				}
+				var coordinates = p.Coordinates;
+				for (var dim = 0; dim < sums.Length; dim++)
+					sums[dim] += coordinates[dim];
+				numPoints++;
+			}
+			if (numPoints == 0) return null;
+			var coords = new uint[sums.Length];
+			for (var dim = 0; dim < sums.Length; dim++)
+				coords[dim] = (uint)Math.Round(sums[dim] / numPoints);
+			return new UnsignedPoint(coords);
 		}
 
 

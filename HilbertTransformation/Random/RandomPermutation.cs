@@ -16,17 +16,19 @@ namespace HilbertTransformation.Random
         /// <summary>
         /// Random number generator used for generating random permutations.
         /// </summary>
-        private static readonly System.Random RandomNumbers = new System.Random(DateTime.Now.Millisecond);
+		private static readonly FastRandom RandomNumbers = new FastRandom(DateTime.Now.Millisecond);
 
-        /// <summary>
-        /// Create a random permutation array, consisting of one each of the numbers 0..count-1 in random order.
-        /// 
-        /// This uses the unbiased Knuth-Fischer-Yates shuffle.
-        /// </summary>
-        /// <param name="count">Number of integers to shuffle.
-        /// This is one higher than the largest integer.</param>
-        /// <returns>A randomized permutation array.</returns>
-        public static int[] CreateRandomPermutation(this int count)
+		//private static readonly System.Random RandomNumbers = new System.Random(DateTime.Now.Millisecond);
+
+		/// <summary>
+		/// Create a random permutation array, consisting of one each of the numbers 0..count-1 in random order.
+		/// 
+		/// This uses the unbiased Knuth-Fischer-Yates shuffle.
+		/// </summary>
+		/// <param name="count">Number of integers to shuffle.
+		/// This is one higher than the largest integer.</param>
+		/// <returns>A randomized permutation array.</returns>
+		public static int[] CreateRandomPermutation(this int count)
         {
             var permutation = new int[count];
             for (var d = 0; d < count; d++)
@@ -42,6 +44,41 @@ namespace HilbertTransformation.Random
             }
             return permutation;
         }
+
+		/// <summary>
+		/// Shuffle some or all of the dimensions.
+		/// </summary>
+		/// <returns>A new permutation array with some or all dimensions shuffled.</returns>
+		/// <param name="startingPermutation">Starting permutation.</param>
+		/// <param name="dimensionsToShuffle">Number of dimensions to shuffle.
+		/// The swaps are independent, so it is likely that some dimensions may be swapped more than once,
+		/// and the number of unique dimensions shuffled may be less than this count.
+		/// </param>
+		public static int[] PartialShuffle(this int[] startingPermutation, int dimensionsToShuffle)
+		{
+			var dimensions = startingPermutation.Length;
+			var newPermutation = (int[])startingPermutation.Clone();
+			if (dimensions < 2) return newPermutation; 
+			if (dimensionsToShuffle >= startingPermutation.Length)
+				return CreateRandomPermutation(dimensionsToShuffle);
+			else {
+				var swapsToPerform = (dimensionsToShuffle + 1)/ 2;
+				var swapsPerformed = 0;
+				while (swapsPerformed < swapsToPerform)
+				{
+					var dim1 = RandomNumbers.Next(dimensions);
+					var dim2 = RandomNumbers.Next(dimensions);
+					if (dim1 != dim2)
+					{
+						var temp = newPermutation[dim1];
+						newPermutation[dim1] = newPermutation[dim2];
+						newPermutation[dim2] = temp;
+						swapsPerformed++;
+					}
+				}
+				return newPermutation;
+			}
+		}
 
         /// <summary>
         /// Lazily generate all N! possible permutations of the numbers zero through count-1.

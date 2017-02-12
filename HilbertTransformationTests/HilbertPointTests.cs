@@ -46,6 +46,29 @@ namespace HilbertTransformationTests
 		}
 
 		/// <summary>
+		/// Verify that the square Cartesian distance calculation is correct.
+		/// </summary>
+		[Test]
+		public void MeasureDistanceSquared()
+		{
+			const int dims = 100;
+			var p1 = new uint[dims];
+			var p2 = new uint[dims];
+			var expectedSquareDistance = 0L;
+			for (var i = 0; i < dims; i++)
+			{
+				p1[i] = (uint)(i % 37) * 10;
+				p2[i] = (uint)(i % 18) * 17;
+				long delta = (long)p1[i] - (long)p2[i];
+				expectedSquareDistance += delta * delta;
+			}
+			var up1 = new UnsignedPoint(p1);
+			var up2 = new UnsignedPoint(p2);
+			var actualSquareDistance = up1.Measure(up2);
+			Assert.AreEqual(expectedSquareDistance, actualSquareDistance, "Distances do not match");
+		}
+
+		/// <summary>
 		/// The proof of this test is studying the Console output by eye.
 		/// </summary>
 		[Test]

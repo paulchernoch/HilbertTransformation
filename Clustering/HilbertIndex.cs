@@ -42,12 +42,12 @@ namespace Clustering
 		public List<HilbertPoint> SortedPoints { get; set; }
 
 		/// <summary>
-		/// Points sorted according to the Hilbert curve index.
+		/// Points sorted the way the caller supplied them.
 		/// </summary>
-		List<HilbertPoint> UnsortedPoints { get; set; }
+		public List<HilbertPoint> UnsortedPoints { get; set; }
 
 		/// <summary>
-		/// Maps a point to its zero-based positions bothe before and after being sorted in Hilbert curve order.
+		/// Maps a point to its zero-based positions both before and after being sorted in Hilbert curve order.
 		/// </summary>
         Dictionary<HilbertPoint, Position> Index { get; set; }
 
@@ -160,7 +160,7 @@ namespace Clustering
 				UnsortedPoints.AddRange(
 					clusterWithNumber.Cluster
 					                 .Select(p => addClassificationDimension ? p.AppendCoordinate(clusterWithNumber.Index) : p)
-									 .Select(p => HilbertPoint.CastOrConvert(p, bitsPerDimension))
+									 .Select(p => HilbertPoint.CastOrConvert(p, bitsPerDimension, true))
 				);
 			}
 			InitIndexing();
@@ -185,6 +185,12 @@ namespace Clustering
 		public HilbertIndex(HilbertIndex original, Permutation<uint> permutation)
 		{
 			UnsortedPoints = original.UnsortedPoints.Select(p => p.Permute(permutation)).ToList();
+			InitIndexing();
+		}
+
+		public HilbertIndex(IList<HilbertPoint> points, Permutation<uint> permutation)
+		{
+			UnsortedPoints = points.Select(p => p.Permute(permutation)).ToList();
 			InitIndexing();
 		}
 

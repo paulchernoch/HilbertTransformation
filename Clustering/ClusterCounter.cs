@@ -159,18 +159,21 @@ namespace Clustering
 			var upperBoundCountExcludingOutliers = 0;
 			foreach (var distance in neighborDistances)
 			{
-				if (distance >= maximumSquareDistance)
+				if (distance <= maximumSquareDistance)
 					currentSize++;
 				else {
-					outliers += currentSize;
+					
 					if (currentSize > OutlierSize)
-						upperBoundCountExcludingOutliers++;
+						upperBoundCountExcludingOutliers++; // A count of clusters
+					else
+						outliers += currentSize; // A count of individual points
 					currentSize = 1;
 				}
 			}
 			if (currentSize > OutlierSize)
 				upperBoundCountExcludingOutliers++;
-
+			else
+				outliers += currentSize;
 			return new ClusterCount
 			{
 				CountExcludingOutliers = upperBoundCountExcludingOutliers,

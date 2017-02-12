@@ -200,6 +200,12 @@ namespace HilbertTransformation
 			HilbertIndex = coordinates.HilbertIndex(BitsPerDimension);
 		}
 
+		public HilbertPoint(uint[] coordinates, int bitsPerDimension, long maxCoordinate, long squareMagnitude, int key) : base(coordinates, maxCoordinate, squareMagnitude, key)
+		{
+			BitsPerDimension = bitsPerDimension;
+			HilbertIndex = coordinates.HilbertIndex(BitsPerDimension);
+		}
+
 		/// <summary>
 		/// If the point is already a HilbertPoint, return it unchanged, otherwise create a new one
 		/// that contains the same coordinates yet has a Hilbert index.
@@ -207,11 +213,17 @@ namespace HilbertTransformation
 		/// <returns>A HilbertPoint.</returns>
 		/// <param name="uPoint">U point.</param>
 		/// <param name="bitsPerDimension">Bits per dimension.</param>
-		public static HilbertPoint CastOrConvert(UnsignedPoint uPoint, int bitsPerDimension)
+		/// <param name="useSameKey">If true and a new point is created, it will share the same key as the original.</param>
+		public static HilbertPoint CastOrConvert(UnsignedPoint uPoint, int bitsPerDimension, bool useSameKey = false)
 		{
 			HilbertPoint hPoint = uPoint as HilbertPoint;
 			if (hPoint == null || hPoint.BitsPerDimension != bitsPerDimension)
-				hPoint = new HilbertPoint(uPoint.Coordinates, bitsPerDimension, uPoint.MaxCoordinate, uPoint.SquareMagnitude);
+			{
+				if (useSameKey)
+					hPoint = new HilbertPoint(uPoint.Coordinates, bitsPerDimension, uPoint.MaxCoordinate, uPoint.SquareMagnitude, uPoint.UniqueId);
+				else
+					hPoint = new HilbertPoint(uPoint.Coordinates, bitsPerDimension, uPoint.MaxCoordinate, uPoint.SquareMagnitude);
+			}
 			return hPoint; 
 		}
 

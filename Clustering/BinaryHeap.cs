@@ -359,6 +359,18 @@ namespace Clustering
     ///         }
     ///     }
     ///     var lowestFiftySorted = heap.RemoveAll();
+	/// 
+	/// Use Case: Use a Max-Heap to maintain a priority queue, such that the k-lowest integers are kept in the heap,
+	///           and higher values are discarded. (Same case as above, but using AddRemove to simplify usage.)
+	/// 
+    ///     var data = new int[] { ... numbers to study ... };
+    ///     var k = 50;
+    ///     var heap = new BinaryHeap{int}(BinaryHeapType.MaxHeap, k);
+    ///     foreach(var i in data)
+    ///     {
+	///         heap.AddRemove(i);
+    ///     }
+    ///     var lowestFiftySorted = heap.RemoveAll();
     /// </summary>
     public class BinaryHeap<TElement>
     {
