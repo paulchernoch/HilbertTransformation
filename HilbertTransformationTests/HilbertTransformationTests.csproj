@@ -41,6 +41,7 @@
     <Compile Include="Data\PolyChromaticClosestPoint.cs" />
     <Compile Include="PolyChromaticClosestPointTests.cs" />
     <Compile Include="KeySorterTests.cs" />
+    <Compile Include="OptimalIndexTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

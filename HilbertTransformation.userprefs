@@ -1,25 +1,23 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformationTests/Data/CoordinateGenerator.cs" Line="1" Column="1" />
-      <File FileName="Clustering/OptimalIndex.cs" Line="1" Column="1" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformationTests/Data/GaussianClustering.cs" Line="1" Column="1" />
-      <File FileName="Clustering/Classification.cs" Line="272" Column="23" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="1" Column="1" />
-      <File FileName="Clustering/HilbertIndex.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="1" Column="1" />
-      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="1" Column="1" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="41" Column="36" />
+      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="61" Column="35" />
+      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="128" Column="23" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
         <State name="__root__">
-          <Node name="HilbertTransformation" expanded="True" />
+          <Node name="HilbertTransformation" expanded="True">
+            <Node name="HilbertTransformationTests" expanded="True">
+              <Node name="HilbertTransformationTests" expanded="True">
+                <Node name="OptimalIndexTests" expanded="True">
+                  <Node name="For_200Dim_40000Pts_200Clusters" selected="True" />
+                </Node>
+              </Node>
+            </Node>
+          </Node>
         </State>
       </Pad>
     </Pads>
