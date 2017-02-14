@@ -101,11 +101,7 @@ namespace HilbertTransformationTests
 					clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(),
 					5 /*outlier size */, 10 /* NoiseSkipBy */, hilbertTries
 				);
-				var sorter = new KeySorter<HilbertPoint, UnsignedPoint>(p => p.UniqueId, p => p.UniqueId);
-				var unsortedPoints = clusters.Points().ToList();
-				var sortedPoints = results.Index.SortedPoints;
-				var sameSortedPoints = sorter.Sort(unsortedPoints, sortedPoints);
-				pccp = new PolyChromaticClosestPoint<string>(clusters, sameSortedPoints);
+				pccp = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			}
 			foreach (var color in pccp.Clusters.ClassLabels())
 			{
@@ -188,8 +184,7 @@ namespace HilbertTransformationTests
 					clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(), 
 					5 /*outlier size */, 10 /* NoiseSkipBy */, hilbertsToTry
 				);
-				var sortedPoints = results.Index.SortedPoints;
-				pccp = new PolyChromaticClosestPoint<string>(clusters, sortedPoints);
+				pccp = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			}
 			for (var iColor2 = 1; iColor2 < numClusters; iColor2++)
 			{
@@ -311,9 +306,14 @@ namespace HilbertTransformationTests
 				5 /*outlier size */, 10 /* NoiseSkipBy */, numCurvesToTry
 			);
 
-			var pointLists = bestIndices.Select(result => result.Index.SortedPoints).ToList();
-			foreach (var pList in pointLists)
-				pccps.Add(new PolyChromaticClosestPoint<string>(clusters, pList));
+			//var pointLists = bestIndices.Select(result => result.Index.SortedPoints).ToList();
+			//foreach (var pList in pointLists)
+			//	pccps.Add(new PolyChromaticClosestPoint<string>(clusters, pList));
+
+			var indices = bestIndices.Select(result => result.Index).ToList();
+			foreach (var index in indices)
+				pccps.Add(new PolyChromaticClosestPoint<string>(clusters, index));
+
 			var pccp1 = pccps[0];
 			foreach (var color in pccp1.Clusters.ClassLabels())
 			{
@@ -368,9 +368,8 @@ namespace HilbertTransformationTests
 
 			var bitsPerDimension = (1 + data.MaxCoordinate).SmallestPowerOfTwo();
 			var results = OptimalIndex.Search(clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(), 5 /*outlier size */, 10 /* NoiseSkipBy */, numCurvesToTry);
-			var pointList = results.Index.SortedPoints;
 
-			var pccp1 = new PolyChromaticClosestPoint<string>(clusters, pointList);
+			var pccp1 = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			var allColorPairs = pccp1.FindAllClustersApproximately();
 			foreach (var color1 in clusters.ClassLabels())
 			{

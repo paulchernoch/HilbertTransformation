@@ -10,6 +10,282 @@ namespace HilbertTransformationTests.Data
 	//       of an algorithm that clusters points, we need another algorithm that also clusters points.
 	//       This clustering algorithm is slow and imperfect, but good enough for making test data.
 
+	/// <summary>
+	/// For a given cluster of points, estimate the distance to all other clusters and find 
+	/// (approximately) the pair of points (one from each cluster) that are closest.
+	/// </summary>
+	public class NearestPointPerLabel<TLabel> where TLabel : IEquatable<TLabel>
+	{
+		public class NearPoints
+		{
+			public TLabel SearchLabel { get; set; }
+			public UnsignedPoint SearchPoint { get; set; }
+			public TLabel NearLabel { get; set; }
+			public UnsignedPoint NearPoint { get; set; }
+			public long Measure { get; set; }
+		}
+
+		List<Tuple<UnsignedPoint, TLabel>> SortedPointsWithLabels { get; set; }
+		Dictionary<TLabel, UnsignedPoint> ForwardLastSeenPoints { get; set; }
+		Dictionary<TLabel, UnsignedPoint> ReverseFirstSeenPoints { get; set; }
+		Dictionary<TLabel, NearPoints> ShortestDistancePerLabel { get; set; }
+		NearPoints ShortestDistance { get; set; }
+
+		TLabel SearchLabel { get; set; }
+
+		public NearestPointPerLabel(IEnumerable<Tuple<UnsignedPoint, TLabel>> sortedLabeledPoints)
+		{
+			SortedPointsWithLabels = new List<Tuple<UnsignedPoint, TLabel>>();
+			Tuple<UnsignedPoint, TLabel> previousPair = null;
+			var addedAlready = false;
+			// This is like one-dimensional edge detection.
+			// The first and last points are kept, as well as every pair of consecutive points whose labels differ. 
+			// Example: If the incoming sequence of labels is:
+			//             A A B B B B B C D D D E E E F 
+			//          then the result will be:
+			//             A B B C D D E E F
+			foreach (var pair in sortedLabeledPoints)
+			{
+				if (previousPair == null)
+				{
+					SortedPointsWithLabels.Add(pair);
+					addedAlready = true;
+				}
+				else if (!previousPair.Item2.Equals(pair.Item2))
+				{
+					if (!addedAlready)
+						SortedPointsWithLabels.Add(previousPair);
+					SortedPointsWithLabels.Add(pair);
+					addedAlready = true;
+				}
+				else
+					addedAlready = false;
+				previousPair = pair;
+			}
+			if (!addedAlready)
+				SortedPointsWithLabels.Add(previousPair);
+		}
+
+		enum SearchState { Start, Matching, Different, Done }
+
+		/// <summary>
+		/// Finds (approximately) the label of the cluster nearest to the cluster corresponding to the given searchLabel,
+		/// as well as the two points - one point from each cluster - that are closest.
+		/// </summary>
+		/// <param name="searchLabel">Label of a cluster whose near neighboring clusters will be sought.</param>
+		/// <returns>A point in the subject cluster, the approximate nearest point, the distance and nearest point's label.
+		/// Of all the labeled clusters, this finds the cluster closest to the given cluster, and the two points -
+		/// one in the searchLabel cluster and one in a nearby cluster - that are closest together.
+		/// </returns>
+		public NearPoints FindNearest(TLabel searchLabel)
+		{
+			ScanPoints(searchLabel);
+			return ShortestDistance;
+		}
+
+		public NearPoints FindNearestWithLabel(TLabel searchLabel, TLabel otherLabel)
+		{
+			ScanPoints(searchLabel);
+			return ShortestDistancePerLabel[otherLabel];
+		}
+
+		/// <summary>
+		/// Scan through the points and find the distance between points whose label matches SearchLabel
+		/// and nearby points with other labels. Record the shortest distance to any point as well as the
+		/// distance to the nearest point having every other label.
+		/// 
+		/// The result is approximate. We are limiting ourselves to searching points that are close along the Hilbert curve,
+		/// which will often exclude the closest point, but should usually find "close" points.
+		/// </summary>
+		/// <param name="searchLabel">Search label.</param>
+		private void ScanPoints(TLabel searchLabel)
+		{
+			// Scanning only needs to be done once for a given search label.
+			// Multiple calls to FindNearest and FindNearestWithLabel for the same searchLabel
+			// can be handled efficiently, if done in sequence. Whenever we change SearchLabel,
+			// everything is recomputed.
+			if (searchLabel.Equals(SearchLabel))
+				return;
+			Clear();
+			SearchLabel = searchLabel;
+			var state = SearchState.Start;
+			Tuple<UnsignedPoint,TLabel> currentMatch = null;
+			foreach (var pair in SortedPointsWithLabels)
+			{
+				var matches = SearchLabel.Equals(pair.Item2);
+				switch (state)
+				{
+					case SearchState.Start:
+						if (matches)
+						{
+							currentMatch = pair;
+							state = SearchState.Matching;
+						}
+						else
+						{
+							ForwardLastSeenPoints[pair.Item2] = pair.Item1;
+							state = SearchState.Different;
+						}
+						break;
+					case SearchState.Different:
+						if (matches)
+						{
+							// We reached the end of a range of unmatching labels, so need to decide
+							// if any of the points recorded in ForwardLastSeenPoints and ReverseFirstSeenPoints
+							// have shorter distances than previously recorded in ShortestDistancePerLabel.
+							// We compare points in ForwardLastSeenPoints to the new matching point in pair,
+							// while we compare points in ReverseFirstSeenPoints to currentMatch (if it is set).
+							UnsignedPoint pointToMeasure;
+							if (currentMatch != null)
+							{
+								pointToMeasure = currentMatch.Item1;
+								foreach (var pair2 in ReverseFirstSeenPoints)
+								{
+									var earlyPoint = pair2.Value;
+									var earlyLabel = pair2.Key;
+									var sqDist = earlyPoint.Measure(pointToMeasure);
+									NearPoints measurement;
+									var isNearer = false;
+									if (ShortestDistancePerLabel.TryGetValue(earlyLabel, out measurement))
+										isNearer = (sqDist < measurement.Measure);
+									else
+										isNearer = true;
+									if (isNearer)
+									{
+										var nearPoints = ShortestDistance = new NearPoints
+										{
+											SearchLabel = SearchLabel,
+											SearchPoint = pointToMeasure,
+											NearLabel = earlyLabel,
+											NearPoint = earlyPoint,
+											Measure = sqDist
+										};
+										if (ShortestDistance == null || ShortestDistance.Measure > sqDist)
+											ShortestDistance = nearPoints;
+										ShortestDistancePerLabel[earlyLabel] = nearPoints;
+									}
+								}
+							}
+							pointToMeasure = pair.Item1;
+							foreach (var pair3 in ForwardLastSeenPoints)
+							{
+								var latePoint = pair3.Value;
+								var lateLabel = pair3.Key;
+								var sqDist = latePoint.Measure(pointToMeasure);
+
+								NearPoints measurement;
+								var isNearer = false;
+								if (ShortestDistancePerLabel.TryGetValue(lateLabel, out measurement))
+									isNearer = (sqDist < measurement.Measure);
+								else
+									isNearer = true;
+								if (isNearer)
+								{
+									var nearPoints = ShortestDistance = new NearPoints
+									{
+										SearchLabel = SearchLabel,
+										SearchPoint = pointToMeasure,
+										NearLabel = lateLabel,
+										NearPoint = latePoint,
+										Measure = sqDist
+									};
+									if (ShortestDistance == null || ShortestDistance.Measure > sqDist)
+										ShortestDistance = nearPoints;
+									ShortestDistancePerLabel[lateLabel] = nearPoints;
+								}
+							}
+							ForwardLastSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+							ReverseFirstSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+							currentMatch = pair;
+							state = SearchState.Matching;
+						}
+						else
+						{
+							// Keep track of the most recently and least recently found point for each label.
+							ForwardLastSeenPoints[pair.Item2] = pair.Item1;
+							if (!ReverseFirstSeenPoints.ContainsKey(pair.Item2))
+								ReverseFirstSeenPoints[pair.Item2] = pair.Item1;
+						}
+						break;
+					case SearchState.Matching:
+						if (matches)
+							currentMatch = pair;
+						else
+						{
+							ForwardLastSeenPoints[pair.Item2] = pair.Item1;
+							ReverseFirstSeenPoints[pair.Item2] = pair.Item1;
+							state = SearchState.Different;
+						}
+						break;
+				}
+			}
+			switch (state)
+			{
+				case SearchState.Different:
+					// Only the ReverseFirstSeenPoints need be processed when we reach the end of the points
+					// because there is no final matching point to compare to for the ForwardLastSeenPoints.
+
+
+					// We reached the end of a range of unmatching labels, so need to decide
+					// if any of the points recorded in ReverseFirstSeenPoints
+					// have shorter distances than previously recorded in ShortestDistancePerLabel.
+					// We compare points in ReverseFirstSeenPoints to currentMatch (if it is set).
+					UnsignedPoint pointToMeasure;
+					if (currentMatch != null)
+					{
+						pointToMeasure = currentMatch.Item1;
+						foreach (var pair2 in ReverseFirstSeenPoints)
+						{
+							var earlyPoint = pair2.Value;
+							var earlyLabel = pair2.Key;
+							var sqDist = earlyPoint.Measure(pointToMeasure);
+							NearPoints measurement;
+							var isNearer = false;
+							if (ShortestDistancePerLabel.TryGetValue(earlyLabel, out measurement))
+								isNearer = (sqDist < measurement.Measure);
+							else
+								isNearer = true;
+							if (isNearer)
+							{
+								var nearPoints = ShortestDistance = new NearPoints
+								{
+									SearchLabel = SearchLabel,
+									SearchPoint = pointToMeasure,
+									NearLabel = earlyLabel,
+									NearPoint = earlyPoint,
+									Measure = sqDist
+								};
+								if (ShortestDistance == null || ShortestDistance.Measure > sqDist)
+									ShortestDistance = nearPoints;
+								ShortestDistancePerLabel[earlyLabel] = nearPoints;
+							}
+						}
+					}
+					ForwardLastSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+					ReverseFirstSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+					state = SearchState.Done;
+
+					break;
+
+				case SearchState.Matching:
+					// No more to do because the last point is part of the cluster for the SearchLabel.
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Clear and reinitialize instance variables for this instance, except for SortedPointsWithLabels.
+		/// </summary>
+		private void Clear()
+		{
+			ForwardLastSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+			ReverseFirstSeenPoints = new Dictionary<TLabel, UnsignedPoint>();
+			ShortestDistancePerLabel = new Dictionary<TLabel, NearPoints>();
+			ShortestDistance = null;
+			SearchLabel = default(TLabel);
+		}
+
+	}
 
 	/// <summary>
 	/// Solve the Poly chromatic closest point problem.
@@ -45,7 +321,7 @@ namespace HilbertTransformationTests.Data
 	///      - time to find distance from one cluster to all others = 2FK
 	///      - time to find distance from every cluster to every cluster = (FK)^2
 	/// </remarks>
-	public class PolyChromaticClosestPoint<TLabel> where TLabel : IEquatable<TLabel>
+	public class PolyChromaticClosestPoint<TLabel> where TLabel : IEquatable<TLabel>, IComparable<TLabel>
 	{
 		/// <summary>
 		/// Holds the results of a closest pair query, indicating two clusters (identified by their "color" labels),
@@ -67,6 +343,7 @@ namespace HilbertTransformationTests.Data
 				Color2 = color2;
 				Point2 = p2;
 				SquareDistance = sqDist;
+				Validate();
 			}
 
 			public ClosestPair(TLabel color1, UnsignedPoint p1, TLabel color2, UnsignedPoint p2)
@@ -76,11 +353,24 @@ namespace HilbertTransformationTests.Data
 				Color2 = color2;
 				Point2 = p2;
 				SquareDistance = Point1.Measure(Point2);
+				Validate();
 			}
 
 			public ClosestPair()
 			{
 				SquareDistance = long.MaxValue;
+			}
+
+			void Validate()
+			{
+				ValidateColor(Color1, "ClosestPair.Color1 should not be null");
+				ValidateColor(Color2, "ClosestPair.Color2 should not be null");
+			}
+
+			public void ValidateColor(TLabel color, string msg)
+			{
+				if (EqualityComparer<TLabel>.Default.Equals(color, default(TLabel)))
+					throw new ArgumentNullException(nameof(color), msg);
 			}
 
 			/// <summary>
@@ -89,6 +379,7 @@ namespace HilbertTransformationTests.Data
 			/// <param name="color1">The color that should match Color1.</param>
 			public ClosestPair Swap(TLabel color1)
 			{
+				ValidateColor(Color1, "Swapping with null Color1");
 				if (!Color1.Equals (color1)) 
 				{
 					var tempColor = Color1;
@@ -185,6 +476,24 @@ namespace HilbertTransformationTests.Data
 		/// <value>The sorted points.</value>
 		public List<UnsignedPoint> SortedPoints { get; private set; }
 
+		private NearestPointPerLabel<TLabel> _nearestPointFinder;
+		NearestPointPerLabel<TLabel> NearestPointFinder { 
+			get
+			{
+				if (_nearestPointFinder == null)
+				{
+					_nearestPointFinder = new NearestPointPerLabel<TLabel>(
+						SortedPoints.Select(
+							p => new Tuple<UnsignedPoint, TLabel>(p, Clusters.GetClassLabel(p))
+						)
+					);
+				}
+				return _nearestPointFinder;
+			}
+		}
+
+
+
 		/// <summary>
 		/// Initializes a new instance of the PolyChromaticClosestPoint class
 		/// and sorting the points according to the default Hilbert curve.
@@ -194,6 +503,7 @@ namespace HilbertTransformationTests.Data
 		{
 			Clusters = clusters;
 			SortPoints ();
+			ValidateIds();
 		}
 
 		/// <summary>
@@ -226,7 +536,22 @@ namespace HilbertTransformationTests.Data
 		{
 			Clusters = clusters;
 			SortedPoints = sortedPoints as List<UnsignedPoint> ?? sortedPoints.ToList ();
+
+			ValidateIds();
 		}
+
+		public PolyChromaticClosestPoint(Classification<UnsignedPoint, TLabel> clusters, HilbertIndex index)
+		{
+			Clusters = clusters;
+
+			var sorter = new KeySorter<HilbertPoint, UnsignedPoint>(p => p.UniqueId, p => p.UniqueId);
+			var unsortedPoints = Clusters.Points().ToList();
+			var sortedPoints = index.SortedPoints;
+			SortedPoints = sorter.Sort(unsortedPoints, sortedPoints).ToList();
+			ValidateIds();
+		}
+
+		#region Finding closest pair
 
 		/// <summary>
 		/// Finds exactly the two closest points (one of each color) and their square distance 
@@ -358,93 +683,22 @@ namespace HilbertTransformationTests.Data
 		/// <returns>The closest cluster and the points from each cluster that were closest.</returns>
 		public ClosestPair FindClusterApproximately(TLabel color1)
 		{
-			var shortest = new ClosestPair();
-			var clusterAtPosition = new TLabel[SortedPoints.Count];
-
-			int segmentStart = 0;
-			int segmentEnd = -1;
-			for (var i = 0; i <= SortedPoints.Count; i++) 
-			{
-				TLabel currColor;
-				if (i < SortedPoints.Count)
-					clusterAtPosition [i] = currColor = Clusters.GetClassLabel (SortedPoints [i]);
-				else
-					currColor = color1;
-				var currColorMatches = currColor.Equals (color1);
-				if (!currColorMatches) 
-				{
-					// Extend the contiguous segment of points that are not color1.
-					segmentEnd = i;
-				} 
-				else
-				{
-					// A contiguous segment of points that are not color1 is sandwiched between 
-					// two points that are color1, except possibly at the beginning and end of the list of SortedPoints.
-					// Iterate both forwrd and backward through the points in the segment. 
-					// If multiple points from the same second color are found in the segment,
-					// only compare the nearest point in sequence to each end of the segment.
-					// For example, if the sequence of colors (1,2,3) for points A thru J is this:
-					//     Points:  A B C D E F G H I J
-					//     Colors:  1 2 2 2 3 3 3 2 2 1
-					// We will compare the distances between A & B, A & E, G & J, and I & J,
-					// because they are likeliest to be the closest points to one or the other endpoints (A & J).
-					// Thus at most one point of each color found in the segment will be compared to the
-					// first point of color1, and at most one point of each color will be compared to the last
-					// point of color1.
-
-					var clustersSeen = new HashSet<TLabel> ();
-					if (segmentStart > 0 && segmentEnd >= segmentStart && segmentEnd < SortedPoints.Count - 1) 
-					{
-						var p1 = SortedPoints [segmentStart - 1];
-						for (var j = segmentStart; j <= segmentEnd; j++)
-						{
-							var color2 = clusterAtPosition [j];
-							if (!clustersSeen.Contains (color2)) 
-							{
-								var p2 = SortedPoints [j];
-								var d = p1.Measure (p2);
-								if (shortest.SquareDistance > d) 
-								{
-									shortest.SquareDistance = d;
-									shortest.Color1 = color1;
-									shortest.Point1 = p1;
-									shortest.Color2 = color2;
-									shortest.Point2 = p2;
-								}
-								clustersSeen.Add (color2);
-							}
-						}
-					}
-
-					clustersSeen = new HashSet<TLabel> ();
-					if (segmentStart >= 0 && segmentEnd < SortedPoints.Count - 1) 
-					{
-						var p1 = SortedPoints [segmentEnd + 1];
-						for (var j = segmentEnd; j >= segmentStart; j--)
-						{
-							var color2 = clusterAtPosition [j];
-							if (!clustersSeen.Contains (color2)) 
-							{
-								var p2 = SortedPoints [j];
-								var d = p1.Measure (p2);
-								if (shortest.SquareDistance > d) 
-								{
-									shortest.SquareDistance = d;
-									shortest.Color1 = color1;
-									shortest.Point1 = p1;
-									shortest.Color2 = color2;
-									shortest.Point2 = p2;
-								}
-								clustersSeen.Add (color2);
-							}
-						}
-					}
-
-					segmentStart = i + 1;
-					segmentEnd = -1;
-				}
-			}
-
+			if (EqualityComparer<TLabel>.Default.Equals(color1, default(TLabel)))
+				throw new ArgumentNullException(nameof(color1));
+			// A contiguous segment of points that are not color1 is sandwiched between 
+			// two points that are color1, except possibly at the beginning and end of the list of SortedPoints.
+			// If multiple points from the same second color are found in the segment,
+			// only compare the nearest point in sequence to each end of the segment.
+			// For example, if the sequence of colors (1,2,3) for points A thru J is this:
+			//     Points:  A B C D E F G H I J
+			//     Colors:  1 2 2 2 3 3 3 2 2 1
+			// We will compare the distances between A & B, A & E, G & J, and I & J,
+			// because they are likeliest to be the closest points to one or the other endpoints (A & J).
+			// Thus at most one point of each color found in the segment will be compared to the
+			// first point of color1, and at most one point of each color will be compared to the last
+			// point of color1.
+			var closest = this.NearestPointFinder.FindNearest(color1);
+			var shortest = new ClosestPair(closest.SearchLabel, closest.SearchPoint, closest.NearLabel, closest.NearPoint, closest.Measure);
 			return shortest.Swap(color1);
 		}
 
@@ -481,10 +735,36 @@ namespace HilbertTransformationTests.Data
 		/// since the distance is symmetric.</returns>
 		public IEnumerable<ClosestPair> FindAllClustersApproximately(long maxSquareDistance = long.MaxValue)
 		{
-			var shortList = new List<UnsignedPoint> ();
-			shortList.Add (SortedPoints [0]);
-			var prevClass = Clusters.GetClassLabel (SortedPoints [0]);
-			var currClass = Clusters.GetClassLabel (SortedPoints [1]);
+			var colors = Clusters.ClassLabels().ToArray();
+			for (var i = 0; i < colors.Length; i++)
+				for (var j = i + 1; j < colors.Length; j++)
+				{
+				    var closest = NearestPointFinder.FindNearestWithLabel(colors[i], colors[j]);
+					var shortest = new ClosestPair(closest.SearchLabel, closest.SearchPoint, closest.NearLabel, closest.NearPoint, closest.Measure);
+					yield return shortest.Swap(colors[i]);
+				}
+		}
+
+		/// <summary>
+		/// Approximates the closest distance between every cluster and every other cluster.
+		/// 
+		/// If there are currently K clusters, this will return at most K(K-1)/2 ClosestPairs, unsorted.
+		/// If an upper limit on the square distance is supplied, fewer may be returned.
+		/// </summary>
+		/// <param name="maxSquareDistance">If omitted, no restriction on distance is applied.
+		/// If supplied, no measurement of the closest distance between two colors will
+		/// be returned if those two colors are farther apart than this distance.
+		/// </param>
+		/// <returns>ClosestPairs for every pair of colors, unsorted. 
+		/// If a distance is returned for colors "A" and "B", one will not be returned for colors "B" and "A",
+		/// since the distance is symmetric.</returns>
+		public IEnumerable<ClosestPair> FindAllClustersApproximatelyOld(long maxSquareDistance = long.MaxValue)
+		{
+			// Has nasty edge-case bug.
+			var shortList = new List<UnsignedPoint>();
+			shortList.Add(SortedPoints[0]);
+			var prevClass = Clusters.GetClassLabel(SortedPoints[0]);
+			var currClass = Clusters.GetClassLabel(SortedPoints[1]);
 
 			// shortList will have all the SortedPoints with some removed.
 			// If a point is in the same class as both its predecessor and successor, remove it. 
@@ -497,45 +777,91 @@ namespace HilbertTransformationTests.Data
 			//
 			// Assume that an initial pass of clustering has already been performed and it
 			// created several partial clusters for every ideal cluster.
-			for (var iPoint = 1; iPoint < SortedPoints.Count - 1; iPoint++) 
+			for (var iPoint = 1; iPoint < SortedPoints.Count - 1; iPoint++)
 			{
-				var nextClass = Clusters.GetClassLabel (SortedPoints [iPoint + 1]);
-				if (!currClass.Equals (prevClass) || !currClass.Equals (nextClass)) 
-					shortList.Add (SortedPoints[iPoint]);
+				var nextClass = Clusters.GetClassLabel(SortedPoints[iPoint + 1]);
+				if (!currClass.Equals(prevClass) || !currClass.Equals(nextClass))
+					shortList.Add(SortedPoints[iPoint]);
 				prevClass = currClass;
 				currClass = nextClass;
 			}
-			shortList.Add (SortedPoints.Last ());
+			shortList.Add(SortedPoints.Last());
 
-			var shortestDistances = new Dictionary<string, ClosestPair> ();
+			var shortestDistances = new Dictionary<string, ClosestPair>();
 			for (var i1 = 0; i1 < shortList.Count - 1; i1++)
 			{
-				var point1 = shortList [i1];
-				var color1 = Clusters.GetClassLabel (point1);
-				var colorsAlreadySeen = new HashSet<TLabel> ();
+				var point1 = shortList[i1];
+				var color1 = Clusters.GetClassLabel(point1);
+				var colorsAlreadySeen = new HashSet<TLabel>();
 				foreach (var pair in shortList
-					.Skip(i1+1)
-					.Select(p => new { point2 = p, color2 = Clusters.GetClassLabel (p) })
-					.TakeWhile(pair => !pair.color2.Equals(color1)) )
+					.Skip(i1 + 1)
+					.Select(p => new { point2 = p, color2 = Clusters.GetClassLabel(p) })
+					.TakeWhile(pair => !pair.color2.Equals(color1)))
 				{
-					if (!colorsAlreadySeen.Contains (pair.color2))
+					if (!colorsAlreadySeen.Contains(pair.color2))
 					{
-						var potentialClosest = new ClosestPair (color1, point1, pair.color2, pair.point2);
+						var potentialClosest = new ClosestPair(color1, point1, pair.color2, pair.point2);
 						if (potentialClosest.SquareDistance > maxSquareDistance)
 							continue;
 						ClosestPair currentClosest;
 						var key = potentialClosest.Key;
-						if (!shortestDistances.TryGetValue (key, out currentClosest)) 
-							shortestDistances [key] = potentialClosest;
+						if (!shortestDistances.TryGetValue(key, out currentClosest))
+							shortestDistances[key] = potentialClosest;
 						else if (currentClosest.CompareTo(potentialClosest) > 0)
-							shortestDistances [key] = potentialClosest;
-						colorsAlreadySeen.Add (pair.color2);
+							shortestDistances[key] = potentialClosest;
+						colorsAlreadySeen.Add(pair.color2);
 					}
 				}
 			}
 			return shortestDistances.Values;
 		}
-			
+		#endregion
+
+		#region Validation
+
+		/// <summary>
+		/// Check if the ids in the points in the Clusters match the ids in the SortedPoints.
+		/// </summary>s
+		private void ValidateIds()
+		{
+			if (SortedPoints.Count != Clusters.NumPoints)
+				throw new InvalidOperationException("Clusters holds more points than SortedPoints");
+
+			var idRangeClusters = Clusters.Points().Aggregate(
+				new	{ Min = int.MaxValue, Max = int.MinValue },
+				(accumulator, o) => new
+				{
+					Min = Math.Min(o.UniqueId, accumulator.Min),
+					Max = Math.Max(o.UniqueId, accumulator.Max)
+				}
+			);
+			var idRangeSortedPoints = SortedPoints.Aggregate(
+				new { Min = int.MaxValue, Max = int.MinValue },
+				(accumulator, o) => new
+				{
+					Min = Math.Min(o.UniqueId, accumulator.Min),
+					Max = Math.Max(o.UniqueId, accumulator.Max)
+				}
+			);
+			if (idRangeClusters.Min != idRangeSortedPoints.Min)
+				throw new InvalidOperationException("The lowest Id among the points in SortedPoints and Clusters is not the same");
+			if (idRangeClusters.Max != idRangeSortedPoints.Max)
+				throw new InvalidOperationException("The highest Id among the points in SortedPoints and Clusters is not the same");
+			/*
+		    // Exhaustive comparison of all ids. More costly.
+			var idsInClusters = new HashSet<int>();
+			foreach (var point in Clusters.Points())
+				idsInClusters.Add(point.UniqueId);
+
+			foreach (var point in SortedPoints)
+			{
+				if (!idsInClusters.Contains(point.UniqueId))
+					throw new InvalidOperationException("SortedPoints has a point whose Id does not match a point in Clusters");
+			}
+			*/
+		}
+
+		#endregion
 	}
 }
 
