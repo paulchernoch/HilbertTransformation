@@ -39,6 +39,7 @@
     <Compile Include="ClusterCounter.cs" />
     <Compile Include="OptimalIndex.cs" />
     <Compile Include="KeySorter.cs" />
+    <Compile Include="ClosestCluster.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

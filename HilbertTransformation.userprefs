@@ -2,8 +2,10 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
       <File FileName="Clustering/OptimalIndex.cs" Line="41" Column="36" />
-      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="61" Column="35" />
+      <File FileName="Clustering/ClosestCluster.cs" Line="44" Column="35" />
+      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="61" Column="37" />
       <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="128" Column="23" />
+      <File FileName="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" Line="515" Column="20" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>

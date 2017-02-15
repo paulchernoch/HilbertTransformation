@@ -492,7 +492,7 @@ namespace HilbertTransformationTests.Data
 			}
 		}
 
-
+		#region Constructors
 
 		/// <summary>
 		/// Initializes a new instance of the PolyChromaticClosestPoint class
@@ -551,6 +551,8 @@ namespace HilbertTransformationTests.Data
 			ValidateIds();
 		}
 
+		#endregion
+
 		#region Finding closest pair
 
 		/// <summary>
@@ -586,6 +588,8 @@ namespace HilbertTransformationTests.Data
 		/// Finds an approximately closest pair of points (one of each color) by using the ordering found in SortedPoints.
 		/// 
 		/// This compares points in two of the clusters, ignoring points in all other clusters.
+		/// 
+		/// NOTE: This was a good idea, but yields results too poor to be used.
 		/// </summary>
 		/// <param name="color1">Label of the first cluster.</param>
 		/// <param name="color2">Label of the second cluster.</param>
@@ -745,76 +749,6 @@ namespace HilbertTransformationTests.Data
 				}
 		}
 
-		/// <summary>
-		/// Approximates the closest distance between every cluster and every other cluster.
-		/// 
-		/// If there are currently K clusters, this will return at most K(K-1)/2 ClosestPairs, unsorted.
-		/// If an upper limit on the square distance is supplied, fewer may be returned.
-		/// </summary>
-		/// <param name="maxSquareDistance">If omitted, no restriction on distance is applied.
-		/// If supplied, no measurement of the closest distance between two colors will
-		/// be returned if those two colors are farther apart than this distance.
-		/// </param>
-		/// <returns>ClosestPairs for every pair of colors, unsorted. 
-		/// If a distance is returned for colors "A" and "B", one will not be returned for colors "B" and "A",
-		/// since the distance is symmetric.</returns>
-		public IEnumerable<ClosestPair> FindAllClustersApproximatelyOld(long maxSquareDistance = long.MaxValue)
-		{
-			// Has nasty edge-case bug.
-			var shortList = new List<UnsignedPoint>();
-			shortList.Add(SortedPoints[0]);
-			var prevClass = Clusters.GetClassLabel(SortedPoints[0]);
-			var currClass = Clusters.GetClassLabel(SortedPoints[1]);
-
-			// shortList will have all the SortedPoints with some removed.
-			// If a point is in the same class as both its predecessor and successor, remove it. 
-			// These are more likely to be interior points in a cluster, and not border points.
-			// The likely number of points that survive elimination is 2*F*K, 
-			// where K is the current number of clusters and F is the degree of cluster fragmentation.
-			// If all the points in  cluster are contiguous in SortedPoints, the fragmentation of that cluster is one.
-			// Given the twistiness of a Hilbert curve (or any fractal, space-filling curve), it is common
-			// for a cluster to be fragmented into from 2 to 10 parts, so F ranges from 2 to 10, with 4 or 5 being most common.
-			//
-			// Assume that an initial pass of clustering has already been performed and it
-			// created several partial clusters for every ideal cluster.
-			for (var iPoint = 1; iPoint < SortedPoints.Count - 1; iPoint++)
-			{
-				var nextClass = Clusters.GetClassLabel(SortedPoints[iPoint + 1]);
-				if (!currClass.Equals(prevClass) || !currClass.Equals(nextClass))
-					shortList.Add(SortedPoints[iPoint]);
-				prevClass = currClass;
-				currClass = nextClass;
-			}
-			shortList.Add(SortedPoints.Last());
-
-			var shortestDistances = new Dictionary<string, ClosestPair>();
-			for (var i1 = 0; i1 < shortList.Count - 1; i1++)
-			{
-				var point1 = shortList[i1];
-				var color1 = Clusters.GetClassLabel(point1);
-				var colorsAlreadySeen = new HashSet<TLabel>();
-				foreach (var pair in shortList
-					.Skip(i1 + 1)
-					.Select(p => new { point2 = p, color2 = Clusters.GetClassLabel(p) })
-					.TakeWhile(pair => !pair.color2.Equals(color1)))
-				{
-					if (!colorsAlreadySeen.Contains(pair.color2))
-					{
-						var potentialClosest = new ClosestPair(color1, point1, pair.color2, pair.point2);
-						if (potentialClosest.SquareDistance > maxSquareDistance)
-							continue;
-						ClosestPair currentClosest;
-						var key = potentialClosest.Key;
-						if (!shortestDistances.TryGetValue(key, out currentClosest))
-							shortestDistances[key] = potentialClosest;
-						else if (currentClosest.CompareTo(potentialClosest) > 0)
-							shortestDistances[key] = potentialClosest;
-						colorsAlreadySeen.Add(pair.color2);
-					}
-				}
-			}
-			return shortestDistances.Values;
-		}
 		#endregion
 
 		#region Validation
