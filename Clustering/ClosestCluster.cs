@@ -14,10 +14,11 @@ namespace Clustering
 	/// 
 	/// Exact and approximate measurements are provided.
 	/// 
-	/// The most interesting method is FindClosestClusters. It fits into an overall clustering algorithm in the following way:
+	/// The most interesting method is FindClosestClusters. It fits into an overall clustering algorithm 
+	/// in the following way. The overall algorithm:
 	///   1. A rough clustering is performed. 
 	///      The result is full clusters, fragmented clusters that still need to be combined, and outliers.
-	///   2. Clusters that are not outliers (with few members) are compared to one another. 
+	///   2. Clusters that are not outliers (i.e. having few members) are compared to one another. 
 	///      If they are close enough, they are combined.
 	///   3. Outliers are attached to the nearest non-outlier cluster.
 	/// 

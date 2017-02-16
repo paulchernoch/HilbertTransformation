@@ -40,11 +40,17 @@ namespace Clustering
 
 			public int EstimatedClusterCount { get; private set; }
 
-			public IndexFound(Permutation<uint> permutation, HilbertIndex index, int estimatedClusterCount)
+			/// <summary>
+			/// The maximum distance between points (other than outliers) that should be clustered together.
+			/// </summary>
+			public long MergeSquareDistance { get; set; }
+
+			public IndexFound(Permutation<uint> permutation, HilbertIndex index, int estimatedClusterCount, long mergeSquareDistance)
 			{
 				PermutationUsed = permutation;
 				Index = index;
 				EstimatedClusterCount = estimatedClusterCount;
+				MergeSquareDistance = mergeSquareDistance;
 			}
 
 			/// <summary>
@@ -75,8 +81,9 @@ namespace Clustering
 		/// <summary>
 		/// Scores how well a given index measures up. The lower the score, the better. 
 		/// A low score is assumed to mean less fragmentation of the index.
+		/// Also derives the MergeSquareDistance.
 		/// </summary>
-		Func<HilbertIndex, int> Metric { get; set; }
+		Func<HilbertIndex, Tuple<int,long>> Metric { get; set; }
 
 		/// <summary>
 		/// Strategy to use for choosing a new permutation, given the previous best permutation,
@@ -132,7 +139,7 @@ namespace Clustering
 		/// </summary>
 		/// <param name="metric">Evaluates the quality of the HilbertIndex derived using a given permutation.</param>
 		/// <param name="strategy">Strategy to employ that decides how many dimensions to scramble during each iteration.</param>
-		public OptimalIndex(Func<HilbertIndex, int> metric, Func<Permutation<uint>, int, int, Permutation<uint>> strategy)
+		public OptimalIndex(Func<HilbertIndex, Tuple<int,long>> metric, Func<Permutation<uint>, int, int, Permutation<uint>> strategy)
 		{
 			Metric = metric;
 			PermutationStrategy = strategy;
@@ -152,7 +159,7 @@ namespace Clustering
 			{
 				var counter = new ClusterCounter { OutlierSize = maxOutliers, NoiseSkipBy = skip };
 				var counts = counter.Count(index.SortedPoints);
-				return counts.CountExcludingOutliers;
+				return new Tuple<int, long>(counts.CountExcludingOutliers, counts.MaximumSquareDistance);
 			};
 			PermutationStrategy = strategy;
 		}
@@ -196,7 +203,8 @@ namespace Clustering
 			var firstIndex = new HilbertIndex(points, startingPermutation);
 			// Measure our first index, then loop through random permutations 
 			// looking for a better one, always accumulating the best in results.
-			var bestResults = new IndexFound(startingPermutation, firstIndex, Metric(firstIndex));
+			var metricResults = Metric(firstIndex);
+			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
 			queue.AddRemove(bestResults);
 
 			var iterationsWithoutImprovement = 0;
@@ -215,7 +223,8 @@ namespace Clustering
 						permutationToTry = PermutationStrategy(startFromPermutation, dimensions, iteration);
 					}
 					var indexToTry = new HilbertIndex(points, permutationToTry);
-					var resultsToTry = new IndexFound(permutationToTry, indexToTry, Metric(indexToTry));
+					metricResults = Metric(indexToTry);
+					var resultsToTry = new IndexFound(permutationToTry, indexToTry, metricResults.Item1, metricResults.Item2);
 
 					lock(queue)
 					{

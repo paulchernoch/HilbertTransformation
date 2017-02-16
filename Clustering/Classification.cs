@@ -204,6 +204,7 @@ namespace Clustering
         /// False if the target partition did not increase in size.</returns>
         public bool Merge(TLabel targetLabel, TLabel sourceLabel)
         {
+			if (targetLabel.Equals(sourceLabel)) return false;
             return Merge(targetLabel, new[] { sourceLabel });
         }
 

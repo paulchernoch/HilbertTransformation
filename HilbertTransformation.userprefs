@@ -1,11 +1,15 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/OptimalIndex.cs" Line="41" Column="36" />
-      <File FileName="Clustering/ClosestCluster.cs" Line="44" Column="35" />
-      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="61" Column="37" />
-      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="128" Column="23" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="70" Column="32" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="201" Column="30" />
+      <File FileName="Clustering/ClosestCluster.cs" Line="54" Column="17" />
       <File FileName="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" Line="515" Column="20" />
+      <File FileName="Clustering/Classification.cs" Line="202" Column="28" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="1" Column="1" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="1" Column="1" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="14" />
+      <File FileName="Clustering/KeySorter.cs" Line="59" Column="22" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
