@@ -1,9 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/HilbertClassifier.cs" Line="207" Column="27" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="251" Column="23" />
       <File FileName="Clustering/OptimalIndex.cs" Line="201" Column="30" />
-      <File FileName="Clustering/ClosestCluster.cs" Line="432" Column="1" />
+      <File FileName="Clustering/ClosestCluster.cs" Line="203" Column="10" />
       <File FileName="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" Line="515" Column="20" />
       <File FileName="Clustering/Classification.cs" Line="202" Column="28" />
       <File FileName="Clustering/ClusterCounter.cs" Line="1" Column="1" />

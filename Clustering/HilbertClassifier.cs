@@ -192,26 +192,20 @@ namespace Clustering
 			//      For all the remaining outliers (small clusters), merge them with the nearest large cluster 
 			//      unless their distance is too great (MergeSquareDistance * OutlierDistanceMultiplier). 
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
-			var closeOutlierPairs = cc.FindClosestOutliers(
-				MaxNeighborsToCompare, 
-			    (long)(MergeSquareDistance * OutlierDistanceMultiplier), 
-				OutlierSize
-			);
-			foreach (var pair in closeOutlierPairs)
-			{
-				pair.Relabel(Clusters);
-				// We do not want an outlier to cause the merger of two large clusters
-				// if each of the large clusters is near the outlier but not near each other.
-				// Thus, once the outlier is merged with the nearer of its neighbors,
-				// it will be ruled out from firther merges.
-				if (pair.CountOutliers(Clusters, OutlierSize) != 1)
-					continue;
-				Clusters.Merge(pair.Color1, pair.Color2);
-			}
+			var maxOutlierMergeDistance = (long)(MergeSquareDistance * OutlierDistanceMultiplier);
+			var merges = MergeOutliers(maxOutlierMergeDistance);
 
 			return Clusters;
 		}
 
+		/// <summary>
+		/// Merge into one cluster all pairs of points that are adjacent to one another in Hilbert curve order
+		/// if they are not too far apart.
+		/// 
+		/// If the ideal number of clusters is K, this first pass often reduces the points to 2K clusters or fewer,
+		/// excluding the outliers.
+		/// </summary>
+		/// <param name="hIndex">HilbertIndex to use for the ordering of points.</param>
 		private void MergeByHilbertIndex(HilbertIndex hIndex)
 		{
 			var unsortedPoints = Clusters.Points().ToArray();
@@ -249,6 +243,36 @@ namespace Clustering
 			}
 			else
 				return false;
+		}
+
+		/// <summary>
+		/// Merges the small outlier clusters with nearby larger clusters.
+		/// </summary>
+		/// <returns>The number of outlier clusters merged.</returns>
+		/// <param name="maxOutlierMergeDistance">An outlier will only be merged if its distance from 
+		/// its nearest cluster does not exceed this square distance.</param>
+		public int MergeOutliers(long maxOutlierMergeDistance)
+		{
+			var mergesDone = 0;
+			var cc = new ClosestCluster<string>(Clusters);
+			var closeOutlierPairs = cc.FindClosestOutliers(
+				MaxNeighborsToCompare,
+				maxOutlierMergeDistance,
+				OutlierSize
+			);
+			foreach (var pair in closeOutlierPairs)
+			{
+				pair.Relabel(Clusters);
+				// We do not want an outlier to cause the merger of two large clusters
+				// if each of the large clusters is near the outlier but not near each other.
+				// Thus, once the outlier is merged with the nearer of its neighbors,
+				// it will be ruled out from firther merges.
+				if (pair.CountOutliers(Clusters, OutlierSize) != 1)
+					continue;
+				if (Clusters.Merge(pair.Color1, pair.Color2))
+					mergesDone++;
+			}
+			return mergesDone;
 		}
 	}
 }
