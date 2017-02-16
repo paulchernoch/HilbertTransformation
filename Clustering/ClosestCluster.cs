@@ -135,13 +135,13 @@ namespace Clustering
 			/// since Point1 and Point2 mayh now be in different clusters than before.
 			/// </summary>
 			/// <param name="clusters">Current clustering of points.</param>
-			/// <param name="maxOutlierSize">Any cluster whose size does not exceed this value is an outlier.</param>
+			/// <param name="maxOutlierSize">Any cluster whose size does not equal or exceed this value is an outlier.</param>
 			/// <returns>Zero if neither cluster is an outlier, otherwise one or two.</returns>
 			public int CountOutliers(Classification<UnsignedPoint, TLabel> clusters, int maxOutlierSize)
 			{
 				var size1 = clusters.PointsInClass(Color1).Count;
 				var size2 = clusters.PointsInClass(Color2).Count;
-				return (size1 <= maxOutlierSize ? 1 : 0) + (size2 <= maxOutlierSize ? 1 : 0);
+				return (size1 < maxOutlierSize ? 1 : 0) + (size2 < maxOutlierSize ? 1 : 0);
 			}
 
 			/// <summary>
@@ -364,8 +364,8 @@ namespace Clustering
 		/// <returns>Pairs of closest clusters, the points in those clusters that are the basis of the judgment 
 		/// and the distance between those pairs of points.</returns>
 		/// <param name="maxNeighbors">No more than this number of neighbors will be returned for each cluster.</param>
-		/// <param name="maxDistance">Two clusters will not be considered close neighbors if their 
-		/// square distance exceeds this value.</param>
+		/// <param name="maxDistance">Two clusters will not be considered close neighbors if the
+		/// square distance between their nearest points exceeds this value.</param>
 		/// <param name="minSize">If a cluster has fewer than this number of points, exclude it from analysis.
 		/// Such clusters are likely outliers and are often handled separately.</param>
 		/// <param name="exact">If true, an exact computation is made when finding how close two clusters are,
@@ -374,7 +374,6 @@ namespace Clustering
 		public List<ClosestPair> FindClosestClusters(int maxNeighbors, long maxDistance, int minSize, bool exact)
 		{
 			var closest = new List<ClosestPair>();
-			//TODO: Implement FindClosestClusters
 			var centroids = GetCentroids().Where(c => c.Count >= minSize).ToList();
 
 			// We will compare every centroid to every other centroid (excluding small outliers)
@@ -415,6 +414,69 @@ namespace Clustering
 				}
 			}
 			return closest;
+		}
+
+		/// <summary>
+		/// For every cluster that is not an outlier, finds neighboring outliers.
+		/// 
+		/// Unlike FindClosestClusters, exact distance from outlier clusters to large clusters is computed,
+		/// never an approximation.
+		/// 
+		/// NOTE: A given outlier may be close to more than one large cluster.
+		/// </summary>
+		/// <returns>Pairs of closest clusters where one cluster is an outlier and the other is not,
+		/// the points in those clusters that are the basis of the judgment 
+		/// and the distance between those pairs of points.
+		/// The list is sorted in increasing order by distance.</returns>
+		/// <param name="maxNeighbors">No more than this number of neighbors will be returned for each cluster.</param>
+		/// <param name="maxDistance">Two clusters will not be considered close neighbors if the
+		/// square distance between their nearest points exceeds this value.</param>
+		/// <param name="minSize">If a cluster has fewer than this number of points, it is an outlier.</param>
+		public List<ClosestPair> FindClosestOutliers(int maxNeighbors, long maxDistance, int minSize)
+		{
+			var closest = new List<ClosestPair>();
+			//TODO: Implement FindClosestClusters
+			var centroids = GetCentroids().Where(c => c.Count >= minSize).ToList();
+
+			// We will compare every centroid to every other centroid (excluding small outliers)
+			// but only go further and find the closest pair of points in the two clusters for 
+			// the pairs whose centroids are among the closest.
+			// countByLabel will tally how many comparisons have been done for a given label,
+			// to ensure we do not exceed maxNeighbors.
+			var countByLabel = new Dictionary<TLabel, int>();
+			foreach (var label in Clusters.ClassLabels())
+				countByLabel[label] = 0;
+
+			var centroidDistances = new List<CentroidPair>();
+
+			// Triangular loop comparison, so that if we compare cluster A to B, we do not also compare cluster B to A.
+			for (var i = 0; i < centroids.Count - 1; i++)
+				for (var j = i + 1; j < centroids.Count; j++)
+				{
+					var centroid1 = centroids[i];
+					var centroid2 = centroids[j];
+					// Only try pairs where one is an outlier and the other is not.
+					if (centroid1.Count < minSize != centroid2.Count < minSize)
+						continue;
+					var measure = centroid1.Centroid.Measure(centroid2.Centroid);
+					centroidDistances.Add(new CentroidPair { A = centroid1, B = centroid2, Measure = measure });
+				}
+			foreach (var pair in centroidDistances.OrderBy(p => p))
+			{
+				int countA = countByLabel[pair.A.ClusterLabel];
+				int countB = countByLabel[pair.B.ClusterLabel];
+				if (countA < maxNeighbors || countB < maxNeighbors)
+				{
+					countByLabel[pair.A.ClusterLabel] = countA + 1;
+					countByLabel[pair.B.ClusterLabel] = countB + 1;
+
+					var close = FindPairExhaustively(pair.A.ClusterLabel, pair.B.ClusterLabel);
+
+					if (close.SquareDistance <= maxDistance)
+						closest.Add(close);
+				}
+			}
+			return closest.OrderBy(c => c.SquareDistance).ToList();
 		}
 
 		#endregion

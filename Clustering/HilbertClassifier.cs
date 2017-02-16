@@ -115,6 +115,13 @@ namespace Clustering
 		/// </summary>
 		public int OutlierSize { get; set; } = 5;
 
+		/// <summary>
+		/// When reducing the first cut Clusters (from the HilbertIndex) to a smaller set, 
+		/// this sets a limit on how many nearest neighboring clusters will be compared to each cluster.
+		/// A low number increases speed and decreases accuracy.
+		/// </summary>
+		public int MaxNeighborsToCompare { get; set; } = 5;
+
 		public int BitsPerDimension { get; set; }
 
 		/// <summary>
@@ -122,6 +129,11 @@ namespace Clustering
 		/// If not a positive number, this is derived (the preferred method, which adapts to the data) and set automatically.
 		/// </summary>
 		public long MergeSquareDistance { get; set; } = 0;
+
+		/// <summary>
+		/// If true, the exact distance between clusters is computed, otherwise a faster approximation is used.
+		/// </summary>
+		public bool UseExactClusterDistance { get; set; } = false;
 
 		private HilbertIndex BestIndex { get; set; }
 
@@ -146,11 +158,9 @@ namespace Clustering
 
 		public Classification<UnsignedPoint, string> Classify()
 		{
-			//TODO: Implement rest of Classify.
-
 			//   3) Create multiple HilbertIndexes.
 			//   4) Find best HilbertIndex and find the one that predicts the lowest number of clusters K (OptimalIndex).
-			//   5) Set the characteristic distance S (MergeSquareDistance).
+			//   5) Set the characteristic merge distance S (MergeSquareDistance).
 			//TODO: Support formation and use of more than one HilbertIndex, to respect IndexBudget.IndexCount.
 			var optimum = OptimalIndex.Search(
 				HilbertPoints,
@@ -167,19 +177,37 @@ namespace Clustering
 			MergeByHilbertIndex(BestIndex);
 
 			//   7) Find the distance from the Centroid of each non-outlier cluster to every other large cluster (ClosestCluster).
-
-
 			//   8) For the closest neighboring large clusters, probe deeper and find the pair of points, 
-			//      one drawn from each of two clusters, that is closest and their separation s. 
-
-
+			//      one drawn from each of two clusters, that is closest and their separation s (square Cartesian distance). 
 			//   9) If a pair of clusters is closer than S (s ≤ S), merge them, transitively. 
-
+			var cc = new ClosestCluster<string>(Clusters);
+			var closeClusterPairs = cc.FindClosestClusters(MaxNeighborsToCompare, MergeSquareDistance, OutlierSize, UseExactClusterDistance);
+			foreach (var pair in closeClusterPairs.Where(p => p.SquareDistance <= MergeSquareDistance))
+			{
+				pair.Relabel(Clusters);
+				Clusters.Merge(pair.Color1, pair.Color2);
+			}
 
 			//  10) Merge outliers with neighboring clusters. 
 			//      For all the remaining outliers (small clusters), merge them with the nearest large cluster 
 			//      unless their distance is too great (MergeSquareDistance * OutlierDistanceMultiplier). 
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
+			var closeOutlierPairs = cc.FindClosestOutliers(
+				MaxNeighborsToCompare, 
+			    (long)(MergeSquareDistance * OutlierDistanceMultiplier), 
+				OutlierSize
+			);
+			foreach (var pair in closeOutlierPairs)
+			{
+				pair.Relabel(Clusters);
+				// We do not want an outlier to cause the merger of two large clusters
+				// if each of the large clusters is near the outlier but not near each other.
+				// Thus, once the outlier is merged with the nearer of its neighbors,
+				// it will be ruled out from firther merges.
+				if (pair.CountOutliers(Clusters, OutlierSize) != 1)
+					continue;
+				Clusters.Merge(pair.Color1, pair.Color2);
+			}
 
 			return Clusters;
 		}
