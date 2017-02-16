@@ -42,6 +42,7 @@
     <Compile Include="PolyChromaticClosestPointTests.cs" />
     <Compile Include="KeySorterTests.cs" />
     <Compile Include="OptimalIndexTests.cs" />
+    <Compile Include="HilbertClassifierTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

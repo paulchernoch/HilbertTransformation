@@ -193,7 +193,7 @@ namespace Clustering
 			//      unless their distance is too great (MergeSquareDistance * OutlierDistanceMultiplier). 
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
 			var maxOutlierMergeDistance = (long)(MergeSquareDistance * OutlierDistanceMultiplier);
-			var merges = MergeOutliers(maxOutlierMergeDistance);
+			MergeOutliers(maxOutlierMergeDistance);
 
 			return Clusters;
 		}
