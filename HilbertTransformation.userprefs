@@ -1,11 +1,14 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="23" Column="4" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="185" Column="34" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="302" Column="45" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="265" Column="1" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="191" Column="27" />
       <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="27" Column="15" />
       <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="94" Column="1" />
-      <File FileName="Clustering/ClosestCluster.cs" Line="435" Column="64" />
+      <File FileName="Clustering/ClosestCluster.cs" Line="458" Column="46" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="194" Column="1" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="97" Column="1" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -15,7 +18,7 @@
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="HilbertClassifierTests" expanded="True">
-                  <Node name="Classify_N10000_30D_100K" selected="True" />
+                  <Node name="ClassifyManyOutOfMemory" selected="True" />
                 </Node>
                 <Node name="OptimalIndexTests" expanded="True" />
               </Node>
@@ -29,8 +32,10 @@
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="270" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="263" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="274" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="267" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="262" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/ClosestCluster.cs" line="459" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

@@ -182,10 +182,12 @@ namespace Clustering
 			//   9) If a pair of clusters is closer than S (s ≤ S), merge them, transitively. 
 			var cc = new ClosestCluster<string>(Clusters);
 			var closeClusterPairs = cc.FindClosestClusters(MaxNeighborsToCompare, MergeSquareDistance, OutlierSize, UseExactClusterDistance);
+			var clusterMerges = 0;
 			foreach (var pair in closeClusterPairs.Where(p => p.SquareDistance <= MergeSquareDistance))
 			{
 				pair.Relabel(Clusters);
-				Clusters.Merge(pair.Color1, pair.Color2);
+				if (Clusters.Merge(pair.Color1, pair.Color2))
+					clusterMerges++;
 			}
 
 			//  10) Merge outliers with neighboring clusters. 
@@ -193,7 +195,9 @@ namespace Clustering
 			//      unless their distance is too great (MergeSquareDistance * OutlierDistanceMultiplier). 
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
 			var maxOutlierMergeDistance = (long)(MergeSquareDistance * OutlierDistanceMultiplier);
-			MergeOutliers(maxOutlierMergeDistance);
+			var outlierMerges = MergeOutliers(maxOutlierMergeDistance);
+
+			Console.WriteLine($"   {clusterMerges} Cluster merges, {outlierMerges} Outlier merges");
 
 			return Clusters;
 		}

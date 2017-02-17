@@ -435,8 +435,8 @@ namespace Clustering
 		public List<ClosestPair> FindClosestOutliers(int maxNeighbors, long maxDistance, int minSize)
 		{
 			var closest = new List<ClosestPair>();
-			//TODO: Implement FindClosestClusters
-			var centroids = GetCentroids().Where(c => c.Count >= minSize).ToList();
+
+			var centroids = GetCentroids();
 
 			// We will compare every centroid to every other centroid (excluding small outliers)
 			// but only go further and find the closest pair of points in the two clusters for 
@@ -456,7 +456,7 @@ namespace Clustering
 					var centroid1 = centroids[i];
 					var centroid2 = centroids[j];
 					// Only try pairs where one is an outlier and the other is not.
-					if (centroid1.Count < minSize != centroid2.Count < minSize)
+					if (centroid1.Count < minSize == centroid2.Count < minSize)
 						continue;
 					var measure = centroid1.Centroid.Measure(centroid2.Centroid);
 					centroidDistances.Add(new CentroidPair { A = centroid1, B = centroid2, Measure = measure });

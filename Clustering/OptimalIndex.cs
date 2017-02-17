@@ -181,6 +181,22 @@ namespace Clustering
 		}
 
 		/// <summary>
+		/// Avoid running out of memory when evaluating multiple indices in parallel
+		/// by reducing the parallelism.
+		/// </summary>
+		/// <returns>The max degrees of parallelism.</returns>
+		/// <param name="points">Points.</param>
+		private static int EstimateMaxDegreesOfParallelism(IList<HilbertPoint> points)
+		{
+			var n = points.Count();
+			var d = points[0].Dimensions;
+			var limit = 16000000;
+			var maxDegrees = limit / (n * d);
+			maxDegrees = Math.Min(4, Math.Max(1, maxDegrees));
+			return maxDegrees;
+		}
+
+		/// <summary>
 		/// Search many HilbertIndex objects, each based on a different permutation of the dimensions, and
 		/// keep the ones yielding the best Metrics, likely those that estimate the lowest values
 		/// for the number of clusters.
@@ -208,11 +224,12 @@ namespace Clustering
 			queue.AddRemove(bestResults);
 
 			var iterationsWithoutImprovement = 0;
+			var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = EstimateMaxDegreesOfParallelism(points) };
 			for (var iteration = 0; iteration < MaxIterations; iteration++)
 			{
 				var improvedCount = 0;
 				var startFromPermutation = bestResults.PermutationUsed;
-				Parallel.For(0, ParallelTrials,
+				Parallel.For(0, ParallelTrials, parallelOpts,
 					i =>
 				{
 					Permutation<uint> permutationToTry;
