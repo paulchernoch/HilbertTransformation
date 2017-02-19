@@ -152,28 +152,38 @@ namespace Clustering
         /// if there are deviations from a perfect clustering. The worse the clustering, the lower the number.</returns>
         public double Measure()
         {
-            Precision = 0.0;
-            Recall = 0.0;
-            var n = Points.Count;
-            switch (n)
-            {
-                case 0:
-                    Precision = double.NaN;
-                    Recall = double.NaN;
-                    break;
-                case 1:
-                    Precision = 1;
-                    Recall = 1;
-                    break;
-                default:
-                    Parallel.Invoke(
-                        () => Precision = Points.Average(p => AverageCorrectness(p, PointsInCluster(Cluster(p)))),
-                        () => Recall = Points.Average(p => AverageCorrectness(p, PointsInCategory(Category(p))))
-                    );
-                    break;
-            }
+			if (Points == null)
+			{
+				// Special case for the default constructor which composes a "perfect" result.
+				Precision = 1.0;
+				Recall = 1.0;
+			}
+			else {
+				Precision = 0.0;
+				Recall = 0.0;
+				var n = Points.Count;
+				switch (n)
+				{
+					case 0:
+						Precision = double.NaN;
+						Recall = double.NaN;
+						break;
+					case 1:
+						Precision = 1;
+						Recall = 1;
+						break;
+					default:
+						Parallel.Invoke(
+							() => Precision = Points.Average(p => AverageCorrectness(p, PointsInCluster(Cluster(p)))),
+							() => Recall = Points.Average(p => AverageCorrectness(p, PointsInCategory(Category(p))))
+						);
+						break;
+				}
+			}
             return BCubed;
         }
+
+
 
         #endregion
 
@@ -219,6 +229,16 @@ namespace Clustering
             if (alpha < 0 || alpha > 1.0)
                 throw new ArgumentOutOfRangeException(nameof(alpha), alpha, "value must be between zero and one, inclusively.");
         }
+
+		/// <summary>
+		/// Create a "perfect" result which asserts that two Classifications are clustered identically if Measure() is called.
+		/// </summary>
+		public ClusterMetric()
+		{
+			Precision = 1;
+			Recall = 1;
+			Alpha = 0.5;
+		}
 
         #endregion
 

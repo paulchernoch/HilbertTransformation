@@ -299,6 +299,8 @@ namespace Clustering
 
         #endregion
 
+		#region Comparing two Classifications
+
         /// <summary>
         /// Compare two classifications and get a metric that identifies how similar they are.
         /// 
@@ -316,17 +318,114 @@ namespace Clustering
         {
             var category = this;
             var cluster = alternatePartition;
-            var metric = new ClusterMetric<TPoint, TLabel>(
-                Points().ToList(),
-                label => category.LabelToPoints[label],
-                label => cluster.LabelToPoints[label], 
-                point => category.PointToLabel[point], 
-                point => cluster.PointToLabel[point], 
-                alpha
+			ClusterMetric<TPoint, TLabel> metric;
+
+			// IsSimilar is fast, but less precise. If it says the Classifications have identical clustering, they do,
+			// but if they do not, we need to figure out how bad they match and need to create a real ClusterMetric.
+			if (cluster.IsSimilarTo(alternatePartition))
+				metric = new ClusterMetric<TPoint, TLabel>();
+			else
+                metric = new ClusterMetric<TPoint, TLabel>(
+	                Points().ToList(),
+	                label => category.LabelToPoints[label],
+	                label => cluster.LabelToPoints[label], 
+	                point => category.PointToLabel[point], 
+	                point => cluster.PointToLabel[point], 
+	                alpha
                 );
+
             metric.Measure();
             return metric;
         }
+
+		public IEnumerable<TPoint> MisplacedPoints(Classification<TPoint, TLabel> goldPartition)
+		{
+			var misplaced = new List<TPoint>();
+			foreach (var thisLabel in ClassLabels())
+			{
+				var correspondingLabel = PointsInClass(thisLabel).Select(goldPartition.GetClassLabel)
+					.GroupBy(goldLabel => goldLabel)
+					.OrderByDescending(grp => grp.Count())
+					.Select(grp => grp.Key).First();
+				misplaced.AddRange(PointsInClass(thisLabel).Where(p => !goldPartition.GetClassLabel(p).Equals(correspondingLabel)));
+			}
+			return misplaced;
+		}
+
+		/// <summary>
+		/// Test if two Classifications are similar or not.
+		/// 
+		/// The labels associated with each cluster are ignored by this comparison.
+		/// All that matters is that the same points are clustered together in each Classification,
+		/// and no points are grouped together in one that are not together in the other.
+		/// 
+		/// NOTE: This is much faster than comparing using BCubed, but does not give a useful qualitative 
+		/// measure of how different two Classifications are.
+		/// </summary>
+		/// <returns><c>true</c>, if both classifications have identical groupings of points into clusters. 
+		/// <c>false</c> otherwise.</returns>
+		/// <param name="alternatePartition">Alternate partition to compare.</param>
+		public bool IsSimilarTo(Classification<TPoint, TLabel> alternatePartition)
+		{
+			if (NumPartitions != alternatePartition.NumPartitions)
+				return false;
+			var identicalCount = IdenticalClusters(alternatePartition);
+			return identicalCount == NumPartitions;
+		}
+
+		/// <summary>
+		/// Compares two classifications to see how many clusters in this partition are identical to corresponding clusters in
+		/// the second partition.
+		/// 
+		/// This measure is not as good as BCubed for getting a true picture of how similar are two Classifications,
+		/// but it is much faster. It is best used to decide if two Classifications are exactly the same or not.
+		/// 
+		/// For example, if there were 10,000 points in 100 clusters, and each cluster had one point missing, 
+		/// then no clusters would match perfectly, giving a score of zero, when in fact, that would yield 
+		/// a very good BCubed score. However, if this returns a number equal to the total number of clusters in this 
+		/// Classification, then the partitions are identical and BCubed would also equal one. 
+		/// </summary>
+		/// <returns>Count of perfectly matching clusters.</returns>
+		/// <param name="alternatePartition">Alternate partition to compare.</param>
+		public int IdenticalClusters(Classification<TPoint, TLabel> alternatePartition)
+		{
+			var identicalCount = 0;
+			var clusterHashes = new HashSet<int>();
+			// Record hashes for each of "this" Classification's clusters.
+			foreach (var pointSet in LabelToPoints.Values)
+			{
+				var hash = SetHash(pointSet.Select(p => p.GetHashCode()));
+				clusterHashes.Add(hash);
+			}
+			// Attempt to match hashes for the alternatePartition's clusters to the ones just recorded above.
+			foreach (var pointSet in alternatePartition.LabelToPoints.Values)
+			{
+				var hash = SetHash(pointSet.Select(p => p.GetHashCode()));
+				if (clusterHashes.Contains(hash))
+					identicalCount++;
+			}
+			return identicalCount;
+		}
+
+		/// <summary>
+		/// Combine a set of integers into a hash in an order-independent way.
+		/// 
+		/// If two sets of integers have the same hash, they are likely the same.
+		/// </summary>
+		/// <param name="ids">Integers to be hashed.</param>
+		private static int SetHash(IEnumerable<int> ids)
+		{
+			var sum = 0;
+			var count = 0;
+			foreach (var i in ids)
+			{
+				sum += i;
+				count++;
+			}
+			return sum + count;
+		}
+
+		#endregion
 
         /// <summary>
         /// For each label in this Classification, deduce the corresponding label in the goldPartition.
@@ -352,19 +451,7 @@ namespace Clustering
             return concordance;
         }
 
-        public IEnumerable<TPoint> MisplacedPoints(Classification<TPoint, TLabel> goldPartition)
-        {
-            var misplaced = new List<TPoint>();
-            foreach (var thisLabel in ClassLabels())
-            {
-                var correspondingLabel = PointsInClass(thisLabel).Select(goldPartition.GetClassLabel)
-                    .GroupBy(goldLabel => goldLabel)
-                    .OrderByDescending(grp => grp.Count())
-                    .Select(grp => grp.Key).First();
-                misplaced.AddRange(PointsInClass(thisLabel).Where(p => !goldPartition.GetClassLabel(p).Equals(correspondingLabel)));
-            }
-            return misplaced;
-        }
+
 
         /// <summary>
         /// Measure how much the given ordering of points is concordant with the clustering.

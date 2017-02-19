@@ -115,6 +115,24 @@ namespace Clustering
 		/// </summary>
 		public int MaxIterationsWithoutImprovement { get; set; } = 3;
 
+		/// <summary>
+		/// If true, make decisions based on optimizing a sample of the points, not all the points.
+		/// If false, optimize based on indices composed of all the points.
+		/// 
+		/// NOTE: The sample size will be determined after creating a first index with all the points.
+		///       It will be chosen such that:
+		///           S * (N / K) ≥ 100
+		///       where:
+		///          S is the sample fraction (from zero to one)
+		///          N is the total number of points (unsampled)
+		///          K is the first estimate of the cluster count.
+		///       Assuming that some clusters are half the size of the mean and others are twice the mean,
+		///       this means that no cluster will end up with fewer than 50 points, which should be large enough
+		///       to resolve the key features of the data. Even if some clusters are smaller than half the mean, 
+		///       the estimaetd K is usually 1.5x to 3x larger than the true K. 
+		/// </summary>
+		public bool UseSample { get; set; } = false;
+
 
 		#endregion
 
@@ -190,7 +208,7 @@ namespace Clustering
 		{
 			var n = points.Count();
 			var d = points[0].Dimensions;
-			var limit = 16000000;
+			var limit = 24000000;
 			var maxDegrees = limit / (n * d);
 			maxDegrees = Math.Min(4, Math.Max(1, maxDegrees));
 			return maxDegrees;
@@ -221,10 +239,20 @@ namespace Clustering
 			// looking for a better one, always accumulating the best in results.
 			var metricResults = Metric(firstIndex);
 			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
+			Console.Write($"Cluster count Starts at: {bestResults}");
 			queue.AddRemove(bestResults);
 
+			// Decide if we are to sample points or use them all
+			var sampledPoints = points;
+			if (UseSample)
+			{
+				var sampleSize = SampleSize(points, bestResults.EstimatedClusterCount);
+				sampledPoints = Sample(points, sampleSize);
+				Console.Write($"    Sample is {sampleSize} of {points.Count} points");
+			}
+			
 			var iterationsWithoutImprovement = 0;
-			var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = EstimateMaxDegreesOfParallelism(points) };
+			var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = EstimateMaxDegreesOfParallelism(sampledPoints) };
 			for (var iteration = 0; iteration < MaxIterations; iteration++)
 			{
 				var improvedCount = 0;
@@ -235,11 +263,10 @@ namespace Clustering
 					Permutation<uint> permutationToTry;
 					// This locking is needed because we use a static random number generator to create a new permutation.
 					// It is more expensive to make the random number generator threadsafe than to make this loop threadsafe.
-					lock (startFromPermutation)
-					{
+					lock (startFromPermutation) {
 						permutationToTry = PermutationStrategy(startFromPermutation, dimensions, iteration);
 					}
-					var indexToTry = new HilbertIndex(points, permutationToTry);
+					var indexToTry = new HilbertIndex(sampledPoints, permutationToTry);
 					metricResults = Metric(indexToTry);
 					var resultsToTry = new IndexFound(permutationToTry, indexToTry, metricResults.Item1, metricResults.Item2);
 
@@ -247,8 +274,7 @@ namespace Clustering
 					{
 						queue.AddRemove(resultsToTry);
 						var improved = resultsToTry.IsBetterThan(bestResults);
-						if (improved)
-						{
+						if (improved) {
 							bestResults = resultsToTry;
 							Interlocked.Add(ref improvedCount, 1);
 							Console.Write($"Cluster count Improved to: {bestResults}");
@@ -263,8 +289,20 @@ namespace Clustering
 				if (iterationsWithoutImprovement >= MaxIterationsWithoutImprovement)
 					break;
 			}
-			return queue.RemoveAll().Reverse().ToList();
+			var indicesFound = queue.RemoveAll().Reverse().ToList();
+			if (sampledPoints.Count < points.Count)
+			{
+				// Results are based on Sampled set of points. Now we need to recreate these indices using the 
+				// full set of points.
+				//TODO: "Unsample" the indices.
+				var unsampledIndices = indicesFound.Select(i => Unsample(points, i)).ToList();
+				Console.Write($"Final, unsampled Cluster count: {unsampledIndices[0]}");
+				return unsampledIndices;
+			}
+			else 
+				return indicesFound;
 		}
+
 
 		/// <summary>
 		/// Using default values for many parameters, search many HilbertIndex objects, each based on a different permutation of the dimensions, and
@@ -277,28 +315,85 @@ namespace Clustering
 		/// <param name="maxTrials">Max trials to attempt. This equals MaxIterations * ParallelTrials (apart from rounding).</param>
 		/// <param name="maxIterationsWithoutImprovement">Max iterations without improvement.
 		/// Stops searching early if no improvement is detected.</param>
-		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3)
+		/// <param name="useSample">If true, use a random sample of points in each HilbertIndex tested, to save time.
+		/// May yield a poorer result, but faster.</param>
+		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
 		{
 			var parallel = 4;
 			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, ScrambleHalfStrategy)
 			{
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
-				ParallelTrials = parallel
+				ParallelTrials = parallel,
+				UseSample = useSample
 			};
 			return optimizer.Search(points);
 		}
 
-		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3)
+		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
 		{
 			var parallel = 4;
 			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, ScrambleHalfStrategy)
 			{
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
-				ParallelTrials = parallel
+				ParallelTrials = parallel,
+				UseSample = useSample
 			};
 			return optimizer.SearchMany(points, indexCount);
+		}
+
+		/// <summary>
+		/// Compute a fair sample size for sample to be drawn from allPoints such that the 
+		/// expected average cluster size is large enough to resolve all clusters
+		/// even after they are shrunk by sampling.
+		/// 
+		/// If the number of points N is larger than 2000, the sample size will never be less than 2000.
+		/// If N is less than 2000, no sampling will occur.
+		/// </summary>
+		/// <param name="allPoints">Points to be sampled.</param>
+		/// <param name="estimatedClusterCount">Estimated cluster count.</param>
+		/// <returns>Sample size to use.</returns>
+		private int SampleSize(IList<HilbertPoint> allPoints, int estimatedClusterCount)
+		{
+			var n = (double)allPoints.Count;
+			var k = (double)estimatedClusterCount;
+			var min = 100.0;
+			var s = Math.Min(1.0, min / (n / k));
+			var nSample = (int)Math.Min(n, Math.Max(2000.0, s * n));
+			return nSample;
+		}
+
+		/// <summary>
+		/// Sample allPoints such that the expected average cluster size is large enough to resolve all clusters
+		/// even after they are shrunk by sampling.
+		/// 
+		/// If the number of points N is larger than 2000, the sample size will never be less than 2000.
+		/// If N is less than 2000, no sampling will occur.
+		/// </summary>
+		/// <param name="allPoints">Points to be sampled.</param>
+		/// <param name="sampleSize">Number of points to randomly sample from allPoints.
+		/// If this number equals N, the unsampled size of allPoints, allPoints is returned unchanged.
+		/// </param>
+		private IList<HilbertPoint> Sample(IList<HilbertPoint> allPoints, int sampleSize)
+		{
+			if (sampleSize >= allPoints.Count)
+				return allPoints;
+			var randomSample = allPoints.TakeRandom(sampleSize, allPoints.Count);
+			return randomSample.ToList();
+		}
+
+		/// <summary>
+		/// Create and measure a new HilbertIndex using all the points, not just a sample of them,
+		/// but use the same permutation.
+		/// </summary>
+		/// <param name="sampled">Sampled.</param>
+		private IndexFound Unsample(IList<HilbertPoint> allPoints, IndexFound sampled)
+		{
+			var indexToTry = new HilbertIndex(allPoints, sampled.PermutationUsed);
+			var metricResults = Metric(indexToTry);
+			var resultsToTry = new IndexFound(sampled.PermutationUsed, indexToTry, metricResults.Item1, metricResults.Item2);
+			return resultsToTry;
 		}
 
 	}

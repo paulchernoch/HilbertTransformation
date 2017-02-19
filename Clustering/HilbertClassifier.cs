@@ -81,6 +81,7 @@ namespace Clustering
 			public int NoiseSkipBy { get; set; } = 10;
 			public int MaxTrials { get; set; } = 1000;
 			public int MaxIterationsWithoutImprovement { get; set; } = 3;
+			public bool UseSample { get; set; } = false;
 		}
 
 		/// <summary>
@@ -167,7 +168,8 @@ namespace Clustering
 				IndexConfig.OutlierSize,
 				IndexConfig.NoiseSkipBy,
 				IndexConfig.MaxTrials,
-				IndexConfig.MaxIterationsWithoutImprovement
+				IndexConfig.MaxIterationsWithoutImprovement,
+				IndexConfig.UseSample
 			);
 			BestIndex = optimum.Index;
 			MergeSquareDistance = optimum.MergeSquareDistance;
