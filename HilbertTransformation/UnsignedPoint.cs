@@ -358,7 +358,7 @@ namespace HilbertTransformation
 			//                          / 2    2
 			//    |A-B| <= Distance <= √(A  + B )
 			//
-			// The compensation for not permitting negtive values is this:
+			// The compensation for not permitting negative values is this:
 			//
 			//           2     2    2
 			//    (A + B)  - (A  + B ) = 2AB

@@ -81,6 +81,12 @@ namespace Clustering
 		/// </remarks>
 		public int NoiseSkipBy { get; set; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:Clustering.ClusterCounter"/> class with default values for
+		/// OutlierSize (1) and NoiseSkipBy (0).
+		/// 
+		/// NOTE: My personal favorite values are OutlierSize = 5 and NoisesSkipBy = 10.
+		/// </summary>
 		public ClusterCounter()
 		{
 			OutlierSize = 1;

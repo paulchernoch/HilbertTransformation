@@ -1,18 +1,11 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/Classification.cs" Line="120" Column="46" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="461" Column="17" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="148" Column="27" />
-      <File FileName="Clustering/OptimalIndex.cs" Line="253" Column="4" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="27" Column="14" />
-      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="349" Column="123" />
-      <File FileName="Clustering/ClosestCluster.cs" Line="458" Column="46" />
-      <File FileName="Clustering/HilbertIndex.cs" Line="194" Column="1" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="97" Column="1" />
-      <File FileName="Clustering/ClusterMetric.cs" Line="234" Column="120" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="210" Column="13" />
-      <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="153" Column="42" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="19" Column="19" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="35" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="208" Column="43" />
+      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="94" Column="37" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="88" Column="83" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -22,10 +15,10 @@
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="HilbertClassifierTests" expanded="True" />
-                <Node name="HilbertPointTests" expanded="True" />
-                <Node name="OptimalIndexTests" expanded="True">
-                  <Node name="DistanceDistribution" selected="True" />
+                <Node name="HilbertPointTests" expanded="True">
+                  <Node name="SquareDistanceCompareAverage" selected="True" />
                 </Node>
+                <Node name="OptimalIndexTests" expanded="True" />
               </Node>
             </Node>
           </Node>

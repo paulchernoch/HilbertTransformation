@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Text;
+using Clustering;
 using HilbertTransformation;
+using HilbertTransformation.Random;
+using HilbertTransformationTests.Data;
 using NUnit.Framework;
 
 namespace HilbertTransformationTests
@@ -198,6 +202,102 @@ namespace HilbertTransformationTests
 			}
 			sb.Append("]");
 			return sb.ToString();
+		}
+
+		[Test]
+		public void SquareDistanceCompareAverage()
+		{
+			// Example output:
+			//    After 200 trials, Optimizations were possible on Average 29.2514 %, with Min 20.14 % and Max 39.26 %
+			var sumPercent = 0.0;
+			var count = 200;
+			var maxPercent = 0.0;
+			var minPercent = 100.0;
+			for (var i = 0; i < count; i++)
+			{
+				var percent = SquareDistanceCompareOptimizableCase(10000);
+				maxPercent = Math.Max(maxPercent, percent);
+				minPercent = Math.Min(minPercent, percent);
+				sumPercent += percent;
+			}
+			var avgPercent = sumPercent / count;
+			var message = $"After {count} trials, Optimizations were possible on Average {avgPercent} %, with Min {minPercent} % and Max {maxPercent} %";
+			Console.WriteLine(message);
+			Assert.GreaterOrEqual(avgPercent, 25.0, message);
+		}
+
+
+		/// <summary>
+		/// UnsignedPoint.SquareDistanceCompare has an optimization. This tests how often this optimization
+		/// can be exploited in a realistic test. The comparison will be against an estimated characteristic distance
+		/// between points. This distance is assumed to be close enough to trigger two points to be merged into a single cluster.
+		/// </summary>
+		private double SquareDistanceCompareOptimizableCase(int totalComparisons)
+		{
+			// 1. Make test data.
+			var bitsPerDimension = 10;
+			var data = new GaussianClustering
+			{
+				ClusterCount = 100,
+				Dimensions = 100,
+				MaxCoordinate = (1 << bitsPerDimension) - 1,
+				MinClusterSize = 50,
+				MaxClusterSize = 150
+			};
+			var clusters = data.MakeClusters();
+
+
+			// 2. Create HilbertIndex for points.
+			var hIndex = new HilbertIndex(clusters, bitsPerDimension);
+
+			// 3. Deduce the characteristic distance.
+			var counter = new ClusterCounter
+			{
+				OutlierSize = 5,
+				NoiseSkipBy = 10
+			};
+			var count = counter.Count(hIndex.SortedPoints);
+			var mergeDistance = count.MaximumSquareDistance;
+			var longDistance = 5 * mergeDistance;
+
+			// 4. Select random pairs of points and see how many distance comparisons can exploit the optimization.
+			var rng = new FastRandom();
+			var points = clusters.Points().ToList();
+			var ableToUseOptimizationsAtShortDistance = 0;
+			var ableToUseOptimizationsAtLongDistance = 0;
+
+			for (var i = 0; i < totalComparisons; i++)
+			{
+				var p1 = points[rng.Next(points.Count)];
+				var p2 = points[rng.Next(points.Count)];
+				if (IsDistanceOptimizationUsable(p1, p2, mergeDistance))
+					ableToUseOptimizationsAtShortDistance++;
+				if (IsDistanceOptimizationUsable(p1, p2, longDistance))
+					ableToUseOptimizationsAtLongDistance++;
+			}
+			var percentOptimizable = 100.0 * ableToUseOptimizationsAtShortDistance / totalComparisons;
+			var percentOptimizableLongDistance = 100.0 * ableToUseOptimizationsAtLongDistance / totalComparisons;
+			var message = $"Comparisons were {percentOptimizable} % Optimizable at short distance, {percentOptimizableLongDistance} % at long distance";
+			Console.WriteLine(message);
+			return percentOptimizable;
+		}
+
+		/// <summary>
+		/// UnsignedPoint.SquareDistanceCompare has an optimization. 
+		/// This tests if that optimization can be used in a given case.
+		/// </summary>
+		/// <returns><c>true</c>, if distance optimization is usable, <c>false</c> otherwise.</returns>
+		/// <param name="p1">First point to compare.</param>
+		/// <param name="p2">Second point to compare.</param>
+		/// <param name="squareDistance">Test if the distance between the points is less than, equal to or greater than this given distance.</param>
+		private bool IsDistanceOptimizationUsable(UnsignedPoint p1, UnsignedPoint p2, long squareDistance)
+		{
+			var delta = p1.Magnitude - p2.Magnitude;
+			var low = (long)Math.Floor(delta * delta);
+			if (squareDistance < low) return true;
+
+			var high = p1.SquareMagnitude + p2.SquareMagnitude;
+			return (squareDistance > high);
 		}
 	}
 }
