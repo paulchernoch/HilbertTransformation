@@ -36,6 +36,50 @@ namespace HilbertTransformationTests
 			ClassifyCase(50000, 100, 50);
 		}
 
+		[Test]
+		/// <summary>
+		/// Classifies random data with 5,000 points, two non-overlapping clusters, 100 dimensions.
+		/// </summary>
+		public void Classify_TwoClustersNoOverlap()
+		{
+			ClassifyTwoClustersCase(5000, 100, 0.0);
+		}
+
+		[Test]
+		/// <summary>
+		/// Classifies random data with 5,000 points, two 50% overlapping clusters, 100 dimensions.
+		/// 
+		/// NOTE: Fifty percent overlap just means that the clusters are separated by half of the computed safe distance.
+		/// The safe distance is how far apart the clusters must be so that the chance of a point from one cluster being 
+		/// near enough to another cluster to be misclassified is remote.
+		/// </summary>
+		public void Classify_TwoClusters50PctOverlap()
+		{
+			ClassifyTwoClustersCase(5000, 100, 50.0);
+		}
+
+		[Test]
+		/// <summary>
+		/// Classifies random data with 5,000 points, two 60% overlapping clusters, 100 dimensions.
+		/// 
+		/// NOTE: Sixty percent overlap just means that the clusters are separated by 40% of the computed safe distance.
+		/// </summary>
+		public void Classify_TwoClusters60PctOverlap()
+		{
+			ClassifyTwoClustersCase(5000, 100, 60.0);
+		}
+
+		[Test]
+		/// <summary>
+		/// Classifies random data with 5,000 points, two 75% overlapping clusters, 100 dimensions.
+		/// 
+		/// NOTE: 75 percent overlap just means that the clusters are seprated by one-quarter of the computed safe distance.
+		/// </summary>
+		public void Classify_TwoClusters75PctOverlap()
+		{
+			ClassifyTwoClustersCase(5000, 100, 75.0);
+		}
+
 		/// <summary>
 		/// Perform classifications for many sizes of problem and record the timings.
 		/// </summary>
@@ -462,6 +506,43 @@ namespace HilbertTransformationTests
 				Console.WriteLine($"Clustering was not perfect. # of Clusters actual/expected: {actualClusters.NumPartitions}/{expectedClusters.NumPartitions}");
 			var seconds = timer.ElapsedMilliseconds / 1000.0;
 			return new Tuple<double,bool>(seconds, success);
+		}
+
+		/// <summary>
+		/// Test case that classifies two clusters that may partially overlap.
+		/// </summary>
+		/// <param name="numPoints">Number points.</param>
+		/// <param name="dimensions">Dimensions.</param>
+		/// <param name="overlapPercent">Overlap percent.</param>
+		/// <param name="clusterSizeVariation">Cluster size variation.</param>
+		/// <param name="maxCoordinate">Max coordinate.</param>
+		/// <param name="acceptableBCubed">Acceptable BC ubed.</param>
+		private void ClassifyTwoClustersCase(int numPoints, int dimensions, double overlapPercent,
+						  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptableBCubed = 0.99)
+		{
+			var clusterCount = 2;
+			var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
+			var maxClusterSize = (numPoints / clusterCount) + clusterSizeVariation;
+			var data = new GaussianClustering
+			{
+				ClusterCount = clusterCount,
+				Dimensions = dimensions,
+				MaxCoordinate = maxCoordinate,
+				MinClusterSize = minClusterSize,
+				MaxClusterSize = maxClusterSize
+			};
+			var expectedClusters = data.TwoClusters(overlapPercent);
+			var classifier = new HilbertClassifier(expectedClusters.Points(), 10);
+			//classifier.IndexConfig.NoiseSkipBy = 0;
+			classifier.IndexConfig.UseSample = false;
+
+			var actualClusters = classifier.Classify();
+			var comparison = expectedClusters.Compare(actualClusters);
+
+			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
+			Console.WriteLine(message);
+			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
+			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
 		}
 	}
 }

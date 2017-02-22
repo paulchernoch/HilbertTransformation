@@ -322,7 +322,7 @@ namespace Clustering
 
 			// IsSimilar is fast, but less precise. If it says the Classifications have identical clustering, they do,
 			// but if they do not, we need to figure out how bad they match and need to create a real ClusterMetric.
-			if (cluster.IsSimilarTo(alternatePartition))
+			if (category.IsSimilarTo(cluster))
 				metric = new ClusterMetric<TPoint, TLabel>();
 			else
                 metric = new ClusterMetric<TPoint, TLabel>(

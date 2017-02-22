@@ -215,7 +215,29 @@ namespace HilbertTransformationTests
 			var minPercent = 100.0;
 			for (var i = 0; i < count; i++)
 			{
-				var percent = SquareDistanceCompareOptimizableCase(10000);
+				var percent = SquareDistanceCompareOptimizableCase(10000, false);
+				maxPercent = Math.Max(maxPercent, percent);
+				minPercent = Math.Min(minPercent, percent);
+				sumPercent += percent;
+			}
+			var avgPercent = sumPercent / count;
+			var message = $"After {count} trials, Optimizations were possible on Average {avgPercent} %, with Min {minPercent} % and Max {maxPercent} %";
+			Console.WriteLine(message);
+			Assert.GreaterOrEqual(avgPercent, 25.0, message);
+		}
+
+		[Test]
+		public void SquareDistanceExtendedCompareAverage()
+		{
+			// Example output:
+			//    After 200 trials, Optimizations were possible on Average 37.959 %, with Min 26.17 % and Max 46.72 %
+			var sumPercent = 0.0;
+			var count = 200;
+			var maxPercent = 0.0;
+			var minPercent = 100.0;
+			for (var i = 0; i < count; i++)
+			{
+				var percent = SquareDistanceCompareOptimizableCase(10000, true);
 				maxPercent = Math.Max(maxPercent, percent);
 				minPercent = Math.Min(minPercent, percent);
 				sumPercent += percent;
@@ -232,7 +254,7 @@ namespace HilbertTransformationTests
 		/// can be exploited in a realistic test. The comparison will be against an estimated characteristic distance
 		/// between points. This distance is assumed to be close enough to trigger two points to be merged into a single cluster.
 		/// </summary>
-		private double SquareDistanceCompareOptimizableCase(int totalComparisons)
+		private double SquareDistanceCompareOptimizableCase(int totalComparisons, bool useExtendedOptimization = false)
 		{
 			// 1. Make test data.
 			var bitsPerDimension = 10;
@@ -270,10 +292,20 @@ namespace HilbertTransformationTests
 			{
 				var p1 = points[rng.Next(points.Count)];
 				var p2 = points[rng.Next(points.Count)];
-				if (IsDistanceOptimizationUsable(p1, p2, mergeDistance))
-					ableToUseOptimizationsAtShortDistance++;
-				if (IsDistanceOptimizationUsable(p1, p2, longDistance))
-					ableToUseOptimizationsAtLongDistance++;
+				if (useExtendedOptimization)
+				{
+					if (IsExtendedDistanceOptimizationUsable(p1, p2, mergeDistance, bitsPerDimension))
+						ableToUseOptimizationsAtShortDistance++;
+					if (IsExtendedDistanceOptimizationUsable(p1, p2, longDistance, bitsPerDimension))
+						ableToUseOptimizationsAtLongDistance++;
+				}
+				else 
+				{
+					if (IsDistanceOptimizationUsable(p1, p2, mergeDistance))
+						ableToUseOptimizationsAtShortDistance++;
+					if (IsDistanceOptimizationUsable(p1, p2, longDistance))
+						ableToUseOptimizationsAtLongDistance++;
+				}
 			}
 			var percentOptimizable = 100.0 * ableToUseOptimizationsAtShortDistance / totalComparisons;
 			var percentOptimizableLongDistance = 100.0 * ableToUseOptimizationsAtLongDistance / totalComparisons;
@@ -298,6 +330,44 @@ namespace HilbertTransformationTests
 
 			var high = p1.SquareMagnitude + p2.SquareMagnitude;
 			return (squareDistance > high);
+		}
+
+		/// <summary>
+		/// UnsignedPoint.SquareDistanceCompare has an optimization. 
+		/// This tests if an extension of that optimization can be used in a given case.
+		/// </summary>
+		/// <returns><c>true</c>, if distance optimization is usable, <c>false</c> otherwise.</returns>
+		/// <param name="p1">First point to compare.</param>
+		/// <param name="p2">Second point to compare.</param>
+		/// <param name="squareDistance">Test if the distance between the points is less than, equal to or greater than this given distance.</param>
+		/// <param name="bitsPerDimension">Number of bits needed to represent the larges value of any coordinate of any point.</param>
+		private bool IsExtendedDistanceOptimizationUsable(UnsignedPoint p1, UnsignedPoint p2, long squareDistance, int bitsPerDimension)
+		{
+			if (IsDistanceOptimizationUsable(p1, p2, squareDistance))
+				return true;
+
+			var maxCoordinate = (1 << bitsPerDimension) - 1;
+			var cornerSqDistance1 = 0L;
+			var cornerSqDistance2 = 0L;
+			for (var d = 0; d < p1.Dimensions; d++)
+			{
+				long delta;
+				delta = maxCoordinate - p1[d];
+				cornerSqDistance1 += delta * delta;
+				delta = maxCoordinate - p2[d];
+				cornerSqDistance2 += delta * delta;
+			}
+			var cornerDistance1 = Math.Sqrt(cornerSqDistance1);
+			var cornerDistance2 = Math.Sqrt(cornerSqDistance2);
+
+			var delta2 = cornerDistance1 - cornerDistance2;
+			var low = (long)Math.Floor(delta2 * delta2);
+			if (squareDistance < low) return true;
+
+			var high = cornerSqDistance1 + cornerSqDistance2;
+			if (squareDistance > high) return true;
+
+			return false;
 		}
 	}
 }

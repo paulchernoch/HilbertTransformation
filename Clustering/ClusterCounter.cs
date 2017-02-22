@@ -82,6 +82,26 @@ namespace Clustering
 		public int NoiseSkipBy { get; set; }
 
 		/// <summary>
+		/// Sets a lower value for NoiseSkipBy in case the observed estimated cluster count is less than
+		/// 2 * NoiseSkipBy. The reason for this is that if the true number of clusters is low compared to 
+		/// NoiseSkipBy, then the estimate of cluster count will be off by a lot.
+		/// Example: If the true number of clusters is 5 and NoiseSkipBy is 10, the estimate will be at least
+		/// 15, if not higher.
+		/// 
+		/// If this property is negative, do not reduce NoiseSkipBy.
+		/// If this property is non-negative and the observed estimated cluster count is less than 2 * NoiseSkipBy,
+		/// reduce the effective NoiseSkipBy to this value.
+		/// </summary>
+		/// <value>The reduced noise skip by.</value>
+		public int ReducedNoiseSkipBy { get; set; }
+
+		/// <summary>
+		/// Track the lowest cluster count seen across many iterations. 
+		/// </summary>
+		/// <value>The lowest count seen.</value>
+		public int LowestCountSeen { get; set; }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Clustering.ClusterCounter"/> class with default values for
 		/// OutlierSize (1) and NoiseSkipBy (0).
 		/// 
@@ -91,8 +111,14 @@ namespace Clustering
 		{
 			OutlierSize = 1;
 			NoiseSkipBy = 0;
+			ReducedNoiseSkipBy = 0;
+			LowestCountSeen = int.MaxValue;
 		}
 
+		/// <summary>
+		/// Estimate how many clusters there are that have a member count equal to or greater than the OutlierSize.
+		/// </summary>
+		/// <param name="points">Points to study.</param>
 		public ClusterCount Count(IList<HilbertPoint> points)
 		{
 			var neighborDistances = new List<long>();
@@ -104,54 +130,17 @@ namespace Clustering
 				previousPoint = point;
 			}
 
-			var indexOfMaximumIncrease = 0;
-			var indexOfMaximumRatio = 0;
-			var maxIncrease = 0L;
-			var maxRatio = 0.0;
-
 			var numPoints = points.Count();
 			var sortedDistances = neighborDistances.OrderBy(p => p).ToList();
-			for (var iDistance = 1 + NoiseSkipBy; iDistance < sortedDistances.Count; iDistance++)
-			{
-				var distance = sortedDistances[iDistance];
-				var previousDistance = sortedDistances[iDistance - 1 - NoiseSkipBy];
-				var diff = distance - previousDistance;
-				if (diff > maxIncrease)
-				{
-					maxIncrease = diff;
-					indexOfMaximumIncrease = iDistance;
-				}
-				if (previousDistance > 1 && iDistance > 10)
-				{
-					var ratio = distance / (double)previousDistance;
-					if (ratio > maxRatio)
-					{
-						maxRatio = ratio;
-						indexOfMaximumRatio = iDistance;
+			var noiseSkipByToUse = 0;
 
-						if (iDistance > numPoints / 2 && maxRatio > 5)
-							break;
-					}
-				}
-			}
+			if (ReducedNoiseSkipBy >= 0 && LowestCountSeen < 2 * NoiseSkipBy)
+				noiseSkipByToUse = ReducedNoiseSkipBy;
+			else
+				noiseSkipByToUse = NoiseSkipBy;
 
 			int indexToUse;
-			// If the two measures agree, we have an unambiguous choice.
-			if (indexOfMaximumIncrease == indexOfMaximumRatio)
-				indexToUse = indexOfMaximumIncrease;
-			// If the highest ratio in length between one distance and the next is at an early index,
-			// it is likely because we skipped from a really low value (like 1) to another really low value (like 10)
-			// which only looks like a large jump because the values are so small.
-			else if (indexOfMaximumRatio < numPoints / 2)
-				indexToUse = indexOfMaximumIncrease;
-			// Once we get near the end of the series of distances, the jumps between successive
-			// distances can become large, but their relative change is small,
-			// so rely on the ratio instead.
-			else indexToUse = indexOfMaximumRatio;
-
-			indexToUse = Math.Max(0, indexToUse - NoiseSkipBy - 1);
-
-			var maximumSquareDistance = sortedDistances[indexToUse];
+			var maximumSquareDistance = FindMaximumSquareDistance(sortedDistances, noiseSkipByToUse, out indexToUse);
 
 			// Every gap between successive points that exceeded our distance threshhold splits the
 			// points into a new cluster, but only IF we consider outliers to make up their own clusters.
@@ -180,6 +169,7 @@ namespace Clustering
 				upperBoundCountExcludingOutliers++;
 			else
 				outliers += currentSize;
+
 			return new ClusterCount
 			{
 				CountExcludingOutliers = upperBoundCountExcludingOutliers,
@@ -189,6 +179,71 @@ namespace Clustering
 				Outliers = outliers
 			};
 
+		}
+
+		/// <summary>
+		/// Finds the maximum square distance between neighboring points that should be considered part of the same cluster.
+		/// 
+		/// This is the critical distance needed for single-link agglomerative clustering.
+		/// </summary>
+		/// <returns>The maximum square distance.</returns>
+		/// <param name="sortedDistances">Squared distances between successive points that were first sorted according to the Hilbert curve,
+		/// subsequently sorted by square distance from low to high.</param>
+		/// <param name="noiseSkipByToUse">Noise skip by to use.</param>
+		/// <param name="indexToUse">Index at which the distance abruptly jumps from a low to a much higher value.
+		/// This value can subsequently be used to infer the cluster count.</param>
+		private static long FindMaximumSquareDistance(List<long> sortedDistances, int noiseSkipByToUse, out int indexToUse)
+		{
+			var indexOfMaximumIncrease = 0;
+			var indexOfMaximumRatio = 0;
+			var maxIncrease = 0L;
+			var maxRatio = 0.0;
+			var numPoints = sortedDistances.Count() + 1;
+
+			for (var iDistance = 1 + noiseSkipByToUse; iDistance < sortedDistances.Count; iDistance++)
+			{
+				var distance = sortedDistances[iDistance];
+				var previousDistance = sortedDistances[iDistance - 1 - noiseSkipByToUse];
+				var diff = distance - previousDistance;
+				if (diff > maxIncrease)
+				{
+					maxIncrease = diff;
+					indexOfMaximumIncrease = iDistance;
+				}
+				if (previousDistance > 1 && iDistance > 10)
+				{
+					var ratio = distance / (double)previousDistance;
+					if (ratio > maxRatio)
+					{
+						maxRatio = ratio;
+						indexOfMaximumRatio = iDistance;
+
+						//TODO: The test "maxRatio > 5" could cause problems if we have clusters with highly varying densities.
+						//      Make it a paramter?
+						if (iDistance > numPoints / 2 && maxRatio > 5)
+							break;
+					}
+				}
+			}
+
+			// If the two measures agree, we have an unambiguous choice.
+			if (indexOfMaximumIncrease == indexOfMaximumRatio)
+				indexToUse = indexOfMaximumIncrease;
+			// If the highest ratio in length between one distance and the next is at an early index,
+			// it is likely because we skipped from a really low value (like 1) to another really low value (like 10)
+			// which only looks like a large jump because the values are so small.
+			else if (indexOfMaximumRatio < numPoints / 2)
+				indexToUse = indexOfMaximumIncrease;
+			// Once we get near the end of the series of distances, the jumps between successive
+			// distances can become large, but their relative change is small,
+			// so rely on the ratio instead.
+			else indexToUse = indexOfMaximumRatio;
+
+			indexToUse = Math.Max(0, indexToUse - noiseSkipByToUse - 1);
+
+			var maximumSquareDistance = sortedDistances[indexToUse];
+
+			return maximumSquareDistance;
 		}
 	}
 }

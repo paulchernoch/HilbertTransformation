@@ -218,6 +218,60 @@ namespace HilbertTransformationTests.Data
 		}
 
 		/// <summary>
+		/// Create two random clusters that may be separated from one another by enough distance
+		/// that they do not overlap, or be partly overlapping, or fully overlapping.
+		/// 
+		/// NOTE: This type of setup is to test divisive clustering, that divides two partly mixed gaussians.
+		/// </summary>
+		/// <param name="overlapPercent">A number from zero to 100. 
+		/// If zero, the clusters do not overlap at all.
+		/// If fifty, then the clusters partly overlap.
+		/// If 100, the clusters have the same center, so are indistinguishable.</param>
+		/// <returns>The two clusters.</returns>
+		public Classification<UnsignedPoint, string> TwoClusters(double overlapPercent)
+		{
+			var clusters = new Classification<UnsignedPoint, string>();
+			r = new FastRandom();
+			var farthestDistanceFromClusterCenter = 0.0;
+
+			var minDistance = EllipsoidalGenerator.MinimumSeparation(MaxDistanceStdDev, Dimensions);
+			var centerGenerator = new DiffuseGenerator(Dimensions, minDistance)
+			{
+				// Keep the centers of the clusters away from the edge, so that points do not go out of bounds and have their coordinates truncated.
+				// Keep the maximum coordinate farther away, because we will pick the second point by shifting one coordinate
+				// in the higher direction.
+				Minimum = MaxDistanceStdDev,
+				Maximum = MaxCoordinate - MaxDistanceStdDev - (int)minDistance
+			};
+			var iCluster = 0;
+			var clusterCenter1 = centerGenerator.Take(1).FirstOrDefault();
+			var clusterCenter2 = (int[])clusterCenter1.Clone();
+			clusterCenter2[0] += (int)(minDistance * (100.0 - overlapPercent) / 100.0);
+			var centers = new[] { clusterCenter1, clusterCenter2 };
+			foreach (var clusterCenter in centers)
+			{
+				var centerPoint = new UnsignedPoint(clusterCenter);
+				var clusterSize = r.Next(MinClusterSize, MaxClusterSize);
+				var pointGenerator = new EllipsoidalGenerator(clusterCenter, RandomDoubles(Dimensions, MinDistanceStdDev, MaxDistanceStdDev, r), Dimensions);
+				var clusterId = iCluster.ToString();
+				foreach (var iPoint in Enumerable.Range(1, clusterSize))
+				{
+					UnsignedPoint p;
+					clusters.Add(
+						p = new UnsignedPoint(pointGenerator.Generate(new int[Dimensions])),
+						clusterId
+					);
+					var distance = Math.Sqrt(centerPoint.Measure(p));
+					farthestDistanceFromClusterCenter = Math.Max(farthestDistanceFromClusterCenter, distance);
+				}
+				iCluster++;
+			}
+			//TODO: Go back and recluster the points. Put each point into the cluster whose centroid
+			//      it is nearest. Thus, if two clusters partly overlap, the points from one will be pushed into the other.
+			return clusters;
+		}
+
+		/// <summary>
 		/// Create an array of random doubles with values chosen uniformly between min (inclusive) and max (exclusive).
 		/// </summary>
 		/// <param name="size">Size of array created.</param>

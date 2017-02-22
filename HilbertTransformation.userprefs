@@ -1,11 +1,11 @@
-﻿<Properties>
+﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="19" Column="19" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="35" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="208" Column="43" />
-      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="94" Column="37" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="88" Column="83" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="54" Column="68" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="166" Column="37" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="282" Column="22" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="185" Column="40" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="239" Column="5" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -14,10 +14,10 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="HilbertClassifierTests" expanded="True" />
-                <Node name="HilbertPointTests" expanded="True">
-                  <Node name="SquareDistanceCompareAverage" selected="True" />
+                <Node name="HilbertClassifierTests" expanded="True">
+                  <Node name="Classify_10000N_30K_100D" selected="True" />
                 </Node>
+                <Node name="HilbertPointTests" expanded="True" />
                 <Node name="OptimalIndexTests" expanded="True" />
               </Node>
             </Node>
@@ -30,11 +30,12 @@
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="276" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="269" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/HilbertClassifier.cs" line="264" column="1" />
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/ClosestCluster.cs" line="459" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/HilbertClassifierTests.cs" line="545" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/HilbertClassifierTests.cs" line="540" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Classification.cs" line="372" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.HilbertTransformationTests PreferredExecutionTarget="MonoDevelop.Default" />
 </Properties>

@@ -82,6 +82,8 @@ namespace Clustering
 		/// Scores how well a given index measures up. The lower the score, the better. 
 		/// A low score is assumed to mean less fragmentation of the index.
 		/// Also derives the MergeSquareDistance.
+		/// 
+		/// NOTE: This delegate must be threadsafe!
 		/// </summary>
 		Func<HilbertIndex, Tuple<int,long>> Metric { get; set; }
 
@@ -133,6 +135,8 @@ namespace Clustering
 		/// </summary>
 		public bool UseSample { get; set; } = false;
 
+		private int LowestCountSeen { get; set; } = int.MaxValue;
+
 
 		#endregion
 
@@ -175,7 +179,7 @@ namespace Clustering
 			var skip = noiseSkipBy;
 			Metric = (HilbertIndex index) =>
 			{
-				var counter = new ClusterCounter { OutlierSize = maxOutliers, NoiseSkipBy = skip };
+				var counter = new ClusterCounter { OutlierSize = maxOutliers, NoiseSkipBy = skip, LowestCountSeen = LowestCountSeen };
 				var counts = counter.Count(index.SortedPoints);
 				return new Tuple<int, long>(counts.CountExcludingOutliers, counts.MaximumSquareDistance);
 			};
@@ -239,6 +243,7 @@ namespace Clustering
 			// looking for a better one, always accumulating the best in results.
 			var metricResults = Metric(firstIndex);
 			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
+			LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
 			Console.Write($"Cluster count Starts at: {bestResults}");
 			queue.AddRemove(bestResults);
 
@@ -277,6 +282,7 @@ namespace Clustering
 						if (improved) {
 							bestResults = resultsToTry;
 							Interlocked.Add(ref improvedCount, 1);
+							LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
 							Console.Write($"Cluster count Improved to: {bestResults}");
 						} 
 					}
@@ -288,6 +294,8 @@ namespace Clustering
 					iterationsWithoutImprovement++;
 				if (iterationsWithoutImprovement >= MaxIterationsWithoutImprovement)
 					break;
+				if (bestResults.EstimatedClusterCount <= 2)
+					break; // No point in continuing!
 			}
 			var indicesFound = queue.RemoveAll().Reverse().ToList();
 			if (sampledPoints.Count < points.Count)
