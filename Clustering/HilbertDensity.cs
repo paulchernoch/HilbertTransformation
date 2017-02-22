@@ -101,9 +101,9 @@ namespace Clustering
 		/// all points will be compared and the result will not be an estimate, it will be accurate.
 		/// </param>
 		/// <returns>Key is the point, value is its neighbor count</returns>
-		public Dictionary<UnsignedPoint, int> EstimateNeighbors(int windowSize)
+		public Dictionary<HilbertPoint, int> EstimateNeighbors(int windowSize)
 		{
-			var neighborCounts = new Dictionary<UnsignedPoint, int>();
+			var neighborCounts = new Dictionary<HilbertPoint, int>();
 			foreach(var pair in SortedPoints.Select((p,i) => new { Point = p, Position = i }))
 				neighborCounts[pair.Point] = EstimateNeighbors(pair.Position, windowSize);
 			return neighborCounts;
@@ -114,12 +114,59 @@ namespace Clustering
 		/// </summary>
 		/// <returns>The points sorted by decreasing density.</returns>
 		/// <param name="windowSize">Window size for measurement.</param>
-		public IEnumerable<UnsignedPoint> SortByDensity(int windowSize)
+		public IEnumerable<HilbertPoint> SortByDensity(int windowSize)
 		{
 			return SortedPoints
 				.Select((p, i) => new { Point = p, Neighbors = EstimateNeighbors(i, windowSize) })
 				.OrderByDescending(pair => pair.Neighbors)
 				.Select(pair => pair.Point);
+		}
+
+		/// <summary>
+		/// For each point taken in Hilbert order, find its rank in terms of density.
+		/// Each rank relates to point at the corresponding position in the OrderedPoints.
+		/// </summary>
+		/// <returns>A list of one-based ranks.</returns>
+		/// <param name="windowSize">Window size.</param>
+		public int[] DensityRank(int windowSize)
+		{
+			var sortedByDensity = SortByDensity(windowSize).ToList();
+			var ranks = new int[sortedByDensity.Count];
+			foreach (var pair in SortByDensity(windowSize).Select((p, i) => new { Point = p, Rank = i + 1 }))
+				ranks[Index.SortedPosition(pair.Point)] = pair.Rank;
+			return ranks;
+		}
+
+		/// <summary>
+		/// Set the rank for a point to the minimum of its rank via DensityRank and the rank of the points 
+		/// immediately before and after the point.
+		/// </summary>
+		/// <returns>The ranks of corresponding points in HilbertIndex order.</returns>
+		/// <param name="windowSize">Window size. 
+		/// If ten, then the ten points before and ten points after a given point are the window.
+		/// All points in the window are influenced by the rank of the point at the center of the window. </param>
+		public int[] NeighborhoodRank(int windowSize)
+		{
+			var densityRank = DensityRank(windowSize);
+			var neighborhoodRank = (int[])densityRank.Clone();
+			neighborhoodRank[0] = neighborhoodRank.Take(windowSize + 1).Min();
+			for (var i = 1; i <= windowSize; i++)
+				neighborhoodRank[i] = Math.Min(neighborhoodRank[i], neighborhoodRank[0]);
+			for (var i = 1; i < neighborhoodRank.Length; i++)
+			{
+				var endOfWindow = Math.Min(i + windowSize, neighborhoodRank.Length - 1);
+				if (neighborhoodRank[i] <= densityRank[i])
+				{
+					//  A previous neighbor lowered this rank and many to the right of it already, so only extend the forward end of the window.
+					neighborhoodRank[endOfWindow] = Math.Min(neighborhoodRank[endOfWindow], densityRank[i]);
+				}
+				else {
+					// This new rank is lower, so potentially update all positions in the window to the right.
+					for (var j = i + 1; j <= endOfWindow; j++)
+						neighborhoodRank[j] = Math.Min(neighborhoodRank[j], densityRank[i]);
+				}
+			}
+			return neighborhoodRank;
 		}
 
 		/// <summary>
