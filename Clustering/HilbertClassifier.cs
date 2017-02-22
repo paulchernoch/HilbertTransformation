@@ -157,6 +157,9 @@ namespace Clustering
 				IdsToPoints[p.UniqueId] = p;
 		}
 
+		/// <summary>
+		/// Perform unassisted classification of points.
+		/// </summary>
 		public Classification<UnsignedPoint, string> Classify()
 		{
 			//   3) Create multiple HilbertIndexes.
@@ -218,12 +221,26 @@ namespace Clustering
 			var sorter = new KeySorter<HilbertPoint, UnsignedPoint>(hp => hp.UniqueId, p => p.UniqueId);
 			var sortedPoints = sorter.Sort(unsortedPoints, hIndex.SortedPoints);
 			UnsignedPoint prevPoint = null;
+			UnsignedPoint lastMerged = null;
+			// About "revisitations". If the Hilbert order leaves a cluster to visit an outlier, 
+			// then returns to "revisit" the same cluster, the revisitation logic may sometimes capture this and perform a merge. 
+			// This test is only performed when consecutive points could not be joined, hence is 
+			// proportional to K, the number of clusters, not N, the number of points.
+			var revisitations = 0;
 			foreach (var currPoint in sortedPoints)
 			{
 				if (prevPoint != null)
-					MergeIfNear(prevPoint, currPoint);
+				{
+					if (MergeIfNear(prevPoint, currPoint))
+						lastMerged = currPoint;
+					else if (lastMerged != null && MergeIfNear(lastMerged, currPoint)) {
+						lastMerged = currPoint;
+						revisitations++;
+					}
+				}
 				prevPoint = currPoint;
 			}
+			Console.WriteLine($"{revisitations} Revisitation{revisitations != 1 ? 's' : ' ' } in MergeByHilbertIndex");
 		}
 
 		/// <summary>

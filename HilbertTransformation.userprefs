@@ -2,10 +2,11 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
       <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="54" Column="68" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="166" Column="37" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="209" Column="3" />
       <File FileName="Clustering/OptimalIndex.cs" Line="282" Column="22" />
       <File FileName="Clustering/ClusterCounter.cs" Line="185" Column="40" />
       <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="239" Column="5" />
+      <File FileName="Clustering/HilbertDensity.cs" Line="137" Column="14" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -15,7 +16,7 @@
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="HilbertClassifierTests" expanded="True">
-                  <Node name="Classify_10000N_30K_100D" selected="True" />
+                  <Node name="ClassifyManyVaryingNumPoints" selected="True" />
                 </Node>
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="OptimalIndexTests" expanded="True" />
