@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Clustering;
 using HilbertTransformation;
@@ -57,6 +58,35 @@ namespace HilbertTransformationTests
 		public void Classify_TwoClusters50PctOverlap()
 		{
 			ClassifyTwoClustersCase(5000, 100, 50.0);
+		}
+
+		[Test]
+		public void Classify_TwoClusters50PctOverlapLoop()
+		{
+			ClassifyTwoClustersReapeatedly(20, 5000, 100, 50.0, 1000);
+		}
+
+		[Test]
+		public void Classify_TwoClusters60PctOverlapLoop()
+		{
+			ClassifyTwoClustersReapeatedly(20, 5000, 100, 60.0, 1000);
+		}
+
+		/// <summary>
+		/// At 65% overlap, the center of one hypersphere falls on 
+		/// the principal radius of the other sphere. The fact that 
+		/// many of the cases cluster well is surprising.
+		/// </summary>
+		[Test]
+		public void Classify_TwoClusters65PctOverlapLoop()
+		{
+			ClassifyTwoClustersReapeatedly(20, 5000, 100, 65.0, 1000);
+		}
+
+		[Test]
+		public void Classify_TwoClusters70PctOverlapLoop()
+		{
+			ClassifyTwoClustersReapeatedly(20, 5000, 100, 70.0, 1000);
 		}
 
 		[Test]
@@ -521,6 +551,97 @@ namespace HilbertTransformationTests
 		private void ClassifyTwoClustersCase(int numPoints, int dimensions, double overlapPercent,
 						  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptableBCubed = 0.99, bool useDensityClassifier = true)
 		{
+			var acceptablePrecision = 0.98; //TODO: Add a parameter for this
+			var results = ClassifyTwoClustersHelper(numPoints, dimensions, overlapPercent, clusterSizeVariation, maxCoordinate, acceptablePrecision, useDensityClassifier);
+			var comparison = results.Item1;
+			var message = $"   Quality {results.Item4}. Comparison of clusters: {comparison}.\n   Clusters expected/actual: {results.Item2}/{results.Item3}.";
+			Console.WriteLine(message);
+			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
+		}
+
+		private void ClassifyTwoClustersReapeatedly(int repeatCount, int numPoints, int dimensions, double overlapPercent,
+				  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptablePrecision = 0.98, bool useDensityClassifier = true)
+		{
+			var histogram = new Dictionary<SplitQuality, int>() 
+			{ 
+				{ SplitQuality.BadOverSplit, 0 },
+				{ SplitQuality.BadSplit, 0 },
+				{ SplitQuality.GoodOverSplit, 0 },
+				{ SplitQuality.FairOverSplit, 0 },
+				{ SplitQuality.GoodSplit, 0 },
+				{ SplitQuality.PerfectSplit, 0 },
+				{ SplitQuality.Unsplit, 0 }
+			};
+
+			for (var iRepeat = 0; iRepeat < repeatCount; iRepeat++)
+			{
+				var results = ClassifyTwoClustersHelper(numPoints, dimensions, overlapPercent, clusterSizeVariation, maxCoordinate, acceptablePrecision, useDensityClassifier);
+				histogram[results.Item4] = histogram[results.Item4] + 1;
+			}
+			var message = "";
+			foreach (var pair in histogram)
+			{
+				message += $"Quality: {pair.Key} {pair.Value} times\n";
+			}
+			Console.WriteLine(message);
+			Assert.AreEqual(repeatCount, histogram[SplitQuality.PerfectSplit], message);
+		}
+
+		public enum SplitQuality
+		{
+			/// <summary>
+			/// Perfect clustering and correct number of clusters
+			/// </summary>
+			PerfectSplit,
+			/// <summary>
+			/// Too many clusters, but each cluster is homogeneous
+			/// </summary>
+			GoodOverSplit,
+
+			/// <summary>
+			/// Too many clusters, homogeneity (precision) is good, but not perfect.
+			/// </summary>
+			FairOverSplit,
+
+			/// <summary>
+			/// Too many clusters, and some have mixtures of points from the two ideal clusters
+			/// </summary>
+			BadOverSplit,
+			/// <summary>
+			/// Correct number of clusters, but a few points out of place
+			/// </summary>
+			GoodSplit,
+			/// <summary>
+			/// Correct number of clusters, but many points out of place
+			/// </summary>
+			BadSplit,
+			/// <summary>
+			/// One big cluster (failure to discriminate)
+			/// </summary>
+			Unsplit
+		}
+
+		/// <summary>
+		/// Perform a classification of two clusters that are near enough to each other to partially overlap, causing problems.
+		/// 
+		/// From this we can deduce which of six cases obtain (the SplitQuality).
+		/// </summary>
+		/// <returns>A Tuple with these parts:
+		///   1) comparison of actual to expected (with its BCubed), 
+		///   2) the expected number of clusters 
+		///   3) the actual number of clusters
+		///   4) a qualitative assessment of the results.
+		/// </returns>
+		/// <param name="numPoints">Number of points.</param>
+		/// <param name="dimensions">Number of Dimensions.</param>
+		/// <param name="overlapPercent">Overlap percent.</param>
+		/// <param name="clusterSizeVariation">Cluster size variation.</param>
+		/// <param name="maxCoordinate">Max value of any coordinate.</param>
+		/// <param name="acceptablePrecision">Acceptable precision</param>
+		/// <param name="useDensityClassifier">If set to <c>true</c> use density classifier.</param>
+		private Tuple<ClusterMetric<UnsignedPoint,string>, int, int, SplitQuality> ClassifyTwoClustersHelper(int numPoints, int dimensions, double overlapPercent,
+				  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptablePrecision = 0.98, bool useDensityClassifier = true)
+		{
 			var bitsPerDimension = maxCoordinate.SmallestPowerOfTwo();
 			var clusterCount = 2;
 			var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
@@ -558,13 +679,31 @@ namespace HilbertTransformationTests
 				actualClusters = classifier.Classify();
 			}
 
-
 			var comparison = expectedClusters.Compare(actualClusters);
+			SplitQuality qualitativeResult = SplitQuality.Unsplit;
+			if (comparison.BCubed >= 1.0)
+				qualitativeResult = SplitQuality.PerfectSplit;
+			else if (actualClusters.NumPartitions == 1)
+				qualitativeResult = SplitQuality.Unsplit;
+			else if (actualClusters.NumPartitions > expectedClusters.NumPartitions && comparison.Precision >= 1.0)
+				qualitativeResult = SplitQuality.GoodOverSplit;
+			else if (actualClusters.NumPartitions > expectedClusters.NumPartitions && comparison.Precision >= acceptablePrecision)
+				qualitativeResult = SplitQuality.FairOverSplit;
+			else if (actualClusters.NumPartitions == expectedClusters.NumPartitions && comparison.Precision >= acceptablePrecision)
+				qualitativeResult = SplitQuality.GoodSplit;
+			else if (actualClusters.NumPartitions > expectedClusters.NumPartitions && comparison.Precision < 1.0)
+				qualitativeResult = SplitQuality.BadOverSplit;
+			else // Assume correct number of clusters.
+				qualitativeResult = SplitQuality.BadSplit;
 
-			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
-			Console.WriteLine(message);
-			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(outlierSize)}");
-			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
+			Console.WriteLine($"  Quality: {qualitativeResult}  Comparison: {comparison}");
+			
+			return new Tuple<ClusterMetric<UnsignedPoint, string>, int, int, SplitQuality>(
+				comparison, 
+				expectedClusters.NumPartitions, 
+				actualClusters.NumPartitions,
+				qualitativeResult
+			);
 		}
 	}
 }
