@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Clustering;
+using HilbertTransformation;
 using HilbertTransformationTests.Data;
 using NUnit.Framework;
 
@@ -518,11 +519,13 @@ namespace HilbertTransformationTests
 		/// <param name="maxCoordinate">Max coordinate.</param>
 		/// <param name="acceptableBCubed">Acceptable BC ubed.</param>
 		private void ClassifyTwoClustersCase(int numPoints, int dimensions, double overlapPercent,
-						  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptableBCubed = 0.99)
+						  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptableBCubed = 0.99, bool useDensityClassifier = true)
 		{
+			var bitsPerDimension = maxCoordinate.SmallestPowerOfTwo();
 			var clusterCount = 2;
 			var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
 			var maxClusterSize = (numPoints / clusterCount) + clusterSizeVariation;
+			var outlierSize = 5;
 			var data = new GaussianClustering
 			{
 				ClusterCount = clusterCount,
@@ -532,16 +535,35 @@ namespace HilbertTransformationTests
 				MaxClusterSize = maxClusterSize
 			};
 			var expectedClusters = data.TwoClusters(overlapPercent);
-			var classifier = new HilbertClassifier(expectedClusters.Points(), 10);
-			//classifier.IndexConfig.NoiseSkipBy = 0;
-			classifier.IndexConfig.UseSample = false;
 
-			var actualClusters = classifier.Classify();
+			Classification<UnsignedPoint, string> actualClusters;
+			if (useDensityClassifier)
+			{
+				var hIndex = new HilbertIndex(expectedClusters, bitsPerDimension);
+				var cc = new ClusterCounter { NoiseSkipBy = 10, OutlierSize = outlierSize, ReducedNoiseSkipBy = 1 };
+				var count = cc.Count(hIndex.SortedPoints);
+
+				var unmergeableSize = expectedClusters.NumPoints / 6;
+				var densityClassifier = new DensityClassifier(hIndex, count.MaximumSquareDistance, unmergeableSize)
+				{
+					NeighborhoodRankWeight = 3
+				};
+
+				actualClusters = densityClassifier.Classify();
+			}
+			else {
+				var classifier = new HilbertClassifier(expectedClusters.Points(), 10) { OutlierSize = outlierSize };
+				//classifier.IndexConfig.NoiseSkipBy = 0;
+				classifier.IndexConfig.UseSample = false;
+				actualClusters = classifier.Classify();
+			}
+
+
 			var comparison = expectedClusters.Compare(actualClusters);
 
 			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
 			Console.WriteLine(message);
-			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
+			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(outlierSize)}");
 			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
 		}
 	}

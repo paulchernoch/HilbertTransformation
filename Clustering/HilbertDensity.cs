@@ -31,6 +31,17 @@ namespace Clustering
 		/// </summary>
 		public int NeighborCount { get; private set; }
 
+		/// <summary>
+		/// Determines how strongly the density rank of a point's neighbors affects its density rank.
+		/// If zero, there is no effect.
+		/// If one, the point's rank is averaged with the lowest rank in its neighborhood.
+		/// If greater than one, the rank is skewed more and more towards the rank of its neighbors.
+		/// 
+		/// By boosting the rank of a point based on its neighbors, clusters are induced to form around
+		/// seeds, where the highest density point in a neighborhood is the seed.
+		/// </summary>
+		public double NeighborhoodRankWeight { get; set; } = 3;
+
 		#region Neigborhood Property and computation
 
 		private long _neighborhood = -1L;
@@ -47,7 +58,7 @@ namespace Clustering
 			}
 		} 
 
-				/// <summary>
+		/// <summary>
 		/// Estimate the square radius of the hypersphere around the average point necessary
 		/// to include a number of neighbors equaling NeighborCount.
 		/// </summary>
@@ -138,8 +149,7 @@ namespace Clustering
 		}
 
 		/// <summary>
-		/// Set the rank for a point to the minimum of its rank via DensityRank and the rank of the points 
-		/// immediately before and after the point.
+		/// Reduce the rank for points who are near other points with low rank to encourage growth near high density regions.
 		/// </summary>
 		/// <returns>The ranks of corresponding points in HilbertIndex order.</returns>
 		/// <param name="windowSize">Window size. 
@@ -150,21 +160,13 @@ namespace Clustering
 			var densityRank = DensityRank(windowSize);
 			var neighborhoodRank = (int[])densityRank.Clone();
 			neighborhoodRank[0] = neighborhoodRank.Take(windowSize + 1).Min();
-			for (var i = 1; i <= windowSize; i++)
-				neighborhoodRank[i] = Math.Min(neighborhoodRank[i], neighborhoodRank[0]);
-			for (var i = 1; i < neighborhoodRank.Length; i++)
+			foreach (var i in Enumerable.Range(0, neighborhoodRank.Length))
 			{
-				var endOfWindow = Math.Min(i + windowSize, neighborhoodRank.Length - 1);
-				if (neighborhoodRank[i] <= densityRank[i])
-				{
-					//  A previous neighbor lowered this rank and many to the right of it already, so only extend the forward end of the window.
-					neighborhoodRank[endOfWindow] = Math.Min(neighborhoodRank[endOfWindow], densityRank[i]);
-				}
-				else {
-					// This new rank is lower, so potentially update all positions in the window to the right.
-					for (var j = i + 1; j <= endOfWindow; j++)
-						neighborhoodRank[j] = Math.Min(neighborhoodRank[j], densityRank[i]);
-				}
+				var start = Math.Max(0,i - windowSize);
+				var stop = Math.Min(i + windowSize, neighborhoodRank.Length);
+				var minRankInNeighborhood = densityRank.Skip(start).Take(stop - start).Min();
+				if (minRankInNeighborhood < densityRank[i])
+					neighborhoodRank[i] = (int)((NeighborhoodRankWeight * minRankInNeighborhood + densityRank[i]) / (NeighborhoodRankWeight + 1));
 			}
 			return neighborhoodRank;
 		}
