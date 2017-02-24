@@ -1,9 +1,11 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="HilbertTransformationTests/HilbertDensityTests.cs" Line="47" Column="6" />
-      <File FileName="Clustering/HilbertDensity.cs" Line="201" Column="28" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="479" Column="1" />
+      <File FileName="HilbertTransformationTests/HilbertDensityTests.cs" Line="31" Column="50" />
+      <File FileName="Clustering/HilbertDensity.cs" Line="187" Column="16" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="668" Column="50" />
+      <File FileName="Clustering/BinaryHeap.cs" Line="99" Column="10" />
+      <File FileName="Clustering/DensityClassifier.cs" Line="25" Column="3" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -12,10 +14,10 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="HilbertClassifierTests" expanded="True" />
-                <Node name="HilbertDensityTests" expanded="True">
-                  <Node name="DensityAccuracy" selected="True" />
+                <Node name="HilbertClassifierTests" expanded="True">
+                  <Node name="Classify_TwoClusters50PctOverlapLoop" selected="True" />
                 </Node>
+                <Node name="HilbertDensityTests" expanded="True" />
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="OptimalIndexTests" expanded="True" />
               </Node>
@@ -31,7 +33,6 @@
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/ClosestCluster.cs" line="459" column="1" />
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Classification.cs" line="372" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/HilbertDensityTests.cs" line="37" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

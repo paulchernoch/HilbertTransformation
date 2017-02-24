@@ -75,10 +75,12 @@ namespace Clustering
 
 		public Classification<UnsignedPoint, string> Classify()
 		{
-			//TODO: Implement density based clustering algorithm.
-
 			// 1. Get the Neighborhood density for all points and rank them by that density, from densest to most diffuse.
-			var hd = new HilbertDensity(Index, NeighborCount) { NeighborhoodRankWeight = NeighborhoodRankWeight };
+			var hd = new HilbertDensity(Index, NeighborCount) { 
+				NeighborhoodRankWeight = NeighborhoodRankWeight, 
+				NeighborhoodCountPercentile = 20, //TODO: Add parameter so caller can set this
+				NeighborCountWindowSize = 100     //TODO: Add parameter so caller can set this
+			};
 			var ranks = hd.NeighborhoodRank(WindowSize);
 
 			// 2. Sort all pairs of points that are adjacent in the Hilbert ordering by the lesser of the neighborhood 

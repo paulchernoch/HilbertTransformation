@@ -25,6 +25,16 @@ namespace Clustering
 		/// </summary>
 		private List<HilbertPoint> SortedPoints { get { return Index.SortedPoints; } }
 
+		public int NeighborCountWindowSize { get; set; }
+
+		/// <summary>
+		/// The Neighborhood distance will be chosen as this percentile of the square distances of all the 
+		/// distances measured. The mean (50th percentile) yields too high a count of neighbors for most
+		/// points, leading to poorer density discrimination, so use a lower percentile.
+		/// </summary>
+		/// <value>The neighborhood count percentile.</value>
+		public int NeighborhoodCountPercentile { get; set; } = 20;
+
 		/// <summary>
 		/// The number of near neighboring points that must occupy the enclosing hypersphere
 		/// used to determine density.
@@ -56,7 +66,24 @@ namespace Clustering
 					_neighborhood = EstimateNeighborhood();
 				return _neighborhood;
 			}
-		} 
+		}
+
+		private static long Percentile(IEnumerable<long> data, int dataCount, int percentile)
+		{
+			int keep;
+			bool topN;
+			if (percentile >= 50)
+			{
+				keep = dataCount * (100 - percentile) / 100;
+				topN = true;
+			}
+			else
+			{
+				keep = dataCount * percentile / 100;
+				topN = false;
+			}
+			return data.SelectSerial(topN, keep).FirstOrDefault();
+		}
 
 		/// <summary>
 		/// Estimate the square radius of the hypersphere around the average point necessary
@@ -64,26 +91,27 @@ namespace Clustering
 		/// </summary>
 		private long EstimateNeighborhood()
 		{
-			var sum = 0L;
-			var count = 0;
-			var windowSize = 2 * NeighborCount + 1;
-			// We average the square radius, instead of squaring the average radius. 
-			// This will produce a larger number.
-			for (var i = 0; i < SortedPoints.Count - windowSize; i++)
-			{
-				var centerPoint = SortedPoints[i + NeighborCount];
-				var sqDistances = new List<long>();
-				for (var j = 0; j < 2 * NeighborCount + 1; j++)
+			var windowSize = NeighborCountWindowSize;
+			var numMeasurements = SortedPoints.Count - windowSize;
+
+			return Percentile(
+				Enumerable.Range(0, numMeasurements)
+				.Select(i =>
 				{
-					if (j == NeighborCount) continue; // Exclude the centerPoint itself.
-					var p = SortedPoints[i + j];
-					sqDistances.Add(centerPoint.Measure(p));
-				}
-				sqDistances.Sort();
-				sum += sqDistances[NeighborCount];
-				count++;
-			}
-			return ((sum + count - 1) / count);
+					var centerPoint = SortedPoints[i + NeighborCount];
+					var sqDistances = new List<long>();
+					for (var j = 0; j < windowSize; j++)
+					{
+						if (j == NeighborCount) continue; // Exclude the centerPoint itself.
+						var p = SortedPoints[i + j];
+						sqDistances.Add(centerPoint.Measure(p));
+					}
+					sqDistances.Sort();
+					return sqDistances[NeighborCount];
+				}),
+			    numMeasurements, 
+			    NeighborhoodCountPercentile
+			);
 		}
 
 		#endregion
@@ -99,6 +127,7 @@ namespace Clustering
 		{
 			Index = index;
 			NeighborCount = neighborCount;
+			NeighborCountWindowSize = 2 * NeighborCount + 1;
 		}
 
 		/// <summary>

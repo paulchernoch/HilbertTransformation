@@ -110,7 +110,7 @@ namespace Clustering
 		/// <param name="comparisonDelegate">If null, assume the items are IComparable and sort them according to their natural ordering.
 		/// If not null, use this in the comparisons to establish the ordering.</param>
 		/// <returns>The Top N or Bottom N items, as requested, sorted appropriately</returns>
-		static IEnumerable<TElement> SelectSerial<TElement>(IEnumerable<TElement> items, bool topN, int k,
+		public static IEnumerable<TElement> SelectSerial<TElement>(this IEnumerable<TElement> items, bool topN, int k,
 			IComparer<TElement> comparisonDelegate = null)
 		{
 			// Seems counterintuitive, but when looking for the Top N we use a Min Heap, and when 
@@ -118,12 +118,7 @@ namespace Clustering
 			var heap = new BinaryHeap<TElement>(topN ? BinaryHeapType.MinHeap : BinaryHeapType.MaxHeap, k, comparisonDelegate);
 			foreach (var item in items)
 			{
-				if (k > heap.Count) heap.Add(item);
-				else if (heap.IsLessExtreme(item))
-				{
-					heap.Remove();
-					heap.Add(item);
-				}
+				heap.AddRemove(item);
 			}
 			var resultsCount = heap.Count;
 			for (var i = 0; i < resultsCount; i++)

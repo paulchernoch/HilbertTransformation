@@ -27,7 +27,7 @@ namespace HilbertTransformationTests
 			var expectedClusters = data.MakeClusters();
 			var hIndex = new HilbertIndex(expectedClusters, bitsPerDimension);
 			var neighborCount = 10;
-			var hd = new HilbertDensity(hIndex, neighborCount);
+			var hd = new HilbertDensity(hIndex, neighborCount) { NeighborCountWindowSize = neighborCount * 10 + 1 };
 			var differenceHistogram = new int[expectedClusters.NumPoints];
 			var comparisonsToMake = 1000;
 			foreach (var i in Enumerable.Range(0, comparisonsToMake))
@@ -38,6 +38,8 @@ namespace HilbertTransformationTests
 				if (difference > differenceHistogram.Length - 1)
 					difference = differenceHistogram.Length - 1;
 				differenceHistogram[difference]++;
+				var ratio = estimatedNeighbors == 0 ? 0 : accurateNeighbors / estimatedNeighbors;
+				Console.Write($"{i}. Est = {estimatedNeighbors}  Accurate = {accurateNeighbors}  Ratio = {ratio}");
 			}
 			for (var i = 0; i < differenceHistogram.Length; i++)
 			{
