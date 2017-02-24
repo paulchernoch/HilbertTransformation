@@ -43,6 +43,7 @@
     <Compile Include="KeySorterTests.cs" />
     <Compile Include="OptimalIndexTests.cs" />
     <Compile Include="HilbertClassifierTests.cs" />
+    <Compile Include="HilbertDensityTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -181,18 +181,29 @@ namespace Clustering
 		/// be compared for distance is twice this windowSize. If you give a window size equal to N/2 or greater,
 		/// all points will be compared and the result will not be an estimate, it will be accurate.
 		/// </param>
-		private int EstimateNeighbors(int pointIndex, int windowSize)
+		public int EstimateNeighbors(int pointIndex, int windowSize)
 		{
 			var centerPoint = SortedPoints[pointIndex];
-			var count = 0;
-			var startIndex = Math.Max(0,pointIndex - windowSize);
-			var pointsToCompare = 2 * windowSize + 1;
-			foreach (var p in SortedPoints.Skip(startIndex).Take(pointsToCompare))
-			{
-				if (p.UniqueId != centerPoint.UniqueId && centerPoint.SquareDistanceCompare(p, Neighborhood) <= 0)
-					count++;
-			}
-			return count;
+			return SortedPoints
+				.Skip(Math.Max(0, pointIndex - windowSize))
+				.Take(2 * windowSize + 1)
+				.Where(p => p.UniqueId != centerPoint.UniqueId && centerPoint.SquareDistanceCompare(p, Neighborhood) <= 0)
+				.Count();
+		}
+
+		/// <summary>
+		/// Counts the neighbors exactly.
+		/// 
+		/// Note: This is much slower than EstimateNeighbors. Use in testing to prove the algorithm.
+		/// </summary>
+		/// <returns>The neighbors.</returns>
+		/// <param name="pointIndex">Point index.</param>
+		public int CountNeighbors(int pointIndex)
+		{
+			var centerPoint = SortedPoints[pointIndex];
+			return SortedPoints
+				.Where(p => p.UniqueId != centerPoint.UniqueId && centerPoint.SquareDistanceCompare(p, Neighborhood) <= 0)
+				.Count();
 		}
 
 		/// <summary>
