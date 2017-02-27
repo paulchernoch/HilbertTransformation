@@ -23,8 +23,6 @@ namespace Clustering
 
 		public Classification<UnsignedPoint, string> Clusters { get; private set; }
 
-		public int WindowSize { get; set; } = 10;
-
 		/// <summary>
 		/// Two clusters of this size or greater will not be permitted to be merged.
 		/// </summary>
@@ -45,24 +43,7 @@ namespace Clustering
 		/// <value>The size of the outlier.</value>
 		public int OutlierSize { get; set; } = 5;
 
-		/// <summary>
-		/// Determines how strongly the density rank of a point's neighbors affects its density rank.
-		/// If zero, there is no effect.
-		/// If one, the point's rank is averaged with the lowest rank in its neighborhood.
-		/// If greater than one, the rank is skewed more and more towards the rank of its neighbors.
-		/// 
-		/// By boosting the rank of a point based on its neighbors, clusters are induced to form around
-		/// seeds, where the highest density point in a neighborhood is the seed.
-		/// </summary>
-		public double NeighborhoodRankWeight { get; set; } = 3;
-
 		public HilbertIndex Index { get; set; }
-
-		/// <summary>
-		/// The number of near neighboring points that must occupy the enclosing hypersphere
-		/// used to determine density.
-		/// </summary>
-		public int NeighborCount { get; private set; } = 10;
 
 		public DensityClassifier(HilbertIndex index, long mergeSquareDistance, int unmergeableSize)
 		{
@@ -76,15 +57,10 @@ namespace Clustering
 		public Classification<UnsignedPoint, string> Classify()
 		{
 			// 1. Get the Neighborhood density for all points and rank them by that density, from densest to most diffuse.
-			var hd = new HilbertDensity(Index, NeighborCount) { 
-				NeighborhoodRankWeight = NeighborhoodRankWeight, 
-				NeighborhoodCountPercentile = 20, //TODO: Add parameter so caller can set this
-				NeighborCountWindowSize = 100     //TODO: Add parameter so caller can set this
-			};
-			var ranks = hd.NeighborhoodRank(WindowSize);
+			var dm = new DensityMeter(Index, MergeSquareDistance * 2 / 5);
 
-			// 2. Sort all pairs of points that are adjacent in the Hilbert ordering by the lesser of the neighborhood 
-			//    density rank for the two points, from high density (low rank) to low density (high rank).
+			// 2. Sort all pairs of points that are adjacent in the Hilbert ordering by the greater of the 
+			//    density for the two points.
 			// 3. Evaluate the distances between pairs of points.
 			//    If their distance is less than MergeSquareDistance, they may be merged unless
 			//    that would cause two clusters each larger than UnmergeableSize to be merged.
@@ -95,10 +71,13 @@ namespace Clustering
 				{
 					Point1 = points[i],
 					Point2 = points[i + 1],
-					DensityRank = Math.Min(ranks[i], ranks[i + 1])
+					Density = Math.Max(
+						dm.EstimatedDensity(points[i],dm.Distances.WindowRadius), 
+						dm.EstimatedDensity(points[i + 1], dm.Distances.WindowRadius)
+					)
 				})
-				.Where(ppd => ppd.Point1.SquareDistanceCompare(ppd.Point2, MergeSquareDistance) <= 0)
-				.OrderBy(ppd => ppd.DensityRank);
+				.Where(ppd => ppd.Point1.SquareDistanceCompare(ppd.Point2, MergeSquareDistance) <= 0) //TODO: Use dm.Distances???
+				.OrderByDescending(ppd => ppd.Density);
 
 			// 4. Merge clusters that pass the test.
 			foreach (var orderedMerge in orderedMerges)

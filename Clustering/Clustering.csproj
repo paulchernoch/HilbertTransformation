@@ -43,6 +43,8 @@
     <Compile Include="HilbertClassifier.cs" />
     <Compile Include="HilbertDensity.cs" />
     <Compile Include="DensityClassifier.cs" />
+    <Compile Include="DensityMeter.cs" />
+    <Compile Include="DistanceMemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

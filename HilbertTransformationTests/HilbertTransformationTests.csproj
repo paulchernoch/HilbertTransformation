@@ -44,6 +44,9 @@
     <Compile Include="OptimalIndexTests.cs" />
     <Compile Include="HilbertClassifierTests.cs" />
     <Compile Include="HilbertDensityTests.cs" />
+    <Compile Include="KendallTauCorrelation.cs" />
+    <Compile Include="KendallTauCorrelationTests.cs" />
+    <Compile Include="DensityMeterTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

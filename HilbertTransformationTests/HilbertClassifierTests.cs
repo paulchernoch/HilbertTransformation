@@ -581,7 +581,7 @@ namespace HilbertTransformationTests
 			var message = "";
 			foreach (var pair in histogram)
 			{
-				message += $"Quality: {pair.Key} {pair.Value} times\n";
+				message += $"Quality: {pair.Value} times {pair.Key} \n";
 			}
 			Console.WriteLine(message);
 			Assert.AreEqual(repeatCount, histogram[SplitQuality.PerfectSplit], message);
@@ -665,10 +665,7 @@ namespace HilbertTransformationTests
 				var count = cc.Count(hIndex.SortedPoints);
 
 				var unmergeableSize = expectedClusters.NumPoints / 6;
-				var densityClassifier = new DensityClassifier(hIndex, count.MaximumSquareDistance, unmergeableSize)
-				{
-					NeighborhoodRankWeight = 3
-				};
+				var densityClassifier = new DensityClassifier(hIndex, count.MaximumSquareDistance, unmergeableSize);
 
 				actualClusters = densityClassifier.Classify();
 			}
@@ -696,7 +693,7 @@ namespace HilbertTransformationTests
 			else // Assume correct number of clusters.
 				qualitativeResult = SplitQuality.BadSplit;
 
-			Console.WriteLine($"  Quality: {qualitativeResult}  Comparison: {comparison}");
+			Console.Write($"  Quality: {qualitativeResult}  Comparison: {comparison}");
 			
 			return new Tuple<ClusterMetric<UnsignedPoint, string>, int, int, SplitQuality>(
 				comparison, 
