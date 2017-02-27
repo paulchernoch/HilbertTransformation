@@ -41,7 +41,6 @@
     <Compile Include="KeySorter.cs" />
     <Compile Include="ClosestCluster.cs" />
     <Compile Include="HilbertClassifier.cs" />
-    <Compile Include="HilbertDensity.cs" />
     <Compile Include="DensityClassifier.cs" />
     <Compile Include="DensityMeter.cs" />
     <Compile Include="DistanceMemo.cs" />

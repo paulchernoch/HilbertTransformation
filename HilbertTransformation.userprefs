@@ -6,9 +6,8 @@
       <File FileName="Clustering/DensityMeter.cs" Line="90" Column="39" />
       <File FileName="Clustering/DistanceMemo.cs" Line="201" Column="24" />
       <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="239" Column="5" />
-      <File FileName="HilbertTransformationTests/HilbertDensityTests.cs" Line="28" Column="70" />
       <File FileName="Clustering/HilbertIndex.cs" Line="70" Column="1" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="692" Column="51" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="689" Column="4" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -21,7 +20,6 @@
                 <Node name="HilbertClassifierTests" expanded="True">
                   <Node name="Classify_TwoClusters70PctOverlapLoop" selected="True" />
                 </Node>
-                <Node name="HilbertDensityTests" expanded="True" />
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="KendallTauCorrelationTests" expanded="True" />
                 <Node name="OptimalIndexTests" expanded="True" />
