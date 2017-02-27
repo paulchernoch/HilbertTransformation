@@ -131,6 +131,11 @@ namespace Clustering
 			}
 
 			var numPoints = points.Count();
+			//TODO: This is an N*Log(N) sort, which we can avoid. Assume that K ≤ √N and perform a Top-N select
+			//      which gives us the most likely region for the jump in distances that we seek.
+			//      Search for the jump in that data and derive a cluster estimate K from the shorter list.
+			//      If we do this, the sort requires N*Log(√N).
+			//      If we have some other upper limit of K' given to us, we can use that and get N*Log(K') performance.
 			var sortedDistances = neighborDistances.OrderBy(p => p).ToList();
 			var noiseSkipByToUse = 0;
 

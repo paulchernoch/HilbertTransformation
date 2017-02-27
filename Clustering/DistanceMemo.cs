@@ -10,6 +10,11 @@ namespace Clustering
 	/// 
 	/// Only memoize short distances, since it is mostly near neighbors that we care about studying.
 	/// </summary>
+	/// <remarks>
+	/// When testing the effects of varying the WindowRadius on the accuracy of DensityMeter or some other
+	/// purpose, start with a higher value of WindowRadius and then decrease it, since that will require
+	/// that fewer distance comparisons be repeated.
+	/// </remarks>
 	public class DistanceMemo
 	{
 		/// <summary>
@@ -41,16 +46,36 @@ namespace Clustering
 		/// </summary>
 		public long NeighborhoodRadius { get; private set; }
 
-		public int WindowRadius { get; private set; }
+		private int _windowRadius = 0;
+		/// <summary>
+		/// Gets/sets the window radius. When counting a point's neighbors in a window, it is compared
+		/// to this many other points on each side of it in along the HilbertIndex, or 2*WindowRadius points in all.
+		/// 
+		/// If this radius is increased, AllInWindowMeasured is set to false, until such time as the distances to 
+		/// more neighbors are measured.
+		/// </summary>
+		public int WindowRadius { 
+			get { return _windowRadius; }
+			set { 
+				if (value > _windowRadius) AllInWindowMeasured = false;
+				_windowRadius = value;
+			} 
+		}
 
-		public bool AllInWindowMeasured { get; private set; } = false;
+		/// <summary>
+		/// Once every point has been compared to every point in its window, this is set to true.
+		/// 
+		/// If the WindowRadius is subsequently increased, this will be set to false.
+		/// </summary>
+		/// <value><c>true</c> if the distance to all points in the window for every point have been measured; otherwise, <c>false</c>.</value>
+		bool AllInWindowMeasured { get; set; } = false;
 
 		/// <summary>
 		/// Order the points whose distances are to be measured.
 		/// 
 		/// A point's position in SortedOrder will be used to identify it in the Distances array and the AllMeasured array.
 		/// </summary>
-		HilbertIndex Index { get; set; }
+		public HilbertIndex Index { get; private set; }
 
 		/// <summary>
 		/// Number of points in the index.
@@ -205,7 +230,12 @@ namespace Clustering
 			var start = center - WindowRadius;
 			var stop = center + WindowRadius;
 			return Distances[iPoint1].Keys.Count(i => i >= start && i <= stop);
-			//return Distances[iPoint1].Count; // <-- This would be all points in neighborhood, not just those in the window.
+
+			// If we wanted all points in the neighborhood, not just in the window, we would do this:
+			//   return Distances[iPoint1].Count; 
+			// Why don't we? Though in many cases it may lead to a mo accurate value for some points,
+			// it would worsen the correlation. If most points undercount, and some are accurate, that
+			// would be inferior.
 		}
 
 		/// <summary>

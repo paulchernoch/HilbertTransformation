@@ -23,7 +23,7 @@ namespace Clustering
 		/// <summary>
 		/// Order the points whose density is to be measured according to the Hilbert curve.
 		/// </summary>
-		HilbertIndex Index { get; set; }
+		public HilbertIndex Index { get; private set; }
 
 		public int Count { get { return Index.SortedPoints.Count; } }
 
@@ -55,7 +55,7 @@ namespace Clustering
 		{
 			Index = index;
 			NeighborhoodRadius = neighborhoodRadius;
-			Estimator = distances => distances.Count(d => d <= NeighborhoodRadius);
+			Estimator = null; // distances => distances.Count(d => d <= NeighborhoodRadius);
 			Distances = new DistanceMemo(Index, neighborhoodRadius, memoWindowRadius);
 		}
 
@@ -84,20 +84,24 @@ namespace Clustering
 		/// half to the left and half to the right of the given point along the Hilbert curve.</param>
 		public long EstimatedDensity(HilbertPoint point, int windowRadius)
 		{
-			// If our windowRadius and the one used by Distances is the same, just use the 
-			// count of neighbors, since we have optimized that case.
-			if (Distances.WindowRadius == windowRadius)
+			if (Estimator != null)
+			{
+				var windowSize = Math.Min(Count, 2 * windowRadius + 1);
+				var iPoint1 = Index.SortedPosition(point);
+				var start = Math.Max(0, iPoint1 - windowRadius);
+				start = Math.Min(start, Count - windowSize);
+				return Estimator(
+					Enumerable
+					.Range(start, windowSize)
+					.Where(i => i != iPoint1)
+					.Select(iPoint2 => Distances.Measure(iPoint1, iPoint2, false)));
+			}
+			else {
+				// If our windowRadius and the one used by Distances are not the same, adjust the memo.
+				if (Distances.WindowRadius != windowRadius)
+					Distances.WindowRadius = windowRadius;
 				return Distances.NeighborsInWindow(point);
-
-			var windowSize = Math.Min(Count, 2 * windowRadius + 1);
-			var iPoint1 = Index.SortedPosition(point);
-			var start = Math.Max(0,iPoint1 - windowRadius);
-			start = Math.Min(start, Count - windowSize);
-			return Estimator(
-				Enumerable
-				.Range(start, windowSize)
-				.Where(i => i != iPoint1)
-				.Select(iPoint2 => Distances.Measure(iPoint1, iPoint2, false)));
+			}
 		}
 
 		public class PointDensityRank

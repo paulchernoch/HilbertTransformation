@@ -261,7 +261,10 @@ namespace Clustering
 				.OrderBy(p => c1.Measure(p))
 				.First()
 			;
-			var closest = points1.Select(p1 => new ClosestPair(color1, p1, color2, p2, p1.Measure(p2))).OrderBy(cp => cp.SquareDistance).First();
+			var closest = points1
+				.Select(p1 => new ClosestPair(color1, p1, color2, p2, p1.Measure(p2)))
+				.OrderBy(cp => cp.SquareDistance)
+				.First();
 			return closest.Swap(color1);
 		}
 
