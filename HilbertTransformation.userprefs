@@ -1,13 +1,16 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="29" Column="4" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="8" Column="32" />
       <File FileName="Clustering/DensityClassifier.cs" Line="58" Column="4" />
       <File FileName="HilbertTransformationTests/DensityMeterTests.cs" Line="44" Column="46" />
       <File FileName="Clustering/DensityMeter.cs" Line="90" Column="39" />
       <File FileName="Clustering/DistanceMemo.cs" Line="201" Column="24" />
       <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="239" Column="5" />
       <File FileName="Clustering/HilbertIndex.cs" Line="70" Column="1" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="689" Column="4" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="148" Column="10" />
+      <File FileName="HilbertTransformation/FastHilbert.cs" Line="348" Column="27" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -18,7 +21,7 @@
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="DensityMeterTests" expanded="True" />
                 <Node name="HilbertClassifierTests" expanded="True">
-                  <Node name="Classify_TwoClusters70PctOverlapLoop" selected="True" />
+                  <Node name="Classify_Finnish_D256_N1024_K16" selected="True" />
                 </Node>
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="KendallTauCorrelationTests" expanded="True" />

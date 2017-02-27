@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Clustering;
 using HilbertTransformation;
 using HilbertTransformationTests.Data;
@@ -36,6 +37,16 @@ namespace HilbertTransformationTests
 		public void Classify_50000N_100K_50D()
 		{
 			ClassifyCase(50000, 100, 50);
+		}
+
+		/// <summary>
+		/// Classifies a dataset from a university in Finland.
+		/// See https://cs.joensuu.fi/sipu/datasets/dim256.txt.
+		/// </summary>
+		[Test]
+		public void Classify_Finnish_D256_N1024_K16()
+		{
+			ClassifyCase(Datasets.D256_N1024_K16_Classified());
 		}
 
 		[Test]
@@ -496,6 +507,23 @@ namespace HilbertTransformationTests
 			Console.WriteLine(message);
 			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
 			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}"); 
+		}
+
+		private void ClassifyCase(Classification<UnsignedPoint,string> expectedClusters, double acceptableBCubed = 0.99)
+		{
+			var maxCoordinate = expectedClusters.Points().Select(p => p.MaxCoordinate).Max();
+			var bitsPerDimension = ((int)maxCoordinate).SmallestPowerOfTwo();
+			var classifier = new HilbertClassifier(expectedClusters.Points(), bitsPerDimension);
+
+			classifier.IndexConfig.UseSample = true;
+
+			var actualClusters = classifier.Classify();
+			var comparison = expectedClusters.Compare(actualClusters);
+
+			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
+			Console.WriteLine(message);
+			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
+			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
 		}
 
 		/// <summary>

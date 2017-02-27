@@ -46,6 +46,7 @@
     <Compile Include="KendallTauCorrelation.cs" />
     <Compile Include="KendallTauCorrelationTests.cs" />
     <Compile Include="DensityMeterTests.cs" />
+    <Compile Include="Data\Datasets.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
