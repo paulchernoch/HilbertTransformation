@@ -5,6 +5,9 @@ using HilbertTransformation;
 
 namespace Clustering
 {
+	// For paper: "Clustering via Nonparametric Density Estimation: The R Package pdfCluster"
+	// by Adelchi Azzalini of Universit`a di Padova and Giovanna Menardi of Universit`a di Padova
+
 	/// <summary>
 	/// Measure the local density of points in the neighborhood of a given point in multidimensional space
 	/// using a HilbertIndex.

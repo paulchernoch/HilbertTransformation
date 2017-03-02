@@ -1,13 +1,13 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/DensityMeter.cs" Line="54" Column="13" />
+      <File FileName="Clustering/DensityMeter.cs" Line="9" Column="74" />
       <File FileName="Clustering/DistanceMemo.cs" Line="71" Column="34" />
       <File FileName="Clustering/DensityClassifier.cs" Line="76" Column="55" />
       <File FileName="HilbertTransformationTests/DensityMeterTests.cs" Line="135" Column="45" />
       <File FileName="Clustering/Classification.cs" Line="348" Column="7" />
-      <File FileName="Clustering/ClosestCluster.cs" Line="482" Column="19" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="140" Column="29" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="366" Column="46" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="231" Column="4" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -16,13 +16,14 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="DensityMeterTests" expanded="True">
-                  <Node name="DensityCorrelationVariations" selected="True" />
-                </Node>
+                <Node name="CartesianDistanceTests" expanded="True" />
+                <Node name="DensityMeterTests" expanded="True" />
                 <Node name="HilbertClassifierTests" expanded="True" />
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="KendallTauCorrelationTests" expanded="True" />
-                <Node name="OptimalIndexTests" expanded="True" />
+                <Node name="OptimalIndexTests" expanded="True">
+                  <Node name="DistanceDistribution" selected="True" />
+                </Node>
               </Node>
             </Node>
           </Node>
