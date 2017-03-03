@@ -4,10 +4,12 @@
       <File FileName="Clustering/DensityMeter.cs" Line="9" Column="74" />
       <File FileName="Clustering/DistanceMemo.cs" Line="71" Column="34" />
       <File FileName="Clustering/DensityClassifier.cs" Line="76" Column="55" />
-      <File FileName="HilbertTransformationTests/DensityMeterTests.cs" Line="135" Column="45" />
+      <File FileName="HilbertTransformationTests/DensityMeterTests.cs" Line="112" Column="53" />
       <File FileName="Clustering/Classification.cs" Line="348" Column="7" />
       <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="366" Column="46" />
       <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="231" Column="4" />
+      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="159" Column="9" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="646" Column="6" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -18,12 +20,12 @@
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="CartesianDistanceTests" expanded="True" />
                 <Node name="DensityMeterTests" expanded="True" />
-                <Node name="HilbertClassifierTests" expanded="True" />
+                <Node name="HilbertClassifierTests" expanded="True">
+                  <Node name="Classify_TwoClusters50PctOverlapLoop" selected="True" />
+                </Node>
                 <Node name="HilbertPointTests" expanded="True" />
                 <Node name="KendallTauCorrelationTests" expanded="True" />
-                <Node name="OptimalIndexTests" expanded="True">
-                  <Node name="DistanceDistribution" selected="True" />
-                </Node>
+                <Node name="OptimalIndexTests" expanded="True" />
               </Node>
             </Node>
           </Node>

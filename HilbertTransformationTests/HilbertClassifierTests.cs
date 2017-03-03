@@ -122,6 +122,13 @@ namespace HilbertTransformationTests
 			ClassifyTwoClustersCase(5000, 100, 75.0);
 		}
 
+		[Test]
+		public void Classify_TwoClustersVaryingOverlap()
+		{
+			var overlapPercents = new[] { 0.0, 45.0, 50.0, 55.0, 60.0, 62.5, 65.0, 67.5, 70.0, 72.5, 75.0 }; 
+			ClassifyTwoClustersReport(20, 5000, 100, overlapPercents);
+		}
+
 		/// <summary>
 		/// Perform classifications for many sizes of problem and record the timings.
 		/// </summary>
@@ -613,6 +620,37 @@ namespace HilbertTransformationTests
 			}
 			Console.WriteLine(message);
 			Assert.AreEqual(repeatCount, histogram[SplitQuality.PerfectSplit], message);
+		}
+
+		private string ClassifyTwoClustersReport(int repeatCount, int numPoints, int dimensions, double[] overlapPercents,
+		  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptablePrecision = 0.98, bool useDensityClassifier = true)
+		{
+			var report = $"Repeat count = {repeatCount}  N = {numPoints}  D = {dimensions}  Max Coord = {maxCoordinate}  Acc Prec = {acceptablePrecision}\n\nOverlap Percent,Perfect Split,Good Split,Good Over-split,Fair Over-split,Bad Split,Unsplit\n";
+			foreach (var overlapPercent in overlapPercents)
+			{
+				var histogram = new Dictionary<SplitQuality, int>()
+				{
+					{ SplitQuality.BadOverSplit, 0 },
+					{ SplitQuality.BadSplit, 0 },
+					{ SplitQuality.GoodOverSplit, 0 },
+					{ SplitQuality.FairOverSplit, 0 },
+					{ SplitQuality.GoodSplit, 0 },
+					{ SplitQuality.PerfectSplit, 0 },
+					{ SplitQuality.Unsplit, 0 }
+				};
+
+				for (var iRepeat = 0; iRepeat < repeatCount; iRepeat++)
+				{
+					var results = ClassifyTwoClustersHelper(numPoints, dimensions, overlapPercent, clusterSizeVariation, maxCoordinate, acceptablePrecision, useDensityClassifier);
+					histogram[results.Item4] = histogram[results.Item4] + 1;
+				}
+				var h = histogram;
+				report += $"{overlapPercent},{h[SplitQuality.PerfectSplit]},{h[SplitQuality.GoodSplit]},{h[SplitQuality.GoodOverSplit]},{h[SplitQuality.FairOverSplit]},{h[SplitQuality.BadSplit]},{h[SplitQuality.Unsplit]}\n";
+
+				Console.WriteLine(report);
+			}
+			Console.WriteLine("DONE!");
+			return report;
 		}
 
 		public enum SplitQuality
