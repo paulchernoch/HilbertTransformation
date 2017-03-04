@@ -38,6 +38,15 @@ namespace HilbertTransformationTests.Data
 		public int MinClusterSize = 100;
 
 		/// <summary>
+		/// If not empty, each created cluster will be assigned a size from this array, in the order they are created.
+		/// 
+		/// If more clusters are made than there are elements in this array, it will loop back to the beginning.
+		/// If fewer, some values will be unused. 
+		/// </summary>
+		/// <value>The cluster sizes.</value>
+		public int[] ClusterSizes { get; set; } = new int[0];
+
+		/// <summary>
 		/// The percentage of uniform randomly distributed extra points added to the Gaussian data to confuse the clustering algorithm. 
 		/// </summary>
 		public double NoisePercentage;
@@ -139,7 +148,12 @@ namespace HilbertTransformationTests.Data
 			foreach (var clusterCenter in centerGenerator.Take(ClusterCount).Where(ctr => ctr != null))
 			{
 				var centerPoint = new UnsignedPoint(clusterCenter);
-				var clusterSize = r.Next(MinClusterSize, MaxClusterSize);
+				// The cluster size may be random, or come from ClusterSizes.
+				int clusterSize;
+				if (ClusterSizes.Length > 0)
+					clusterSize = ClusterSizes[iCluster % ClusterSizes.Length];
+				else
+				    clusterSize = r.Next(MinClusterSize, MaxClusterSize);
 				var pointGenerator = new EllipsoidalGenerator(clusterCenter, RandomDoubles(Dimensions, MinDistanceStdDev, MaxDistanceStdDev, r), Dimensions);
 				var clusterId = iCluster.ToString();
 				foreach (var iPoint in Enumerable.Range(1, clusterSize))

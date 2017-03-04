@@ -40,6 +40,56 @@ namespace HilbertTransformationTests
 		}
 
 		/// <summary>
+		/// Test whether a wide range of cluster densities in the same population can be handled by the clusterer.
+		/// The sparsest and densest clusters have densities that differs by a factor of fifty.
+		/// 
+		/// The clusters have a continuous range of sizes (and hence densities), from 100 points to 5000 points.
+		/// </summary>
+		[Test]
+		public void Classify_DensitySpread()
+		{
+			var clusterCount = 50;
+			var dimensions = 100;
+			var maxCoordinate = 1000;
+			var acceptableBCubed = 0.99;
+			var clusterSizes = new int[50];
+			foreach (var i in Enumerable.Range(0, 50))
+				clusterSizes[i] = 100 + (100 * i);
+			
+			var minClusterSize = clusterSizes.Min();
+			var maxClusterSize = clusterSizes.Max();
+			var data = new GaussianClustering
+			{
+				ClusterCount = clusterCount,
+				Dimensions = dimensions,
+				MaxCoordinate = maxCoordinate,
+				MinClusterSize = minClusterSize,
+				MaxClusterSize = maxClusterSize,
+				ClusterSizes = clusterSizes
+			};
+
+			ClusterCore(data, acceptableBCubed);
+		}
+
+		private void ClusterCore(GaussianClustering data, double acceptableBCubed)
+		{
+			var expectedClusters = data.MakeClusters();
+			var classifier = new HilbertClassifier(expectedClusters.Points(), 10);
+
+			classifier.IndexConfig.UseSample = true;
+
+			var actualClusters = classifier.Classify();
+			var comparison = expectedClusters.Compare(actualClusters);
+
+			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
+			Console.WriteLine(message);
+			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
+			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
+
+		}
+
+
+		/// <summary>
 		/// Classifies a dataset from a university in Finland.
 		/// See https://cs.joensuu.fi/sipu/datasets/dim256.txt.
 		/// </summary>
@@ -126,7 +176,7 @@ namespace HilbertTransformationTests
 		public void Classify_TwoClustersVaryingOverlap()
 		{
 			var overlapPercents = new[] { 0.0, 45.0, 50.0, 55.0, 60.0, 62.5, 65.0, 67.5, 70.0, 72.5, 75.0 }; 
-			ClassifyTwoClustersReport(20, 5000, 100, overlapPercents);
+			ClassifyTwoClustersReport(50, 5000, 100, overlapPercents);
 		}
 
 		/// <summary>
@@ -502,18 +552,7 @@ namespace HilbertTransformationTests
 				MinClusterSize = minClusterSize,
 				MaxClusterSize = maxClusterSize
 			};
-			var expectedClusters = data.MakeClusters();
-			var classifier = new HilbertClassifier(expectedClusters.Points(), 10);
-
-			classifier.IndexConfig.UseSample = true;
-
-			var actualClusters = classifier.Classify();
-			var comparison = expectedClusters.Compare(actualClusters);
-
-			var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
-			Console.WriteLine(message);
-			Console.WriteLine($"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}");
-			Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}"); 
+			ClusterCore(data, acceptableBCubed);
 		}
 
 		private void ClassifyCase(Classification<UnsignedPoint,string> expectedClusters, double acceptableBCubed = 0.99)
