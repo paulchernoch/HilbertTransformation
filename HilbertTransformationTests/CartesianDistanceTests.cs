@@ -30,7 +30,7 @@ namespace HilbertTransformationTests
 			var repetitions = 100000;
 			var naiveTime = Time(() => SquareDistanceNaive(x, y), repetitions);
 			var distributeTime = Time(() => SquareDistanceDistributed(x, y), repetitions);
-var branchTime = Time(() => SquareDistanceBranching(x, y), repetitions);
+			var branchTime = Time(() => SquareDistanceBranching(x, y), repetitions);
 			var dotProductTime = Time(() => SquareDistanceDotProduct(x, y, xMag2, yMag2, xMax, yMax), repetitions);
 
 			Console.Write($@"

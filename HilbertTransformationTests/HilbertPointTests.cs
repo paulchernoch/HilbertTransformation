@@ -204,6 +204,89 @@ namespace HilbertTransformationTests
 			return sb.ToString();
 		}
 
+		/// <summary>
+		/// Make sure that SquareDistanceCompare returns the correct result.
+		/// </summary>
+		[Test]
+		public void SquareDistanceCompareValidation()
+		{
+			var repeats = 25;
+			var avg = Enumerable.Range(1, repeats).Select(i => SquareDistanceCompareValidationCase()).Average();
+			Console.WriteLine($"For {repeats} tries, Average usage of optimization is {avg} %");
+		}
+
+		public double SquareDistanceCompareValidationCase()
+		{
+			var correctResult = 0;
+			var wrongResult = 0;
+			var totalComparisons = 10000;
+			var shortTrianagulatable = 0;
+			var shortNotTrianagulatable = 0;
+			var longTrianagulatable = 0;
+			var longNotTrianagulatable = 0;
+
+			// 1. Make test data.
+			var bitsPerDimension = 10;
+			var data = new GaussianClustering
+			{
+				ClusterCount = 100,
+				Dimensions = 100,
+				MaxCoordinate = (1 << bitsPerDimension) - 1,
+				MinClusterSize = 50,
+				MaxClusterSize = 150
+			};
+			var clusters = data.MakeClusters();
+
+			// 2. Create HilbertIndex for points.
+			var hIndex = new HilbertIndex(clusters, bitsPerDimension);
+
+			// 3. Deduce the characteristic distance.
+			var counter = new ClusterCounter
+			{
+				OutlierSize = 5,
+				NoiseSkipBy = 10
+			};
+			var count = counter.Count(hIndex.SortedPoints);
+			var mergeDistance = count.MaximumSquareDistance;
+			var longDistance = 5 * mergeDistance;
+
+			// 4. Select random pairs of the HilbertPoints points and see how many distance comparisons yield the correct result.
+			var rng = new FastRandom();
+			var points = hIndex.SortedPoints.ToList();
+
+			for (var i = 0; i < totalComparisons; i++)
+			{
+				var p1 = points[rng.Next(points.Count)];
+				var p2 = points[rng.Next(points.Count)];
+				var d = p1.Measure(p2);
+				if (d.CompareTo(mergeDistance) == p1.SquareDistanceCompare(p2, mergeDistance))
+					correctResult++;
+				else
+					wrongResult++;
+
+				if (d.CompareTo(longDistance) == p1.SquareDistanceCompare(p2, longDistance))
+					correctResult++;
+				else
+					wrongResult++;
+
+				if (p1.Triangulatable(p2, mergeDistance))
+					shortTrianagulatable++;
+				else
+					shortNotTrianagulatable++;
+
+				if (p1.Triangulatable(p2, longDistance))
+					longTrianagulatable++;
+				else
+					longNotTrianagulatable++;
+			}
+			var shortPct = 100.0 * shortTrianagulatable / (shortTrianagulatable + shortNotTrianagulatable);
+			var longPct = 100.0 * longTrianagulatable / (longTrianagulatable + longNotTrianagulatable);
+			Console.WriteLine($"Triangulatable? \n    Short: {shortPct} % Yes {shortTrianagulatable}, No {shortNotTrianagulatable}\n    Long: {longPct} % Yes {longTrianagulatable}, No {longNotTrianagulatable}");
+			Assert.AreEqual(wrongResult, 0, $"{correctResult} correct, {wrongResult} wrong");
+
+			return shortPct;
+		}
+
 		[Test]
 		public void SquareDistanceCompareAverage()
 		{

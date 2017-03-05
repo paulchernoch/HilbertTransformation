@@ -341,7 +341,7 @@ namespace HilbertTransformation
 		/// +1 if the square Distance is greater than squareDistance. </returns>
 		/// <param name="other">Other.</param>
 		/// <param name="squareDistance">Square distance.</param>
-		public int SquareDistanceCompare(UnsignedPoint other, long squareDistance)
+		public virtual int SquareDistanceCompare(UnsignedPoint other, long squareDistance)
 		{
 			// If two points are on a one-dimensional number line, then if they are both on the same side of the origin
 			// (both positive, for example), then the difference between their distances from the origin 
@@ -368,11 +368,14 @@ namespace HilbertTransformation
 			// without having to compute the actual distance.
 			// Because of the poor contrast in distances between points in high-dimensional space, this
 			// optimization is likely to become less useful as the number of dimensions increases.
+			// 
+			// First: Lower bound on distance
 			var delta = Magnitude - other.Magnitude;
 			var low = (long)Math.Floor(delta * delta);
 			if (squareDistance < low)
 				return 1;
 
+			// Second: Upper bound on distance
 			var high = SquareMagnitude + other.SquareMagnitude;
 			if (squareDistance > high)
 				return -1;

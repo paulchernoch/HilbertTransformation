@@ -41,6 +41,7 @@
     <Compile Include="Random\FastRandom.cs" />
     <Compile Include="Random\RandomPermutation.cs" />
     <Compile Include="Random\Permutation.cs" />
+    <Compile Include="Triangulator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Random\" />

@@ -1,16 +1,10 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformationTests/Data/GaussianClustering.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/DensityMeter.cs" Line="9" Column="74" />
-      <File FileName="HilbertTransformationTests/Data/GaussianClustering.cs" Line="1" Column="1" />
-      <File FileName="Clustering/DistanceMemo.cs" Line="71" Column="34" />
-      <File FileName="Clustering/DensityClassifier.cs" Line="76" Column="55" />
-      <File FileName="HilbertTransformationTests/DensityMeterTests.cs" Line="112" Column="53" />
-      <File FileName="Clustering/Classification.cs" Line="348" Column="7" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="366" Column="46" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="231" Column="4" />
-      <File FileName="HilbertTransformationTests/OptimalIndexTests.cs" Line="159" Column="9" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="137" Column="19" />
+      <File FileName="HilbertTransformation/Triangulator.cs" Line="93" Column="60" />
+      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="27" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="226" Column="35" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="369" Column="3" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -21,10 +15,10 @@
               <Node name="HilbertTransformationTests" expanded="True">
                 <Node name="CartesianDistanceTests" expanded="True" />
                 <Node name="DensityMeterTests" expanded="True" />
-                <Node name="HilbertClassifierTests" expanded="True">
-                  <Node name="Classify_TwoClustersVaryingOverlap" selected="True" />
+                <Node name="HilbertClassifierTests" expanded="True" />
+                <Node name="HilbertPointTests" expanded="True">
+                  <Node name="SquareDistanceCompareValidation" selected="True" />
                 </Node>
-                <Node name="HilbertPointTests" expanded="True" />
                 <Node name="KendallTauCorrelationTests" expanded="True" />
                 <Node name="OptimalIndexTests" expanded="True" />
               </Node>

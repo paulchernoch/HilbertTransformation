@@ -35,6 +35,15 @@ namespace HilbertTransformation
         /// </summary>
         public int BitsPerDimension { get; private set; }
 
+		Triangulator _triangulation;
+		Triangulator Triangulation { 
+			get {
+				if (_triangulation == null)
+					_triangulation = new Triangulator(this, BitsPerDimension);
+				return _triangulation;
+			} 
+		}
+
         #endregion
 
         #region Constructors and helpers
@@ -345,6 +354,37 @@ namespace HilbertTransformation
         {
             points.Sort();
         }
+
+		public override int SquareDistanceCompare(UnsignedPoint other, long squareDistance)
+		{
+			var hPoint = other as HilbertPoint;
+			if (hPoint == null)
+				return base.SquareDistanceCompare(other, squareDistance);
+			if (Triangulation.ArePointsFartherForSure(hPoint.Triangulation, squareDistance))
+				return 1;
+			if (Triangulation.ArePointsNearerForSure(hPoint.Triangulation, squareDistance))
+				return -1;
+			return Measure(other).CompareTo(squareDistance);
+		}
+
+		/// <summary>
+		/// Can Triangulation bypass the need to compute the ful distance?
+		/// 
+		/// THis method is only used for testing.
+		/// </summary>
+		/// <param name="other">Other.</param>
+		/// <param name="squareDistance">Square distance.</param>
+		public bool Triangulatable(UnsignedPoint other, long squareDistance)
+		{
+			var hPoint = other as HilbertPoint;
+			if (hPoint == null)
+				return false;
+			if (Triangulation.ArePointsFartherForSure(hPoint.Triangulation, squareDistance))
+				return true;
+			if (Triangulation.ArePointsNearerForSure(hPoint.Triangulation, squareDistance))
+				return true;
+			return false;
+		}
 
 		#endregion
 
