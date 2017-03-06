@@ -205,21 +205,58 @@ namespace HilbertTransformationTests
 		}
 
 		/// <summary>
-		/// Make sure that SquareDistanceCompare returns the correct result.
+		/// Make sure that SquareDistanceCompare returns the correct result, and if every test succeeds,
+		/// report on the Average percentage of the time that the SquareDistanceCompare optimization could be used.
 		/// </summary>
 		[Test]
 		public void SquareDistanceCompareValidation()
 		{
 			var repeats = 25;
-			var avg = Enumerable.Range(1, repeats).Select(i => SquareDistanceCompareValidationCase()).Average();
+			var avg = Enumerable.Range(1, repeats).Select(i => SquareDistanceCompareValidationCase(10)).Average();
 			Console.WriteLine($"For {repeats} tries, Average usage of optimization is {avg} %");
 		}
 
-		public double SquareDistanceCompareValidationCase()
+		/// <summary>
+		/// Vary the number of triangulation points used when comparing distances
+		/// to see where the point of diminishing returns is.
+		/// </summary>
+		[Test]
+		public void SquareDistanceCompareVaryTriangulation()
+		{
+			/*
+			    Sample output:
+				    For 25 tries, Triangulating with 2 points, Average usage of optimization is 37.1748 %
+				    For 25 tries, Triangulating with 4 points, Average usage of optimization is 40.8068 %
+				    For 25 tries, Triangulating with 6 points, Average usage of optimization is 44.0816 %
+				    For 25 tries, Triangulating with 8 points, Average usage of optimization is 45.6396 %
+				    For 25 tries, Triangulating with 10 points, Average usage of optimization is 47.7976 %
+				    For 25 tries, Triangulating with 12 points, Average usage of optimization is 48.8452 %
+				    For 25 tries, Triangulating with 14 points, Average usage of optimization is 50.2412 %
+				    For 25 tries, Triangulating with 16 points, Average usage of optimization is 50.6484 %
+				    For 25 tries, Triangulating with 18 points, Average usage of optimization is 50.52 % 
+			 */
+
+			var repeats = 25;
+			var triangulationValues = new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18 };
+			var report = "";
+			foreach (var numTriangulationPoints in triangulationValues)
+			{
+				var avg = Enumerable.Range(1, repeats).Select(i => SquareDistanceCompareValidationCase(numTriangulationPoints)).Average();
+				var record = $"    For {repeats} tries, Triangulating with {numTriangulationPoints} points, Average usage of optimization is {avg} %\n";
+				report += record;
+				Console.WriteLine(report);
+			}
+			Console.WriteLine("\n\nFinal report:\n");
+			Console.WriteLine(report);
+		}
+
+		public double SquareDistanceCompareValidationCase(int numTriangulationPoints)
 		{
 			var correctResult = 0;
 			var wrongResult = 0;
 			var totalComparisons = 10000;
+			var extraShortTrianagulatable = 0;
+			var extraShortNotTrianagulatable = 0;
 			var shortTrianagulatable = 0;
 			var shortNotTrianagulatable = 0;
 			var longTrianagulatable = 0;
@@ -239,6 +276,7 @@ namespace HilbertTransformationTests
 
 			// 2. Create HilbertIndex for points.
 			var hIndex = new HilbertIndex(clusters, bitsPerDimension);
+			hIndex.SetTriangulation(numTriangulationPoints);
 
 			// 3. Deduce the characteristic distance.
 			var counter = new ClusterCounter
@@ -269,6 +307,11 @@ namespace HilbertTransformationTests
 				else
 					wrongResult++;
 
+				if (p1.Triangulatable(p2, mergeDistance/2))
+					extraShortTrianagulatable++;
+				else
+					extraShortNotTrianagulatable++;
+
 				if (p1.Triangulatable(p2, mergeDistance))
 					shortTrianagulatable++;
 				else
@@ -279,9 +322,10 @@ namespace HilbertTransformationTests
 				else
 					longNotTrianagulatable++;
 			}
+			var extraShortPct = 100.0 * extraShortTrianagulatable / (extraShortTrianagulatable + extraShortNotTrianagulatable);
 			var shortPct = 100.0 * shortTrianagulatable / (shortTrianagulatable + shortNotTrianagulatable);
 			var longPct = 100.0 * longTrianagulatable / (longTrianagulatable + longNotTrianagulatable);
-			Console.WriteLine($"Triangulatable? \n    Short: {shortPct} % Yes {shortTrianagulatable}, No {shortNotTrianagulatable}\n    Long: {longPct} % Yes {longTrianagulatable}, No {longNotTrianagulatable}");
+			Console.WriteLine($"Triangulatable? \n    XS: {extraShortPct} % \n    Short: {shortPct} % Yes {shortTrianagulatable}, No {shortNotTrianagulatable}\n    Long: {longPct} % Yes {longTrianagulatable}, No {longNotTrianagulatable}");
 			Assert.AreEqual(wrongResult, 0, $"{correctResult} correct, {wrongResult} wrong");
 
 			return shortPct;
@@ -350,7 +394,6 @@ namespace HilbertTransformationTests
 				MaxClusterSize = 150
 			};
 			var clusters = data.MakeClusters();
-
 
 			// 2. Create HilbertIndex for points.
 			var hIndex = new HilbertIndex(clusters, bitsPerDimension);

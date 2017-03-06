@@ -1,11 +1,12 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/HilbertIndex.cs">
     <Files>
-      <File FileName="HilbertTransformation/Triangulator.cs" Line="93" Column="60" />
+      <File FileName="HilbertTransformation/Triangulator.cs" Line="23" Column="36" />
       <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="27" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="226" Column="35" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="369" Column="3" />
+      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="363" Column="33" />
+      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="49" Column="4" />
       <File FileName="HilbertTransformation Status" />
+      <File FileName="Clustering/HilbertIndex.cs" Line="152" Column="16" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">

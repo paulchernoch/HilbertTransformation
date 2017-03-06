@@ -20,6 +20,8 @@ namespace HilbertTransformation
 		long[] ReferenceSquareDistances { get; set; }
 		double[] ReferenceDistances { get; set; }
 
+		public int NumTriangulationPoints { get { return ReferenceSquareDistances.Length; } }
+
 		int Key { get; set; }
 
 
@@ -50,25 +52,38 @@ namespace HilbertTransformation
 		private static ConcurrentDictionary<int, UnsignedPoint[]> ReferencePoints { get; set; } 
 			= new ConcurrentDictionary<int, UnsignedPoint[]>();
 
+		/// <summary>
+		/// Creates reference points for triangulation.
+		/// 
+		/// The first is guaranteed to be the origin, and the second will be the opposite corner and 
+		/// have "max" for each of its coordinate values, where max = (2^bits) - 1.
+		/// After that, the patterns will be:
+		///    { max, 0, max, 0, max, 0, ... }
+		///    { max, max, 0, 0, max, max, 0, 0, ... }
+		///    { max, max, max, 0, 0, 0, max, max, max, 0, 0, 0, ... }
+		///    { max, max, max, max, 0, 0, 0, 0, max, max, max, max, 0, 0, 0, 0, ... }
+		/// </summary>
+		/// <returns>The reference points.</returns>
+		/// <param name="dimensions">Number of Dimensions for each point.</param>
+		/// <param name="bits">Bits per coordinate.</param>
+		/// <param name="numTriangulationPoints">Number of triangulation points to create.</param>
 		private static UnsignedPoint[] CreateReferencePoints(int dimensions, int bits, int numTriangulationPoints)
 		{
 			var tPoints = new UnsignedPoint[numTriangulationPoints];
 			var max = (uint)((1 << bits) - 1);
-			var modulus = numTriangulationPoints - 1;
-			foreach (var i in Enumerable.Range(0, numTriangulationPoints))
+			// The origin
+			tPoints[0] = new UnsignedPoint(new uint[dimensions]);
+			// The corner opposite the origin.
+			tPoints[1] = new UnsignedPoint(
+				Enumerable.Range(0, dimensions).Select(i => max).ToArray()
+			);
+			foreach (var i in Enumerable.Range(2, numTriangulationPoints - 2))
 			{
 				var coordinates = new uint[dimensions];
-				if (i == 1)
+				for (var iDim = 0; iDim < dimensions; iDim++)
 				{
-					for (var iDim = 0; iDim < dimensions; iDim++)
+					if ((iDim / (i-1)) % 2 == 0)
 						coordinates[i] = max;
-				}
-				else if (i > 1) {
-					for (var iDim = 0; iDim < dimensions; iDim++)
-					{
-						if (iDim % modulus == 0)
-							coordinates[i] = max;
-					}
 				}
 				tPoints[i] = new UnsignedPoint(coordinates);
 			}

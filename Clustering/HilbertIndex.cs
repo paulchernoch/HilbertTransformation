@@ -321,5 +321,16 @@ namespace Clustering
             var avg = firstIndex.UnsortedPoints.Take(sampleSize).Select(p => CompositeAccuracy(indices, p, k, rangeLength)).Average();
             return avg;
         }
+
+		/// <summary>
+		/// Set the number of points to triangulate on when comparing distances.
+		/// </summary>
+		/// <param name="numTriangulationPoints">Number of triangulation points.</param>
+		public HilbertIndex SetTriangulation(int numTriangulationPoints)
+		{
+			foreach (var point in UnsortedPoints)
+				point.NumTriangulationPoints = numTriangulationPoints;
+			return this;
+		}
     }
 }

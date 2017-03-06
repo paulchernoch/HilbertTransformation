@@ -42,6 +42,19 @@ namespace HilbertTransformation
 					_triangulation = new Triangulator(this, BitsPerDimension);
 				return _triangulation;
 			} 
+			set
+			{
+				_triangulation = value;
+			}
+		}
+
+		public int NumTriangulationPoints
+		{
+			get { return Triangulation.NumTriangulationPoints; }
+			set {
+				if (_triangulation == null || _triangulation.NumTriangulationPoints != value)
+					Triangulation = new Triangulator(this, BitsPerDimension, value);
+			}
 		}
 
         #endregion
@@ -285,6 +298,7 @@ namespace HilbertTransformation
 		{
 			BitsPerDimension = original.BitsPerDimension;
 			HilbertIndex = original.HilbertIndex;
+			Triangulation = original.Triangulation;
 		}
 
 		public override object Clone() { return new HilbertPoint(this); }
