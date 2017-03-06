@@ -64,4 +64,6 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        c. Since the range is now from zero to 300, the next highest power of two is 512, so choose nine bits of resolution 
           for your HilbertPoints.
 
- 
+ ##Unassisted Classification
+
+ In progress.... A tool to cluster high-dimensional data using the Hilbert curve.

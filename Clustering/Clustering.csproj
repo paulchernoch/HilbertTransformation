@@ -28,6 +28,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="YamlDotNet">
+      <HintPath>..\packages\YamlDotNet.4.1.0\lib\net35\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -44,12 +47,21 @@
     <Compile Include="DensityClassifier.cs" />
     <Compile Include="DensityMeter.cs" />
     <Compile Include="DistanceMemo.cs" />
+    <Compile Include="Slash\SlashCommand.cs" />
+    <Compile Include="Slash\SlashConfig.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">
       <Project>{8105A344-A241-4CAB-979E-6290E01E97D6}</Project>
       <Name>HilbertTransformation</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Slash\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

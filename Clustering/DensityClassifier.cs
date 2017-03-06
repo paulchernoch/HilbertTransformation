@@ -38,6 +38,13 @@ namespace Clustering
 		public long MergeSquareDistance { get; set; }
 
 		/// <summary>
+		/// Multiplied by the MergeSquareDistance to get the Neighborhood radius.
+		/// </summary>
+		public double NeighborhoodRadiusMultiplier { get; set; } = 2.0 / 5.0;
+
+		public long NeighborhoodRadius { get { return (long)(MergeSquareDistance * NeighborhoodRadiusMultiplier); } }
+
+		/// <summary>
 		/// All clusters smaller than this size are outliers and may be merged to the nearest cluster of a larger size.
 		/// </summary>
 		/// <value>The size of the outlier.</value>
@@ -57,7 +64,7 @@ namespace Clustering
 		public Classification<UnsignedPoint, string> Classify()
 		{
 			// 1. Get the Neighborhood density for all points and rank them by that density, from densest to most diffuse.
-			var dm = new DensityMeter(Index, MergeSquareDistance * 2 / 5);
+			var dm = new DensityMeter(Index, NeighborhoodRadius);
 
 			// 2. Sort all pairs of points that are adjacent in the Hilbert ordering by the greater of the 
 			//    density for the two points.

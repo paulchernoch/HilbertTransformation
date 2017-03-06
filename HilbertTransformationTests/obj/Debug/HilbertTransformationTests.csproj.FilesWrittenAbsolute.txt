@@ -8,3 +8,4 @@
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/HilbertTransformation.dll.mdb
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll.mdb
+/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/YamlDotNet.dll

@@ -1,12 +1,12 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/HilbertIndex.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="HilbertTransformation/Triangulator.cs" Line="23" Column="36" />
-      <File FileName="HilbertTransformation/UnsignedPoint.cs" Line="344" Column="27" />
-      <File FileName="HilbertTransformationTests/HilbertPointTests.cs" Line="363" Column="33" />
-      <File FileName="HilbertTransformation/HilbertPoint.cs" Line="49" Column="4" />
+      <File FileName="Clustering/Slash/SlashConfig.cs" Line="274" Column="4" />
+      <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="20" Column="84" />
+      <File FileName="Clustering/DensityClassifier.cs" Line="55" Column="27" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="773" Column="33" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="94" Column="19" />
       <File FileName="HilbertTransformation Status" />
-      <File FileName="Clustering/HilbertIndex.cs" Line="152" Column="16" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
@@ -14,14 +14,9 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="CartesianDistanceTests" expanded="True" />
-                <Node name="DensityMeterTests" expanded="True" />
-                <Node name="HilbertClassifierTests" expanded="True" />
-                <Node name="HilbertPointTests" expanded="True">
-                  <Node name="SquareDistanceCompareValidation" selected="True" />
+                <Node name="SlashConfigTests" expanded="True">
+                  <Node name="SlashConfigSerialization" selected="True" />
                 </Node>
-                <Node name="KendallTauCorrelationTests" expanded="True" />
-                <Node name="OptimalIndexTests" expanded="True" />
               </Node>
             </Node>
           </Node>

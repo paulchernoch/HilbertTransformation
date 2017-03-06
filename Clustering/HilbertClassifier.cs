@@ -74,7 +74,7 @@ namespace Clustering
 		/// 
 		/// Note that the index search can have an OutlierSize different from the main clustering algorithm.
 		/// </summary>
-		public class IndexBudget
+		public class IndexBudget: IEquatable<IndexBudget>
 		{
 			public int IndexCount { get; set; } = 1;
 			public int OutlierSize { get; set; } = 5;
@@ -82,6 +82,24 @@ namespace Clustering
 			public int MaxTrials { get; set; } = 1000;
 			public int MaxIterationsWithoutImprovement { get; set; } = 3;
 			public bool UseSample { get; set; } = false;
+
+			public override bool Equals(object obj)
+			{
+				return Equals(obj as IndexBudget);
+			}
+
+			public bool Equals(IndexBudget other)
+			{
+				if (other == null)
+					return false;
+				return IndexCount == other.IndexCount
+					  && OutlierSize == other.OutlierSize
+					  && NoiseSkipBy == other.NoiseSkipBy
+					  && MaxTrials == other.MaxTrials
+					  && MaxIterationsWithoutImprovement == other.MaxIterationsWithoutImprovement
+					  && UseSample == other.UseSample
+				;
+			}
 		}
 
 		/// <summary>
