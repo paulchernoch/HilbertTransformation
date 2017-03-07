@@ -39,9 +39,9 @@ namespace Clustering
 			public String CategoryField { get; set; } = "?";
 
 			/// <summary>
-			/// Input file containing the points to be clustered.
+			/// Input file containing the points to be clustered, or a dash, to indicate standard input.
 			/// </summary>
-			public String InputDataFile { get; set; } = "?";
+			public String InputDataFile { get; set; } = "-";
 
 			public override bool Equals(object obj)
 			{
@@ -66,11 +66,11 @@ namespace Clustering
 		public class OutputConfig: IEquatable<OutputConfig>
 		{
 			/// <summary>
-			/// Output file into which to write results.
+			/// Output file into which to write results, or a dash if writing to standard output.
 			/// 
-			/// If "?", empty string or null, results will not be saved.
+			/// If the value is null, empty string or "?", do not write the results out.
 			/// </summary>
-			public String OutputDataFile { get; set; } = "?";
+			public String OutputDataFile { get; set; } = "-";
 
 			/// <summary>
 			/// Returns true if an output file should be written.
@@ -98,6 +98,12 @@ namespace Clustering
 
 			public String LogFile { get; set; } = "";
 
+			/// <summary>
+			/// Gets or sets the log level, which should be "debug", "info", "warn" or "error".
+			/// </summary>
+			/// <value>The log level.</value>
+			public String LogLevel { get; set; } = "info";
+
 
 			public override bool Equals(object obj)
 			{
@@ -113,6 +119,7 @@ namespace Clustering
                      && (IdField ?? "").Equals(other.IdField)
                      && (CategoryField ?? "").Equals(other.CategoryField)
                      && (LogFile ?? "").Equals(other.LogFile)
+					 && (LogLevel ?? "").Equals(other.LogLevel)
                  ;
 			}
 		}
@@ -124,6 +131,9 @@ namespace Clustering
 		/// </summary>
 		public class IndexConfig: IEquatable<IndexConfig>
 		{
+			/// <summary>
+			/// Controls how hard OptimalIndex should try when seeking a result.
+			/// </summary>
 			public HilbertClassifier.IndexBudget Budget { get; set; } = new HilbertClassifier.IndexBudget();
 
 			/// <summary>
@@ -146,30 +156,6 @@ namespace Clustering
 			}
 		}
 
-		/// <summary>
-		/// Parameters needed by ClusterCounter.
-		/// </summary>
-		public class ClusterCounterConfig: IEquatable<ClusterCounterConfig>
-		{
-			public int NoiseSkipBy { get; set; } = 10;
-			public int ReducedNoiseSkipBy { get; set; } = 1;
-			public int OutlierSize { get; set; } = 5;
-
-			public override bool Equals(object obj)
-			{
-				return Equals(obj as ClusterCounterConfig);
-			}
-
-			public bool Equals(ClusterCounterConfig other)
-			{
-				if (other == null)
-					return false;
-				return NoiseSkipBy == other.NoiseSkipBy
-				   && ReducedNoiseSkipBy == other.ReducedNoiseSkipBy
-				   && OutlierSize == other.OutlierSize
-				;
-			}
-		}
 
 		public class HilbertClassifierConfig:IEquatable<HilbertClassifierConfig>
 		{
@@ -243,7 +229,6 @@ namespace Clustering
 		public DataConfig Data { get; set; } = new DataConfig();
 		public OutputConfig Output { get; set; } = new OutputConfig();
 		public IndexConfig Index { get; set; } = new IndexConfig();
-		public ClusterCounterConfig ClusterCounter { get; set; }  = new ClusterCounterConfig();
 		public HilbertClassifierConfig HilbertClassifier { get; set; } = new HilbertClassifierConfig();
 		public DensityClassifierConfig DensityClassifier { get; set; } = new DensityClassifierConfig();
 
@@ -305,7 +290,6 @@ namespace Clustering
 			return Data.Equals(other.Data)
 			   && Output.Equals(other.Output)
 			   && Index.Equals(other.Index)
-			   && ClusterCounter.Equals(other.ClusterCounter)
 			   && HilbertClassifier.Equals(other.HilbertClassifier)
 			   && DensityClassifier.Equals(other.DensityClassifier)
 		       && Math.Abs(AcceptableBCubed - other.AcceptableBCubed) <= 0.0001

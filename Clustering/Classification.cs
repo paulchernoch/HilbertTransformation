@@ -13,7 +13,7 @@ namespace Clustering
     /// </summary>
     /// <typeparam name="TPoint">Type of the points to be classified.</typeparam>
     /// <typeparam name="TLabel">Type of the label that can be associated with a set within the classification.</typeparam>
-    public class Classification<TPoint, TLabel> where TLabel : IEquatable<TLabel>
+    public class Classification<TPoint, TLabel> :ICloneable where TLabel : IEquatable<TLabel>
     {
 
         #region Properties (LabelToPoints, PointToLabel, NumPartitions, NumPoints)
@@ -479,5 +479,17 @@ namespace Clustering
             return NumPartitions / (double) transitions;
         }
 
-    }
+		/// <summary>
+		/// Clone the Classification, using the same Points and labels (semi-shallow copy).
+		/// </summary>
+		public object Clone()
+		{
+			var copy = new Classification<TPoint, TLabel>();
+			foreach (var point in Points())
+			{
+				copy.Add(point, GetClassLabel(point));
+			}
+			return copy;
+		}
+	}
 }

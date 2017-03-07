@@ -172,14 +172,20 @@ namespace Clustering
 		/// </summary>
 		/// <param name="outlierSize">OutlierSize to use with the ClusterCounter.</param>
 		/// <param name="noiseSkipBy">NoiseSkipBy to use with the ClusterCounter.</param>
+		/// <param name="reducedNoiseSkipBy">ReducedNoiseSkipBy to use with the ClusterCounter.</param>
 		/// <param name="strategy">Strategy to employ that decides how many dimensions to scramble during each iteration.</param>
-		public OptimalIndex(int outlierSize, int noiseSkipBy, Func<Permutation<uint>, int, int, Permutation<uint>> strategy)
+		public OptimalIndex(int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, Func<Permutation<uint>, int, int, Permutation<uint>> strategy)
 		{
 			var maxOutliers = outlierSize;
 			var skip = noiseSkipBy;
 			Metric = (HilbertIndex index) =>
 			{
-				var counter = new ClusterCounter { OutlierSize = maxOutliers, NoiseSkipBy = skip, LowestCountSeen = LowestCountSeen };
+				var counter = new ClusterCounter { 
+					OutlierSize = maxOutliers, 
+					NoiseSkipBy = skip, 
+					ReducedNoiseSkipBy = reducedNoiseSkipBy, 
+					LowestCountSeen = LowestCountSeen 
+				};
 				var counts = counter.Count(index.SortedPoints);
 				return new Tuple<int, long>(counts.CountExcludingOutliers, counts.MaximumSquareDistance);
 			};
@@ -320,15 +326,16 @@ namespace Clustering
 		/// <param name="points">Points to index.</param>
 		/// <param name="outlierSize">OutlierSize that discriminates between clusters worth counting and those that are not.</param>
 		/// <param name="noiseSkipBy">NoiseSkipBy value to help smooth out calculations in the presence of noisy data.</param>
+		/// <param name="reducedNoiseSkipBy">If few clusters, reduce NoiseSkipBy to this.</param>
 		/// <param name="maxTrials">Max trials to attempt. This equals MaxIterations * ParallelTrials (apart from rounding).</param>
 		/// <param name="maxIterationsWithoutImprovement">Max iterations without improvement.
 		/// Stops searching early if no improvement is detected.</param>
 		/// <param name="useSample">If true, use a random sample of points in each HilbertIndex tested, to save time.
 		/// May yield a poorer result, but faster.</param>
-		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
+		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
 		{
 			var parallel = 4;
-			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, ScrambleHalfStrategy)
+			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy)
 			{
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
@@ -338,10 +345,10 @@ namespace Clustering
 			return optimizer.Search(points);
 		}
 
-		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
+		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy,  int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
 		{
 			var parallel = 4;
-			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, ScrambleHalfStrategy)
+			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy)
 			{
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,

@@ -50,6 +50,7 @@
     <Compile Include="Slash\SlashCommand.cs" />
     <Compile Include="Slash\SlashConfig.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Slash\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

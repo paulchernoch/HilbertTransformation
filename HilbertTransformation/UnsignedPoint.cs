@@ -100,8 +100,15 @@ namespace HilbertTransformation
 			InitInvariants();
 		}
 
-		public UnsignedPoint(IList<uint> coordinates): this(coordinates.ToArray())
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:HilbertTransformation.UnsignedPoint"/> class.
+		/// </summary>
+		/// <param name="coordinates">Coordinates.</param>
+		/// <param name="id">Optional Identifier. If not specified, an id is automatically generated.</param>
+		public UnsignedPoint(IList<uint> coordinates, int id = -1): this(coordinates.ToArray())
 		{
+			if (id >= 0)
+				UniqueId = id;
 		}
 
 		/// <summary>

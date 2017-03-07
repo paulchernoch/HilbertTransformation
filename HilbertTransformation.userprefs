@@ -1,11 +1,15 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/Slash/SlashConfig.cs" Line="274" Column="4" />
-      <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="20" Column="84" />
-      <File FileName="Clustering/DensityClassifier.cs" Line="55" Column="27" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="773" Column="33" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="94" Column="19" />
+      <File FileName="Clustering/Slash/SlashConfig.cs" Line="116" Column="16" />
+      <File FileName="Clustering/Slash/SlashCommand.cs" Line="384" Column="25" />
+      <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="16" Column="30" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="79" Column="16" />
+      <File FileName="Clustering/ClusterCounter.cs" Line="84" Column="1" />
+      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="368" Column="39" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="567" Column="45" />
+      <File FileName="Clustering/Classification.cs" Line="317" Column="45" />
+      <File FileName="Clustering/Slash/Logger.cs" Line="66" Column="4" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>

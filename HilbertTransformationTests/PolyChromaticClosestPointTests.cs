@@ -97,9 +97,10 @@ namespace HilbertTransformationTests
 			if (hilbertTries <= 1)
 				pccp = new PolyChromaticClosestPoint<string>(clusters);
 			else {
+				var reducedNoiseSkipBy = 1;
 				var results = OptimalIndex.Search(
 					clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(),
-					5 /*outlier size */, 10 /* NoiseSkipBy */, hilbertTries
+					5 /*outlier size */, 10 /* NoiseSkipBy */, reducedNoiseSkipBy, hilbertTries
 				);
 				pccp = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			}
@@ -182,7 +183,7 @@ namespace HilbertTransformationTests
 				var bitsPerDimension = (1 + data.MaxCoordinate).SmallestPowerOfTwo();
 				var results = OptimalIndex.Search(
 					clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(), 
-					5 /*outlier size */, 10 /* NoiseSkipBy */, hilbertsToTry
+					5 /*outlier size */, 10 /* NoiseSkipBy */, 1 /* ReducedNoiseSkipBy */, hilbertsToTry
 				);
 				pccp = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			}
@@ -303,7 +304,7 @@ namespace HilbertTransformationTests
 			var bestIndices = OptimalIndex.SearchMany(
 				clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(),
 				numCurvesToKeep,
-				5 /*outlier size */, 10 /* NoiseSkipBy */, numCurvesToTry
+				5 /*outlier size */, 10 /* NoiseSkipBy */, 1 /* ReducedNoiseSkipBy */, numCurvesToTry
 			);
 
 			//var pointLists = bestIndices.Select(result => result.Index.SortedPoints).ToList();
@@ -367,7 +368,11 @@ namespace HilbertTransformationTests
 			var clusters = data.MakeClusters();
 
 			var bitsPerDimension = (1 + data.MaxCoordinate).SmallestPowerOfTwo();
-			var results = OptimalIndex.Search(clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(), 5 /*outlier size */, 10 /* NoiseSkipBy */, numCurvesToTry);
+			var results = OptimalIndex
+				.Search(
+					clusters.Points().Select(up => HilbertPoint.CastOrConvert(up, bitsPerDimension, true)).ToList(), 
+					5 /*outlier size */, 10 /* NoiseSkipBy */, 1 /* ReducedNoiseSkipBy */, numCurvesToTry
+				);
 
 			var pccp1 = new PolyChromaticClosestPoint<string>(clusters, results.Index);
 			var allColorPairs = pccp1.FindAllClustersApproximately();

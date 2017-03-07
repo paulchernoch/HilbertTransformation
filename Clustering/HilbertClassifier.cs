@@ -14,7 +14,9 @@ namespace Clustering
 	/// The algorithm:
 	/// 
 	///   1) Receive N D-dimensional points (UniqueIntegerPoint) with non-negative, integral coordinates.
-	///   2) Initially classify each point in its own cluster (Classification).
+	///   2) Initially classify each point one of two ways:
+	///        a. in its own cluster (Classification)
+	///        b. in a pre-existing category, as a follow on to a prior round of clustering
 	///   3) Create multiple alternate Hilbert curves (HilbertIndex).
 	///      Each is derived by a different permutation of the coordinates of the points, yielding corresponding HilbertPoints.
 	///   4) Evaluate each HilbertIndex and find the one that predicts the lowest number of clusters K (OptimalIndex).
@@ -79,9 +81,15 @@ namespace Clustering
 			public int IndexCount { get; set; } = 1;
 			public int OutlierSize { get; set; } = 5;
 			public int NoiseSkipBy { get; set; } = 10;
+			public int ReducedNoiseSkipBy { get; set; } = 1;
 			public int MaxTrials { get; set; } = 1000;
 			public int MaxIterationsWithoutImprovement { get; set; } = 3;
 			public bool UseSample { get; set; } = false;
+
+			public override int GetHashCode()
+			{
+				return IndexCount + OutlierSize * 10 + NoiseSkipBy * 100 + ReducedNoiseSkipBy * 1000 + MaxTrials + MaxIterationsWithoutImprovement * 10000 + (UseSample ? 1 : 0); 
+			}
 
 			public override bool Equals(object obj)
 			{
@@ -95,6 +103,7 @@ namespace Clustering
 				return IndexCount == other.IndexCount
 					  && OutlierSize == other.OutlierSize
 					  && NoiseSkipBy == other.NoiseSkipBy
+					  && ReducedNoiseSkipBy == other.ReducedNoiseSkipBy
 					  && MaxTrials == other.MaxTrials
 					  && MaxIterationsWithoutImprovement == other.MaxIterationsWithoutImprovement
 					  && UseSample == other.UseSample
@@ -163,11 +172,32 @@ namespace Clustering
 		/// <value>The outlier distance multiplier.</value>
 		public double OutlierDistanceMultiplier { get; set; } = 5;
 
+		/// <summary>
+		/// Create a classifier to cluster from scratch, with no regard to any previous categorization.
+		/// </summary>
+		/// <param name="points">Points to categorize.</param>
+		/// <param name="bitsPerDimension">Bits per dimension.</param>
 		public HilbertClassifier(IEnumerable<UnsignedPoint> points, int bitsPerDimension)
 		{
 			var labelCounter = 1;
-			// Steps 1 and 2 (Receive points and classify all points in separate clusters of size one).
+			// Steps 1 and 2a (Receive points and classify all points in separate clusters of size one).
 			Clusters = new Classification<UnsignedPoint, string>(points, p => (labelCounter++).ToString());
+			BitsPerDimension = bitsPerDimension;
+
+			IdsToPoints = new Dictionary<int, UnsignedPoint>();
+			foreach (var p in Clusters.Points())
+				IdsToPoints[p.UniqueId] = p;
+		}
+
+		/// <summary>
+		/// Create a classifier to categorize points further, building on top of an existing classification.
+		/// </summary>
+		/// <param name="points">Points to categorize.</param>
+		/// <param name="bitsPerDimension">Bits per dimension.</param>
+		public HilbertClassifier(Classification<UnsignedPoint, string> c, int bitsPerDimension)
+		{
+			// Steps 1 and 2b (Receive points and classify all points as they are already classified).
+			Clusters = c;
 			BitsPerDimension = bitsPerDimension;
 
 			IdsToPoints = new Dictionary<int, UnsignedPoint>();
@@ -188,6 +218,7 @@ namespace Clustering
 				HilbertPoints,
 				IndexConfig.OutlierSize,
 				IndexConfig.NoiseSkipBy,
+				IndexConfig.ReducedNoiseSkipBy,
 				IndexConfig.MaxTrials,
 				IndexConfig.MaxIterationsWithoutImprovement,
 				IndexConfig.UseSample
@@ -258,7 +289,8 @@ namespace Clustering
 				}
 				prevPoint = currPoint;
 			}
-			Console.WriteLine($"{revisitations} Revisitation{revisitations != 1 ? 's' : ' ' } in MergeByHilbertIndex");
+			var plural = revisitations != 1 ? 's' : ' ';
+			Console.WriteLine($"{revisitations} Revisitation{plural} in MergeByHilbertIndex");
 		}
 
 		/// <summary>
