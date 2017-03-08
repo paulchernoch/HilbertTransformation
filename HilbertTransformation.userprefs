@@ -1,5 +1,5 @@
 ﻿<Properties StartupConfiguration="Multi-Startup">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
+  <MonoDevelop.Ide.Workbench ActiveDocument="README.md">
     <Files>
       <File FileName="Clustering/Program.cs" Line="13" Column="6" />
       <File FileName="Clustering/Slash/SlashCommand.cs" Line="285" Column="7" />
@@ -11,6 +11,7 @@
       <File FileName="HilbertTransformation/Random/Permutation.cs" Line="158" Column="13" />
       <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="101" Column="54" />
       <File FileName="HilbertTransformation Status" />
+      <File FileName="README.md" Line="71" Column="6" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
