@@ -1,8 +1,8 @@
-﻿<Properties StartupConfiguration="MonoDevelop.Projects.MultiStartup">
+﻿<Properties StartupConfiguration="Multi-Startup">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
       <File FileName="Clustering/Program.cs" Line="13" Column="6" />
-      <File FileName="Clustering/Slash/SlashCommand.cs" Line="288" Column="1" />
+      <File FileName="Clustering/Slash/SlashCommand.cs" Line="285" Column="7" />
       <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="16" Column="30" />
       <File FileName="HilbertTransformationTests/SlashCommandTests.cs" Line="62" Column="5" />
       <File FileName="Clustering/Slash/SlashConfig.cs" Line="17" Column="16" />
@@ -28,16 +28,21 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" line="48" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" line="49" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" line="172" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" line="215" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" relfile="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" relfile="Clustering/Slash/Logger.cs" line="48" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" relfile="Clustering/Slash/Logger.cs" line="49" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" relfile="Clustering/Slash/SlashCommand.cs" line="215" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" relfile="Clustering/Slash/SlashCommand.cs" line="173" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" relfile="Clustering/Slash/SlashCommand.cs" line="289" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.ItemProperties.HilbertTransformationTests PreferredExecutionTarget="MonoDevelop.Default" />
-  <StartupItems>
-    <String>HilbertTransformationTests/HilbertTransformationTests.csproj</String>
-  </StartupItems>
+  <MultiItemStartupConfigurations>
+    <MultiItemSolutionRunConfiguration Id="Multi-Startup" Name="Multi-Startup">
+      <Items>
+        <StartupItem ItemId="{65093B83-5D70-4FE8-869D-CA2894477DE4}" ConfigurationId="Unit Tests" />
+      </Items>
+    </MultiItemSolutionRunConfiguration>
+  </MultiItemStartupConfigurations>
 </Properties>

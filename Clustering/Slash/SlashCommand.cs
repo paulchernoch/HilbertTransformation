@@ -216,6 +216,7 @@ Usage: 1. slash [help | -h | -help]
 				return;
 			InitialClassification = new Classification<UnsignedPoint, string>();
 			InputOrder = new List<UnsignedPoint>();
+			InputDataIds = new Dictionary<UnsignedPoint, string>();
 			IEnumerable<string> lines;
 			if (Configuration.Data.ReadFromStandardIn())
 				lines = ReadLinesFromConsole();
@@ -273,7 +274,7 @@ Usage: 1. slash [help | -h | -help]
 					if (categoryPosition == -1)
 						categoryString = rownum.ToString(); // Unclassified - all points in their own cluster.
 					else 
-						categoryString = values[idPosition];
+						categoryString = values[categoryPosition];
 					
 					var coordinates = new List<uint>();
 					foreach (var pair in values.Select((v, i) => new { Value = v, Position = i }))
@@ -304,6 +305,11 @@ Usage: 1. slash [help | -h | -help]
 				InputOrder = InitialClassification.Points().ToList();
 			else
 				InputOrder = originalOrder.ToList();
+			InputDataIds = new Dictionary<UnsignedPoint, string>();
+			foreach (var point in InitialClassification.Points())
+			{
+				InputDataIds[point] = point.UniqueId.ToString();
+			}
 		}
 
 		/// <summary>
