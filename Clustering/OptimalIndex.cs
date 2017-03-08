@@ -264,6 +264,14 @@ namespace Clustering
 			
 			var iterationsWithoutImprovement = 0;
 			var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = EstimateMaxDegreesOfParallelism(sampledPoints) };
+
+			List<Permutation<uint>> allPermutations = null;
+
+			// If the number of dimensions is small, we might waste time trying the same randomly chosen permutations mutiple times.
+			// Instead, we will try all or many of them in order.
+			if (dimensions <= 7)
+				allPermutations = Permutation<uint>.AllPermutations(dimensions).ToList();
+			
 			for (var iteration = 0; iteration < MaxIterations; iteration++)
 			{
 				var improvedCount = 0;
@@ -274,8 +282,20 @@ namespace Clustering
 					Permutation<uint> permutationToTry;
 					// This locking is needed because we use a static random number generator to create a new permutation.
 					// It is more expensive to make the random number generator threadsafe than to make this loop threadsafe.
-					lock (startFromPermutation) {
-						permutationToTry = PermutationStrategy(startFromPermutation, dimensions, iteration);
+					if (dimensions > 7)
+						lock (startFromPermutation)
+						{
+							permutationToTry = PermutationStrategy(startFromPermutation, dimensions, iteration);
+						}
+					else
+					{
+						lock(allPermutations)
+						{
+							if (!allPermutations.Any())
+								return;
+							permutationToTry = allPermutations.Last();
+							allPermutations.RemoveAt(allPermutations.Count - 1);
+						}
 					}
 					var indexToTry = new HilbertIndex(sampledPoints, permutationToTry);
 					metricResults = Metric(indexToTry);
@@ -310,7 +330,7 @@ namespace Clustering
 				// full set of points.
 				//TODO: "Unsample" the indices.
 				var unsampledIndices = indicesFound.Select(i => Unsample(points, i)).ToList();
-				Console.Write($"Final, unsampled Cluster count: {unsampledIndices[0]}");
+				Logger.Info($"Final, unsampled Cluster count: {unsampledIndices[0]}");
 				return unsampledIndices;
 			}
 			else 

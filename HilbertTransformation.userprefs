@@ -6,7 +6,10 @@
       <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="16" Column="30" />
       <File FileName="HilbertTransformationTests/SlashCommandTests.cs" Line="62" Column="5" />
       <File FileName="Clustering/Slash/SlashConfig.cs" Line="17" Column="16" />
-      <File FileName="Clustering/slash.sh" Line="3" Column="25" />
+      <File FileName="Clustering/slash.sh" Line="10" Column="23" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="150" Column="4" />
+      <File FileName="HilbertTransformation/Random/Permutation.cs" Line="158" Column="13" />
+      <File FileName="HilbertTransformation/Random/RandomPermutation.cs" Line="101" Column="54" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -15,9 +18,10 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="SlashCommandTests" expanded="True">
-                  <Node name="ReadCategorizedButDontWriteResults" selected="True" />
+                <Node name="HilbertClassifierTests" expanded="True">
+                  <Node name="Classify_20000N_50K_100D" selected="True" />
                 </Node>
+                <Node name="SlashCommandTests" expanded="True" />
                 <Node name="SlashConfigTests" expanded="True" />
               </Node>
             </Node>

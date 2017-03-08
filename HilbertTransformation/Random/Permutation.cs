@@ -157,5 +157,14 @@ namespace HilbertTransformation.Random
 
 		#endregion
 
+		public static IEnumerable<Permutation<T>> AllPermutations(int dimensions)
+		{
+			foreach (var perm in dimensions.CreateAllPermutations())
+				yield return new Permutation<T>(perm);
+		}
+
+
+
+
 	}
 }
