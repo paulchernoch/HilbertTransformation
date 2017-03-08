@@ -93,9 +93,20 @@ Usage: 1. slash [help | -h | -help]
 		/// </summary>
 		public List<UnsignedPoint> InputOrder { get; set; }
 
+		/// <summary>
+		/// How the data was classified before running the clustering process.
+		/// </summary>
 		public Classification<UnsignedPoint, string> InitialClassification { get; set; }
 
+		/// <summary>
+		/// How the data is classified after the clustering pricess.
+		/// </summary>
 		public Classification<UnsignedPoint, string> FinalClassification { get; set; }
+
+		/// <summary>
+		/// Comparison between InitialClassification with FinalClassification.
+		/// </summary>
+		public ClusterMetric<UnsignedPoint,string> MeasuredChange { get; private set; }
 
 		/// <summary>
 		/// Create a SlashCommand that processes command line arguments and loads the configuration frmo a file.
@@ -191,18 +202,22 @@ Usage: 1. slash [help | -h | -help]
 			SaveData();
 		}
 
+		bool IsDataLoaded { get { return InitialClassification != null && InitialClassification.NumPoints > 0; } }
+
 		/// <summary>
-		/// Load the data from a file or standard input.
+		/// Load the data from a file or standard input unless it has already been loaded into InitialClassification.
 		/// 
 		/// It must have a header row if Configuration.Data.ReadHeader is true.
 		/// Field values may be separated by commas or tabs.
 		/// </summary>
 		void LoadData()
 		{
+			if (IsDataLoaded)
+				return;
 			InitialClassification = new Classification<UnsignedPoint, string>();
 			InputOrder = new List<UnsignedPoint>();
 			IEnumerable<string> lines;
-			if (Configuration.Data.InputDataFile.Equals("-"))
+			if (Configuration.Data.ReadFromStandardIn())
 				lines = ReadLinesFromConsole();
 			else 
 				lines = File.ReadLines(Configuration.Data.InputDataFile);
@@ -275,57 +290,93 @@ Usage: 1. slash [help | -h | -help]
 		}
 
 		/// <summary>
-		/// Points will be written to the output file or standard out in the order they were loaded,
-		/// with categories attached.
+		/// Load data directly, not via a file.
 		/// </summary>
+		/// <param name="initialClassification">Initial classification.</param>
+		/// <param name="originalOrder">Original order. If omitted, an arbitrary ordering of points will be defined.</param>
+		public void LoadData(Classification<UnsignedPoint,string> initialClassification, IList<UnsignedPoint> originalOrder = null)
+		{
+			InitialClassification = initialClassification;
+			if (originalOrder == null)
+				InputOrder = InitialClassification.Points().ToList();
+			else
+				InputOrder = originalOrder.ToList();
+		}
+
+		/// <summary>
+		/// If configured to write to a file, points will be written to the output file or standard out 
+		/// in the order they were loaded, with categories attached.
+		/// The results will also be recorded in MeasuredChange.
+		/// </summary>
+		/// <returns>True if the data was saved, false otherwise.
+		/// MeasuredChange is set in either case.
+		/// </returns>
 		bool SaveData()
 		{
-			if (!Configuration.Output.ShouldWrite())
-				return false;
-			
-			TextWriter writer;
-			bool shouldCloseWriter;
-			var d = ","; // Field delimiter
-			if ((Configuration.Output.OutputDataFile ?? "").Length > 1)
+			var dataWasSaved = false;
+			if (Configuration.Output.ShouldWrite())
 			{
-				writer = new StreamWriter(File.OpenWrite(Configuration.Output.OutputDataFile));
-				shouldCloseWriter = true;
-			}
-			else
-			{
-				writer = Console.Out;
-				shouldCloseWriter = false;
-			}
-
-			try
-			{
-				if (Configuration.Output.WriteHeader)
+				TextWriter writer;
+				bool shouldCloseWriter;
+				var d = ","; // Field delimiter
+				if ((Configuration.Output.OutputDataFile ?? "").Length > 1)
 				{
-					// Write the header record.
-					writer.Write($"id{d}category");
-					for (var i = 0; i < InputOrder[0].Dimensions; i++)
-						writer.Write($"{d}col{i}");
-					writer.WriteLine();
+					writer = new StreamWriter(File.OpenWrite(Configuration.Output.OutputDataFile));
+					shouldCloseWriter = true;
+				}
+				else
+				{
+					writer = Console.Out;
+					shouldCloseWriter = false;
 				}
 
-				// Write the points.
-				foreach (var point in InputOrder)
-					writer.WriteLine(PointToRecord(point, d));
-			}
-			finally
-			{
-				if (shouldCloseWriter)
-					writer.Close();
-			}
+				try
+				{
+					if (Configuration.Output.WriteHeader)
+					{
+						// Write the header record.
+						writer.Write($"id{d}category");
+						for (var i = 0; i < InputOrder[0].Dimensions; i++)
+							writer.Write($"{d}col{i}");
+						writer.WriteLine();
+					}
 
+					// Write the points.
+					foreach (var point in InputOrder)
+						writer.WriteLine(PointToRecord(point, d));
+				}
+				finally
+				{
+					if (shouldCloseWriter)
+						writer.Close();
+				}
+				dataWasSaved = true;
+			}
+			RecordResult();
+			return dataWasSaved;
+		}
+
+		/// <summary>
+		/// Compare the initial and final classifications and set MeasuredChange.
+		/// </summary>
+		/// <returns>The result of the comparison.</returns>
+		ClusterMetric<UnsignedPoint, string> RecordResult()
+		{
 			// Compute the BCubed score between the initial and final classification IF there was an initial classification.
 			if (InitialClassification.NumPartitions != InitialClassification.NumPoints)
 			{
-				var comparison = CompareClassifications();
+				MeasuredChange = CompareClassifications();
 				// Write comparison to the log.
-				Logger.Info($"Comparison between initial and final classification: {comparison}");
+				Logger.Info($"Comparison between initial and final classification: {MeasuredChange}. Acceptable: {Configuration.AcceptableBCubed}");
 			}
-			return true;
+			else {
+				MeasuredChange = new ClusterMetric<UnsignedPoint, string>()
+				{
+					Precision = 0,
+					Recall = 0
+				};
+			}
+			return MeasuredChange;
 		}
 
 		/// <summary>
@@ -334,6 +385,26 @@ Usage: 1. slash [help | -h | -help]
 		ClusterMetric<UnsignedPoint, string> CompareClassifications()
 		{
 			return InitialClassification.Compare(FinalClassification);
+		}
+
+		/// <summary>
+		/// Returns true if clustering has completed and the comparison between InitialClassification and FinalClassification
+		/// has been performed and the result is a BCubed value that is not less than Configuration.AcceptableBCubed.
+		/// </summary>
+		public bool IsClassificationAcceptable
+		{
+			get
+			{
+				if (FinalClassification == null)
+					return false;
+				if (InitialClassification == null)
+					return false;
+				if (MeasuredChange == null)
+					return false;
+				if (Configuration.AcceptableBCubed > MeasuredChange.BCubed)
+					return false;
+				return true;
+			}
 		}
 
 

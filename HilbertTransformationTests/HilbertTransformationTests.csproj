@@ -48,6 +48,7 @@
     <Compile Include="DensityMeterTests.cs" />
     <Compile Include="Data\Datasets.cs" />
     <Compile Include="SlashConfigTests.cs" />
+    <Compile Include="Data\SlashCommandTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

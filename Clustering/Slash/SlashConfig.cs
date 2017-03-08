@@ -43,6 +43,11 @@ namespace Clustering
 			/// </summary>
 			public String InputDataFile { get; set; } = "-";
 
+			public bool ReadFromStandardIn()
+			{
+				return "-".Equals(InputDataFile);
+			}
+
 			public override bool Equals(object obj)
 			{
 				return Equals(obj as DataConfig);
@@ -54,9 +59,15 @@ namespace Clustering
 					return false;
 				return ReadHeader == other.ReadHeader
                       && (IdField ?? "").Equals(other.IdField)
-                      && (CategoryField ?? "").Equals(other.CategoryField)
-                      && (InputDataFile ?? "").Equals(other.InputDataFile)
+                      && (CategoryField ?? "").Equals(other.CategoryField ?? "")
+                      && (InputDataFile ?? "").Equals(other.InputDataFile ?? "")
 				;
+			}
+
+			public override int GetHashCode()
+			{
+				return CategoryField.GetHashCode() + IdField.GetHashCode() 
+					                + (InputDataFile??"").GetHashCode() + (ReadHeader ? 1 : 0);
 			}
 		}
 
@@ -73,12 +84,12 @@ namespace Clustering
 			public String OutputDataFile { get; set; } = "-";
 
 			/// <summary>
-			/// Returns true if an output file should be written.
+			/// Returns true if an output file should be written, including writing to standard out.
 			/// </summary>
 			public bool ShouldWrite() { 
 				// Dash means standard out.
 				// Null, empty string or "?" means do not write.
-				return (OutputDataFile ?? "?").Length > 1 || OutputDataFile.Equals("-"); 
+				return (OutputDataFile ?? "?").Length > 1 || "-".Equals(OutputDataFile); 
 			}
 
 			/// <summary>
@@ -273,6 +284,15 @@ namespace Clustering
 		public SlashConfig(){}
 
 		#endregion
+
+		/// <summary>
+		/// Call this to disable reading from an input file or writing to an output file.
+		/// </summary>
+		public void UseNoFiles()
+		{
+			Data.InputDataFile = null;
+			Output.OutputDataFile = null;
+		}
 
 		/// <summary>
 		/// Serialize the configuration to a YAML string.

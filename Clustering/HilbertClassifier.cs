@@ -250,9 +250,8 @@ namespace Clustering
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
 			var maxOutlierMergeDistance = (long)(MergeSquareDistance * OutlierDistanceMultiplier);
 			var outlierMerges = MergeOutliers(maxOutlierMergeDistance);
-
-			Console.WriteLine($"   {clusterMerges} Cluster merges, {outlierMerges} Outlier merges");
-
+			var msg = $"   {clusterMerges} Cluster merges, {outlierMerges} Outlier merges";
+			Logger.Info(msg);
 			return Clusters;
 		}
 

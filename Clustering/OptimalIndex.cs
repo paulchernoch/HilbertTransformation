@@ -250,7 +250,7 @@ namespace Clustering
 			var metricResults = Metric(firstIndex);
 			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
 			LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
-			Console.Write($"Cluster count Starts at: {bestResults}");
+		    Logger.Info($"Cluster count Starts at: {bestResults}");
 			queue.AddRemove(bestResults);
 
 			// Decide if we are to sample points or use them all
@@ -259,7 +259,7 @@ namespace Clustering
 			{
 				var sampleSize = SampleSize(points, bestResults.EstimatedClusterCount);
 				sampledPoints = Sample(points, sampleSize);
-				Console.Write($"    Sample is {sampleSize} of {points.Count} points");
+				Logger.Info($"    Sample is {sampleSize} of {points.Count} points");
 			}
 			
 			var iterationsWithoutImprovement = 0;
@@ -289,7 +289,7 @@ namespace Clustering
 							bestResults = resultsToTry;
 							Interlocked.Add(ref improvedCount, 1);
 							LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
-							Console.Write($"Cluster count Improved to: {bestResults}");
+							Logger.Info($"Cluster count Improved to: {bestResults}");
 						} 
 					}
 

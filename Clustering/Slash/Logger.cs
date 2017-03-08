@@ -14,7 +14,7 @@ namespace Clustering
 		public bool WriteToStandardError { get; set; } = false;
 		public bool WriteToFile { get; set; } = false;
 		public string Level { get; set; } = "info";
-		public string LogFile { get; set; } = "slash.log";
+		public string LogFile { get; set; } = "./slash.log";
 
 		public bool ShouldIgnore(string messageLevel)
 		{
@@ -37,7 +37,7 @@ namespace Clustering
 		bool Write(string message, string messageLevel)
 		{
 			messageLevel = messageLevel.ToLowerInvariant();
-			var msgToWrite = $"{messageLevel.ToUpperInvariant()}: message\n";
+			var msgToWrite = $"{messageLevel.ToUpperInvariant()}. {message}\n";
 			if (ShouldIgnore(messageLevel))
 				return false;
 			lock(this)
@@ -45,7 +45,7 @@ namespace Clustering
 				if (WriteToStandardError && IsErrorOrWarning(messageLevel))
 					Console.Error.Write(msgToWrite);
 				else if (WriteToStandardOut)
-					Console.Out.Write(msgToWrite);
+					Console.Write(msgToWrite);
 				if (WriteToFile)
 					File.AppendAllText(LogFile, msgToWrite);
 			}
@@ -62,11 +62,11 @@ namespace Clustering
 		public static bool Warn(string message) { return Instance.LogWarn(message); }
 		public static bool Error(string message) { return Instance.LogError(message); }
 
-		public static void SetupForTests(string logFileName = "slash-test.log")
+		public static void SetupForTests(string logFileName = "./slash-test.log")
 		{
 			Logger.Instance.LogFile = logFileName;
 			Logger.Instance.Level = "info";
-			Logger.Instance.WriteToFile = true;
+			Logger.Instance.WriteToFile = Logger.Instance.LogFile != null;
 			Logger.Instance.WriteToStandardOut = true;
 		}
 

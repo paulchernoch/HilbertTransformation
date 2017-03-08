@@ -71,7 +71,7 @@ namespace Clustering
         /// This is a proxy for homogeneity: clusters should only contain members that belong together.
         /// Groups should be homogeneous on category.
         /// </summary>
-        public double Precision { get; private set; }
+        public double Precision { get; set; }
 
         /// <summary>
         /// Average correctness of all points over categories.
@@ -79,7 +79,7 @@ namespace Clustering
         /// This is a proxy for completeness: all the members that belong together should be in the same group.
         /// Members of a category should not be split among multiple clusters.
         /// </summary>
-        public double Recall { get; private set; }
+        public double Recall { get; set; }
 
         /// <summary>
         /// Weight used when combining Precision and Recall to form BCubed.

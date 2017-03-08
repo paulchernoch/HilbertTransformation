@@ -1,15 +1,13 @@
 ﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
   <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
     <Files>
-      <File FileName="Clustering/Slash/SlashConfig.cs" Line="308" Column="36" />
-      <File FileName="Clustering/Slash/SlashCommand.cs" Line="114" Column="25" />
-      <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="16" Column="30" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="79" Column="16" />
-      <File FileName="Clustering/ClusterCounter.cs" Line="84" Column="1" />
-      <File FileName="HilbertTransformationTests/PolyChromaticClosestPointTests.cs" Line="368" Column="39" />
-      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="567" Column="45" />
-      <File FileName="Clustering/Classification.cs" Line="317" Column="45" />
-      <File FileName="Clustering/Slash/Logger.cs" Line="66" Column="4" />
+      <File FileName="HilbertTransformationTests/Data/SlashCommandTests.cs" Line="35" Column="22" />
+      <File FileName="Clustering/Slash/SlashConfig.cs" Line="52" Column="5" />
+      <File FileName="Clustering/Slash/SlashCommand.cs" Line="364" Column="4" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="256" Column="1" />
+      <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="547" Column="1" />
+      <File FileName="Clustering/Slash/Logger.cs" Line="63" Column="3" />
+      <File FileName="Clustering/OptimalIndex.cs" Line="253" Column="1" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
@@ -18,9 +16,10 @@
           <Node name="HilbertTransformation" expanded="True">
             <Node name="HilbertTransformationTests" expanded="True">
               <Node name="HilbertTransformationTests" expanded="True">
-                <Node name="SlashConfigTests" expanded="True">
-                  <Node name="SlashConfigSerialization" selected="True" />
+                <Node name="SlashCommandTests" expanded="True">
+                  <Node name="ClusterWithoutFiles" selected="True" />
                 </Node>
+                <Node name="SlashConfigTests" expanded="True" />
               </Node>
             </Node>
           </Node>
@@ -32,8 +31,8 @@
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/ClosestCluster.cs" line="462" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Classification.cs" line="372" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" line="48" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" line="49" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
