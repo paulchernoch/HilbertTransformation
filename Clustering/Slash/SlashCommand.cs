@@ -108,6 +108,8 @@ Usage: 1. slash [help | -h | -help]
 		/// </summary>
 		public ClusterMetric<UnsignedPoint,string> MeasuredChange { get; private set; }
 
+		#region Constructors
+
 		/// <summary>
 		/// Create a SlashCommand that processes command line arguments and loads the configuration frmo a file.
 		/// </summary>
@@ -132,6 +134,8 @@ Usage: 1. slash [help | -h | -help]
 			OutputFile = Configuration.Output.OutputDataFile;
 			InitLogger(Configuration);
 		}
+
+		#endregion
 
 		/// <summary>
 		/// Execute the command, potentially reading the configuration file and data file and writing the output file.
@@ -164,6 +168,8 @@ Usage: 1. slash [help | -h | -help]
 			}
 		}
 
+		#region Clustering
+
 		/// <summary>
 		/// Cluster the data, starting with an initially unclustered classification and combining points into fewer clusters.
 		/// </summary>
@@ -180,6 +186,7 @@ Usage: 1. slash [help | -h | -help]
 			};
 			//TODO: Follow this with the DensityClassifier.
 			FinalClassification = classifier.Classify();
+			ReclassifyByDensity();
 			SaveData();
 		}
 
@@ -199,8 +206,23 @@ Usage: 1. slash [help | -h | -help]
 			};
 			//TODO: Follow this with the DensityClassifier.
 			FinalClassification = classifier.Classify();
+			ReclassifyByDensity();
 			SaveData();
 		}
+
+		/// <summary>
+		/// Apply Density-based reclassification to the FinalClassification.
+		/// This may cause some clusters to be split into smaller clusters.
+		/// It will not cause any existing clusters to be merged.
+		/// </summary>
+		void ReclassifyByDensity()
+		{
+			//TODO: Implement DensityReclassification
+		}
+
+		#endregion
+
+		#region File I/O: IsDataLoaded, LoadData, SaveData, etc.
 
 		bool IsDataLoaded { get { return InitialClassification != null && InitialClassification.NumPoints > 0; } }
 
@@ -365,6 +387,47 @@ Usage: 1. slash [help | -h | -help]
 			return dataWasSaved;
 		}
 
+
+		/// <summary>
+		/// Format a point as a delimited string record, without the terminating newline.
+		/// </summary>
+		/// <returns>The record.</returns>
+		/// <param name="point">Point to format.</param>
+		/// <param name="fieldDelimiter">Field delimiter.</param>
+		string PointToRecord(UnsignedPoint point, string fieldDelimiter = ",")
+		{
+			var category = FinalClassification.GetClassLabel(point);
+			var id = InputDataIds[point];
+
+			var sb = new StringBuilder();
+			sb.Append(id).Append(fieldDelimiter).Append(category);
+			foreach (var coordinate in point.Coordinates)
+			{
+				sb.Append(fieldDelimiter).Append(coordinate);
+			}
+			return sb.ToString();
+		}
+
+		static int SafeParseInt(string s, int defaultIfUnparseable)
+		{
+			int i = defaultIfUnparseable;
+			if ((s ?? "").Length == 0)
+				return i;
+			Int32.TryParse(s, out i);
+			return i;
+		}
+
+		public static IEnumerable<string> ReadLinesFromConsole()
+		{
+			string line;
+			while (null != (line = Console.ReadLine()))
+				yield return line;
+		}
+
+		#endregion
+
+		#region Comparing InitialClassification to FinalClassification
+
 		/// <summary>
 		/// Compare the initial and final classifications and set MeasuredChange.
 		/// </summary>
@@ -416,42 +479,7 @@ Usage: 1. slash [help | -h | -help]
 			}
 		}
 
-
-		/// <summary>
-		/// Format a point as a delimited string record, without the terminating newline.
-		/// </summary>
-		/// <returns>The record.</returns>
-		/// <param name="point">Point to format.</param>
-		/// <param name="fieldDelimiter">Field delimiter.</param>
-		string PointToRecord(UnsignedPoint point, string fieldDelimiter = ",")
-		{
-			var category = FinalClassification.GetClassLabel(point);
-			var id = InputDataIds[point];
-
-			var sb = new StringBuilder();
-			sb.Append(id).Append(fieldDelimiter).Append(category);
-			foreach (var coordinate in point.Coordinates)
-			{
-				sb.Append(fieldDelimiter).Append(coordinate);
-			}
-			return sb.ToString();
-		}
-
-		static int SafeParseInt(string s, int defaultIfUnparseable)
-		{
-			int i = defaultIfUnparseable;
-			if ((s ?? "").Length == 0)
-				return i;
-			Int32.TryParse(s, out i);
-			return i;
-		}
-
-		public static IEnumerable<string> ReadLinesFromConsole()
-		{
-			string line;
-			while (null != (line = Console.ReadLine()))
-				yield return line;
-		}
+		#endregion
 
 		#region Parse Command Line, Load Configuration
 
