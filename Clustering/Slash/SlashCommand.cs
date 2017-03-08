@@ -231,6 +231,9 @@ Usage: 1. slash [help | -h | -help]
 			string[] header = null;
 			foreach (var values in lines.Select(line => line.Split(new [] { ',', '\t' })))
 			{
+				// Skip blank lines and comments
+				if (values.Length < 2)
+					continue;
 				if (rownum == 0 && Configuration.Data.ReadHeader)
 				{
 					// Identify which columns hold the Id and the Category, if any.

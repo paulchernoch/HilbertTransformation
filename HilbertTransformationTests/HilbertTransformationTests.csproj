@@ -48,7 +48,7 @@
     <Compile Include="DensityMeterTests.cs" />
     <Compile Include="Data\Datasets.cs" />
     <Compile Include="SlashConfigTests.cs" />
-    <Compile Include="Data\SlashCommandTests.cs" />
+    <Compile Include="SlashCommandTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">
@@ -65,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Data\N1024_D128_K16.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
