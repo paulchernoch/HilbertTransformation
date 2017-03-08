@@ -104,6 +104,11 @@ Usage: 1. slash [help | -h | -help]
 		public Classification<UnsignedPoint, string> FinalClassification { get; set; }
 
 		/// <summary>
+		/// The maximum merge distance discovered by the HilbertClassifier.
+		/// </summary>
+		long MergeSquareDistance { get; set; }
+
+		/// <summary>
 		/// Comparison between InitialClassification with FinalClassification.
 		/// </summary>
 		public ClusterMetric<UnsignedPoint,string> MeasuredChange { get; private set; }
@@ -186,6 +191,7 @@ Usage: 1. slash [help | -h | -help]
 			};
 			//TODO: Follow this with the DensityClassifier.
 			FinalClassification = classifier.Classify();
+			MergeSquareDistance = classifier.MergeSquareDistance;
 			ReclassifyByDensity();
 			SaveData();
 		}
@@ -206,6 +212,7 @@ Usage: 1. slash [help | -h | -help]
 			};
 			//TODO: Follow this with the DensityClassifier.
 			FinalClassification = classifier.Classify();
+			MergeSquareDistance = classifier.MergeSquareDistance;
 			ReclassifyByDensity();
 			SaveData();
 		}
@@ -217,7 +224,69 @@ Usage: 1. slash [help | -h | -help]
 		/// </summary>
 		void ReclassifyByDensity()
 		{
-			//TODO: Implement DensityReclassification
+			// 0. Decide if we will be doing this or not, based on the configuration.
+			if (!Configuration.DensityClassifier.SkipDensityClassification)
+			{
+				// 1. Loop through all clusters in FinalClassification
+				foreach (var clusterId in FinalClassification.ClassLabels())
+				{
+					// 2. Decide if the cluster needs reclustering.
+					if (NeedsReclustering(clusterId))
+					{
+						// 3. Obtain the members of the cluster and index them by the Hilbert curve
+						var pointsToClassify = FinalClassification.PointsInClass(clusterId);
+						var lookupPointById = new Dictionary<int, UnsignedPoint>();
+						foreach (var p in pointsToClassify)
+							lookupPointById[p.UniqueId] = p;
+						int labelCounter = 1;
+						var subClassification = new Classification<UnsignedPoint, string>(pointsToClassify, p => (labelCounter++).ToString());
+						var hIndex = new HilbertIndex(subClassification, Configuration.Index.BitsPerDimension);
+
+						// 4. Create a DensityClassifier, properly configured.
+						var unmergeableSize = (int) (pointsToClassify.Count * Configuration.DensityClassifier.UnmergeableSizeFraction);
+						var densityClassifier = new DensityClassifier(hIndex, MergeSquareDistance, unmergeableSize)
+						{
+						 	NeighborhoodRadiusMultiplier = Configuration.DensityClassifier.NeighborhoodRadiusMultiplier,
+							OutlierSize = Configuration.DensityClassifier.OutlierSize
+						};
+
+						// 5. Reclassify.
+						//    This classification is in terms of HilbertPoints, so afterwards we will need to map them to
+						//    their non-HilbertPoint, original UnsignedPoints.
+						var densityClassification = densityClassifier.Classify();
+
+						// 6. If the number of clusters made from the points is more than one...
+						if (densityClassification.NumPartitions > 1)
+						{
+							// 7. ... loop through all HilbertPoints from cluster and find corresponding UnsignedPoints.
+							foreach (var hPoint in densityClassification.Points())
+							{
+								var uPoint = lookupPointById[hPoint.UniqueId];
+
+								// Form the new class label by appending the previous label and the density-based label.
+								var previousClassLabel = FinalClassification.GetClassLabel(uPoint);
+								var densityClassLabel = densityClassification.GetClassLabel(hPoint);
+								var newClassLabel = $"{previousClassLabel}-{densityClassLabel}";
+
+								// 8. Pull point from its current cluster and add it to a new cluster
+								FinalClassification.Remove(uPoint);
+								FinalClassification.Add(uPoint, newClassLabel);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// A cluster needs reclustering if it is oddly-shaped, weakly-connected.
+		/// </summary>
+		/// <returns><c>true</c>, if reclustering is needsed, <c>false</c> otherwise.</returns>
+		/// <param name="clusterId">Cluster identifier for a cluster in FinalClassification.</param>
+		bool NeedsReclustering(string clusterId)
+		{
+			//TODO: Figure out how to triage clusters and decide which are oddly-shaped and need reclustering.
+			return true;
 		}
 
 		#endregion

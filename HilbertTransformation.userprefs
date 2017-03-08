@@ -1,8 +1,13 @@
 ﻿<Properties StartupConfiguration="Multi-Startup">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformationTests/SlashCommandTests.cs">
     <Files>
-      <File FileName="Clustering/Slash/SlashCommand.cs" Line="218" Column="27" />
+      <File FileName="Clustering/Slash/SlashCommand.cs" Line="251" Column="7" />
       <File FileName="HilbertTransformation Status" />
+      <File FileName="Clustering/Slash/SlashConfig.cs" Line="224" Column="41" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="238" Column="74" />
+      <File FileName="Clustering/DensityClassifier.cs" Line="61" Column="109" />
+      <File FileName="Clustering/Classification.cs" Line="104" Column="23" />
+      <File FileName="HilbertTransformationTests/SlashCommandTests.cs" Line="62" Column="5" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.UnitTesting.TestPad">
@@ -28,7 +33,7 @@
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" relfile="HilbertTransformationTests/Data/PolyChromaticClosestPoint.cs" line="65" column="1" />
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" relfile="Clustering/Slash/Logger.cs" line="48" column="1" />
       <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/Logger.cs" relfile="Clustering/Slash/Logger.cs" line="49" column="1" />
-      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" relfile="Clustering/Slash/SlashCommand.cs" line="179" column="1" />
+      <Breakpoint file="/Users/pchernoc/github/HilbertTransformation/Clustering/Slash/SlashCommand.cs" relfile="Clustering/Slash/SlashCommand.cs" line="184" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

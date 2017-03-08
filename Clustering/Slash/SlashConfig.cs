@@ -219,6 +219,11 @@ namespace Clustering
 		public class DensityClassifierConfig: IEquatable<DensityClassifierConfig>
 		{
 			/// <summary>
+			/// If true, skip over the density-based reclassification step.
+			/// </summary>
+			public bool SkipDensityClassification { get; set; } = false;
+
+			/// <summary>
 			/// Multiplied by the number of points to cluster to get UnmergeableSize.
 			/// </summary>
 			public double UnmergeableSizeFraction { get; set; } = 1.0 / 6.0;
@@ -228,6 +233,10 @@ namespace Clustering
 			/// </summary>
 			public double NeighborhoodRadiusMultiplier { get; set; } = 0.4;
 
+			/// <summary>
+			/// Clusters of a size smaller than this are considered outliers,
+			/// and are merged with the nearest non-outliers.
+			/// </summary>
 			public int OutlierSize { get; set; } = 5;
 
 			public override bool Equals(object obj)
@@ -243,6 +252,12 @@ namespace Clustering
 			       && Math.Abs(NeighborhoodRadiusMultiplier - other.NeighborhoodRadiusMultiplier) <= 0.0001
 				   && OutlierSize == other.OutlierSize
 				;
+			}
+
+			public override int GetHashCode()
+			{
+				return SkipDensityClassification.GetHashCode() + UnmergeableSizeFraction.GetHashCode() 
+					    + NeighborhoodRadiusMultiplier.GetHashCode() + OutlierSize.GetHashCode();
 			}
 		}
 

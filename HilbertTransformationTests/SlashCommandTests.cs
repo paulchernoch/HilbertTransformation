@@ -11,7 +11,8 @@ namespace HilbertTransformationTests
 	{
 		/// <summary>
 		/// Prepare the SlashConfig and data without reading from files,
-		/// and cluster the data without writing the results.
+		/// and cluster the data without writing the results, and skipping over
+		/// density-based classification.
 		/// </summary>
 		[Test]
 		public void ClusterWithoutFiles()
@@ -35,6 +36,7 @@ namespace HilbertTransformationTests
 				InputFile = null,
 				OutputFile = null
 			};
+			command.Configuration.DensityClassifier.SkipDensityClassification = true;
 			// Need to put this here, because the command initializes the logger differently.
 			Logger.SetupForTests(null);
 			command.LoadData(expectedClassification);
@@ -47,6 +49,7 @@ namespace HilbertTransformationTests
 		/// <summary>
 		/// Use the SlashCommand to read a data file that already has categories, perform clustering, 
 		/// but do not write the results to an output file.
+		/// Skip over density-based classification.
 		/// </summary>
 		[Test]
 		public void ReadCategorizedButDontWriteResults()
@@ -65,7 +68,7 @@ namespace HilbertTransformationTests
 				CategoryField = "category",
 				ReadHeader = true
 			};
-
+			config.DensityClassifier.SkipDensityClassification = true;
 			config.Output.OutputDataFile = null;
 			var command = new SlashCommand(SlashCommand.CommandType.Cluster, config)
 			{
