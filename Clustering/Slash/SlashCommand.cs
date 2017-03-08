@@ -9,7 +9,8 @@ using HilbertTransformation;
 namespace Clustering
 {
 	/// <summary>
-	/// Command line program that performs clustering.
+	/// Command line program that performs clustering using the SLASH algorithm:
+	/// Single-Link Agglomerative Scalable Hilbert clustering.
 	/// </summary>
 	public class SlashCommand
 	{
@@ -96,15 +97,37 @@ Usage: 1. slash [help | -h | -help]
 
 		public Classification<UnsignedPoint, string> FinalClassification { get; set; }
 
+		/// <summary>
+		/// Create a SlashCommand that processes command line arguments and loads the configuration frmo a file.
+		/// </summary>
+		/// <param name="args">Command line Arguments.</param>
 		public SlashCommand(string[] args)
 		{
 			Command = ParseAction(args.Length == 0 ? "" : args[0]);
 			ParseFiles(args);
-
 		}
 
+		/// <summary>
+		/// Create a SlashCommand that is told which command to execute and is handed its configuration,
+		/// so does not need to load it from a file.
+		/// </summary>
+		/// <param name="command">Command to execute.</param>
+		/// <param name="configuration">Configuration tht specifies how the clustering is to be performed.</param>
+		public SlashCommand(CommandType command, SlashConfig configuration)
+		{
+			Command = command;
+			Configuration = configuration;
+			InputFile = Configuration.Data.InputDataFile;
+			OutputFile = Configuration.Output.OutputDataFile;
+			InitLogger(Configuration);
+		}
+
+		/// <summary>
+		/// Execute the command, potentially reading the configuration file and data file and writing the output file.
+		/// </summary>
 		public void Execute()
 		{
+			var alreadyHaveConfig = Configuration != null;
 			switch (Command)
 			{
 				case CommandType.Help:
@@ -118,11 +141,13 @@ Usage: 1. slash [help | -h | -help]
 					File.WriteAllText(ConfigFile, definition.ToString());
 					break;
 				case CommandType.Cluster:
-					Configuration = LoadConfig();
+					if (!alreadyHaveConfig)
+						Configuration = LoadConfig();
 					Cluster();
 					break;
 				case CommandType.Recluster:
-					Configuration = LoadConfig();
+					if (!alreadyHaveConfig)
+						Configuration = LoadConfig();
 					Recluster();
 					break;
 			}
@@ -253,8 +278,11 @@ Usage: 1. slash [help | -h | -help]
 		/// Points will be written to the output file or standard out in the order they were loaded,
 		/// with categories attached.
 		/// </summary>
-		void SaveData()
+		bool SaveData()
 		{
+			if (!Configuration.Output.ShouldWrite())
+				return false;
+			
 			TextWriter writer;
 			bool shouldCloseWriter;
 			var d = ","; // Field delimiter
@@ -297,6 +325,7 @@ Usage: 1. slash [help | -h | -help]
 				// Write comparison to the log.
 				Logger.Info($"Comparison between initial and final classification: {comparison}");
 			}
+			return true;
 		}
 
 		/// <summary>
@@ -368,13 +397,17 @@ Usage: 1. slash [help | -h | -help]
 				configuration.Output.OutputDataFile = OutputFile;
 			else
 				OutputFile = configuration.Output.OutputDataFile;
+			InitLogger(configuration);
+			return configuration;
+		}
+
+		void InitLogger(SlashConfig configuration)
+		{
 			Logger.Instance.LogFile = configuration.Output.LogFile;
 			Logger.Instance.Level = configuration.Output.LogLevel;
 			Logger.Instance.WriteToFile = configuration.Output.LogFile.Length > 1;
 			Logger.Instance.WriteToStandardOut = configuration.Output.LogFile.Equals("-");
 			Logger.Instance.WriteToStandardError = configuration.Output.LogFile.Equals("-");
-
-			return configuration;
 		}
 
 		CommandType ParseAction(string action)

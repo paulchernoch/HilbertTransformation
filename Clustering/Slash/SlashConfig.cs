@@ -75,7 +75,11 @@ namespace Clustering
 			/// <summary>
 			/// Returns true if an output file should be written.
 			/// </summary>
-			public bool ShouldWrite() { return (OutputDataFile ?? "?").Length > 0; }
+			public bool ShouldWrite() { 
+				// Dash means standard out.
+				// Null, empty string or "?" means do not write.
+				return (OutputDataFile ?? "?").Length > 1 || OutputDataFile.Equals("-"); 
+			}
 
 			/// <summary>
 			/// True if the output data shall be prefixed by a row containing a header record, false otherwise.
@@ -153,6 +157,11 @@ namespace Clustering
 					return false;
 				return BitsPerDimension == other.BitsPerDimension
 					&& Budget.Equals(other.Budget);
+			}
+
+			public override int GetHashCode()
+			{
+				return Budget.GetHashCode() + BitsPerDimension;
 			}
 		}
 
@@ -294,6 +303,12 @@ namespace Clustering
 			   && DensityClassifier.Equals(other.DensityClassifier)
 		       && Math.Abs(AcceptableBCubed - other.AcceptableBCubed) <= 0.0001
 			;
+		}
+
+		public override int GetHashCode()
+		{
+			return AcceptableBCubed.GetHashCode() + Data.GetHashCode() + DensityClassifier.GetHashCode()
+								   + HilbertClassifier.GetHashCode() + Index.GetHashCode() + Output.GetHashCode();
 		}
 	}
 }
