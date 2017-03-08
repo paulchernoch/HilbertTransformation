@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BF3FC391-2AB2-424B-A924-731055FD6F5E}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>Clustering</RootNamespace>
     <AssemblyName>Clustering</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -51,6 +51,7 @@
     <Compile Include="Slash\SlashConfig.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Slash\Logger.cs" />
+    <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

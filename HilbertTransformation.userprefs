@@ -1,10 +1,11 @@
-﻿<Properties StartupConfiguration="{65093B83-5D70-4FE8-869D-CA2894477DE4}|Unit Tests">
-  <MonoDevelop.Ide.Workbench ActiveDocument="HilbertTransformation Status">
+﻿<Properties StartupConfiguration="MonoDevelop.Projects.MultiStartup">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Clustering/Program.cs">
     <Files>
+      <File FileName="Clustering/Program.cs" Line="13" Column="6" />
       <File FileName="HilbertTransformationTests/Data/SlashCommandTests.cs" Line="35" Column="22" />
       <File FileName="Clustering/Slash/SlashConfig.cs" Line="52" Column="5" />
-      <File FileName="Clustering/Slash/SlashCommand.cs" Line="364" Column="4" />
-      <File FileName="Clustering/HilbertClassifier.cs" Line="256" Column="1" />
+      <File FileName="Clustering/Slash/SlashCommand.cs" Line="22" Column="35" />
+      <File FileName="Clustering/HilbertClassifier.cs" Line="27" Column="14" />
       <File FileName="HilbertTransformationTests/HilbertClassifierTests.cs" Line="547" Column="1" />
       <File FileName="Clustering/Slash/Logger.cs" Line="63" Column="3" />
       <File FileName="Clustering/OptimalIndex.cs" Line="253" Column="1" />
@@ -37,4 +38,7 @@
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.ItemProperties.HilbertTransformationTests PreferredExecutionTarget="MonoDevelop.Default" />
+  <StartupItems>
+    <String>Clustering/Clustering.csproj</String>
+  </StartupItems>
 </Properties>

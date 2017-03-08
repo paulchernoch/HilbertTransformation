@@ -9,3 +9,5 @@
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.dll.mdb
 /Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/YamlDotNet.dll
+/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.exe
+/Users/pchernoc/github/HilbertTransformation/HilbertTransformationTests/bin/Debug/Clustering.exe.mdb

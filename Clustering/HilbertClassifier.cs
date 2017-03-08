@@ -289,7 +289,7 @@ namespace Clustering
 				prevPoint = currPoint;
 			}
 			var plural = revisitations != 1 ? 's' : ' ';
-			Console.WriteLine($"{revisitations} Revisitation{plural} in MergeByHilbertIndex");
+			Logger.Debug($"{revisitations} Revisitation{plural} in MergeByHilbertIndex");
 		}
 
 		/// <summary>
