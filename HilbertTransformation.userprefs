@@ -6,6 +6,7 @@
       <File FileName="HilbertTransformationTests/SlashConfigTests.cs" Line="16" Column="30" />
       <File FileName="HilbertTransformationTests/SlashCommandTests.cs" Line="62" Column="5" />
       <File FileName="Clustering/Slash/SlashConfig.cs" Line="17" Column="16" />
+      <File FileName="Clustering/slash.sh" Line="3" Column="25" />
       <File FileName="HilbertTransformation Status" />
     </Files>
     <Pads>
