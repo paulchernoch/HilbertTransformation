@@ -66,9 +66,9 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
 
  ##Unassisted Classification
 
- In progress.... A tool to cluster high-dimensional data using the Hilbert curve.
+ In progress.... SLASH, a tool to cluster high-dimensional data using the Hilbert curve.
 
- The class StashCommand implements a console application that can perform unassisted classification
+ The class SlashCommand implements a console application that can perform unassisted classification
  of high-dimensional data. To run the program, execute the bash command slash.sh.
  You may need to modify this script to point to your mono installation.
 
