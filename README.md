@@ -78,15 +78,15 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
 
  Example output from slash help:
 
-    Slash Version 0.1
+       Slash Version 0.1
 
-    Purpose: Slash clusters high-dimensional data.
+       Purpose: Slash clusters high-dimensional data.
 
-    Usage: 1. slash [help | -h | -help]
-           2. slash define [config-file] [input-data-file] [output-data-file]
-           3. slash cluster [config-file] [input-data-file] [output-data-file]
-           4. slash recluster [config-file] [input-data-file] [output-data-file]
-           5. slash version
+       Usage: 1. slash [help | -h | -help]
+              2. slash define [config-file] [input-data-file] [output-data-file]
+              3. slash cluster [config-file] [input-data-file] [output-data-file]
+              4. slash recluster [config-file] [input-data-file] [output-data-file]
+              5. slash version
 
        config-file ....... If omitted, assume slash.yaml is the configuration file.
                            Configuration values are either written to this file
@@ -104,23 +104,23 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
                            to standard output.
                            Otherwise, use the value from the existing configuration file. 
 
-       *HELP*. The first usage shows this help message.
+       HELP. The first usage shows this help message.
 
-       *DEFINE*. The second usage creates a new YAML configuration file with the given name
+       DEFINE. The second usage creates a new YAML configuration file with the given name
        but does not perform clustering. 
        The file will have default settings for all properties, except any file names
        optionally supplied on the command line. The user should edit this file
        to specify important properties like the names of the id field and category field, 
        and whether there is a header record in the input CSV file.
 
-       *CLUSTER*. The third usage reads a configuration file and the indicated input data file
+       CLUSTER. The third usage reads a configuration file and the indicated input data file
        (or standard input), clusters the data and writes the results to the indicated 
        output file (or standard output). If the input data includes clustering
        categories, a comparison is logged to indicate how similar the new clustering
        is to the clustering done via some other source or a previous run of SLASH.
        The original clustering, if present, has no influence over the resulting clustering.
        
-       *RECLUSTER*. The fourth usage reads a configuration file and the indicated input data file
+       RECLUSTER. The fourth usage reads a configuration file and the indicated input data file
        (or standard input). It assumes that the records have already been clustered.
        It begins with the records grouped by this original clustering and continues
        with a new round of clustering. It writes the results to the indicated 
@@ -128,6 +128,6 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        and the final categories is logged to indicate how different the new clustering
        is from the original clustering.
 
-       *VERSION*. Print out the program version number.
+       VERSION. Print out the program version number.
 
 
