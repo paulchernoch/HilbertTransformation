@@ -211,6 +211,11 @@ namespace Clustering
                      && Math.Abs(OutlierDistanceMultiplier - other.OutlierDistanceMultiplier) <= 0.001
 				;
 			}
+
+			public override int GetHashCode()
+			{
+				return MaxNeighborsToCompare.GetHashCode() + UseExactClusterDistance.GetHashCode() + OutlierDistanceMultiplier.GetHashCode();
+			}
 		}
 
 		/// <summary>
@@ -239,6 +244,17 @@ namespace Clustering
 			/// </summary>
 			public int OutlierSize { get; set; } = 5;
 
+			/// <summary>
+			/// Gets or sets the acceptable shrinkage ratio that permits two clusters to be combined.
+			/// If two clusters were to be combined and that would shrink the radius of the combined cluster sufficiently,
+			/// then such a combination would be performed.
+			/// This should be a value between zero and one, probably in the range one half to 0.9, but 
+			/// experiments are needed.
+			/// 
+			/// Setting this to zero means that no merging based on radius shrinkage will be attempted.
+			/// </summary>
+			public double MergeableShrinkage { get; set; } = 0;
+
 			public override bool Equals(object obj)
 			{
 				return Equals(obj as DensityClassifierConfig);
@@ -251,13 +267,15 @@ namespace Clustering
 				return Math.Abs(UnmergeableSizeFraction - other.UnmergeableSizeFraction) <= 0.0001
 			       && Math.Abs(NeighborhoodRadiusMultiplier - other.NeighborhoodRadiusMultiplier) <= 0.0001
 				   && OutlierSize == other.OutlierSize
+				   && Math.Abs(MergeableShrinkage - other.MergeableShrinkage) <= 0.0001
 				;
 			}
 
 			public override int GetHashCode()
 			{
 				return SkipDensityClassification.GetHashCode() + UnmergeableSizeFraction.GetHashCode() 
-					    + NeighborhoodRadiusMultiplier.GetHashCode() + OutlierSize.GetHashCode();
+					    + NeighborhoodRadiusMultiplier.GetHashCode() + OutlierSize.GetHashCode()
+					    + MergeableShrinkage.GetHashCode();
 			}
 		}
 

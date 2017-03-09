@@ -37,17 +37,17 @@ namespace Clustering
 		bool Write(string message, string messageLevel)
 		{
 			messageLevel = messageLevel.ToLowerInvariant();
-			var msgToWrite = $"{messageLevel.ToUpperInvariant()}. {message}\n";
+			var msgToWrite = $"{messageLevel.ToUpperInvariant()}. {message}";
 			if (ShouldIgnore(messageLevel))
 				return false;
 			lock(this)
 			{
 				if (WriteToStandardError && IsErrorOrWarning(messageLevel))
-					Console.Error.Write(msgToWrite);
+					Console.Error.WriteLine(msgToWrite);
 				else if (WriteToStandardOut)
-					Console.Write(msgToWrite);
+					Console.WriteLine(msgToWrite);
 				if (WriteToFile)
-					File.AppendAllText(LogFile, msgToWrite);
+					File.AppendAllText(LogFile, $"{msgToWrite}\n");
 			}
 			return true;
 		}
@@ -62,12 +62,21 @@ namespace Clustering
 		public static bool Warn(string message) { return Instance.LogWarn(message); }
 		public static bool Error(string message) { return Instance.LogError(message); }
 
-		public static void SetupForTests(string logFileName = "./slash-test.log")
+		public static void SetupForTests(string logFileName = "slash-test.log")
 		{
-			Logger.Instance.LogFile = logFileName;
+			Logger.Instance.LogFile = AbsolutePath(logFileName);
 			Logger.Instance.Level = "info";
 			Logger.Instance.WriteToFile = Logger.Instance.LogFile != null;
 			Logger.Instance.WriteToStandardOut = true;
+		}
+
+		public static string AbsolutePath(string path)
+		{
+			if (String.IsNullOrWhiteSpace(path))
+				return null;
+			if (System.IO.Path.IsPathRooted(path))
+				return path;
+			return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
 		}
 
 	}

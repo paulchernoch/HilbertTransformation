@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using HilbertTransformation;
 
@@ -42,6 +43,10 @@ namespace Clustering
 		/// </summary>
 		public double NeighborhoodRadiusMultiplier { get; set; } = 2.0 / 5.0;
 
+		/// <summary>
+		/// Defines the radius around a point of the hypersphere to be searched for the neighbors
+		/// that contribute to the density.
+		/// </summary>
 		public long NeighborhoodRadius { get { return (long)(MergeSquareDistance * NeighborhoodRadiusMultiplier); } }
 
 		/// <summary>
@@ -49,6 +54,17 @@ namespace Clustering
 		/// </summary>
 		/// <value>The size of the outlier.</value>
 		public int OutlierSize { get; set; } = 5;
+
+		/// <summary>
+		/// Gets or sets the acceptable shrinkage ratio that permits two clusters to be combined.
+		/// If two clusters were to be combined and that would shrink the radius of the combined cluster sufficiently,
+		/// then such a combination would be performed.
+		/// This should be a value between zero and one, probably in the range one half to 0.9, but 
+		/// experiments are needed.
+		/// 
+		/// Setting this to zero means that no merging based on radius shrinkage will be attempted.
+		/// </summary>
+		public double MergeableShrinkage { get; set; } = 0;
 
 		public HilbertIndex Index { get; set; }
 
@@ -94,6 +110,10 @@ namespace Clustering
 			//    In the end, we will only have large clusters remaining.
 			MergeOutliers();
 
+			// 6. Merge together clusters if it creates a new cluster with a radius smaller 
+			//    than the sum of the radii of the component clusters.
+			MergeByRadius();
+
 			return Clusters;
 		}
 
@@ -104,8 +124,10 @@ namespace Clustering
 		/// </summary>
 		/// <param name="p1">Point belonging to first cluster to merge.</param>
 		/// <param name="p2">Point belonging to second cluster to merge.</param>
+		/// <param name="forceMerge">If true and UnmergeableSize is the sole obstacle to the merge, perform the merge anyways.
+		/// If false, honor UnmergeableSize.</param>
 		/// <returns>True if the merge was performed successfully, false otherwise.</returns>
-		private bool Merge(UnsignedPoint p1, UnsignedPoint p2)
+		private bool Merge(UnsignedPoint p1, UnsignedPoint p2, bool forceMerge = false)
 		{
 			var category1 = Clusters.GetClassLabel(p1);
 			var category2 = Clusters.GetClassLabel(p2);
@@ -113,7 +135,7 @@ namespace Clustering
 				return false;
 			var size1 = Clusters.PointsInClass(category1).Count;
 			var size2 = Clusters.PointsInClass(category2).Count;
-			if (size1 >= UnmergeableSize && size2 >= UnmergeableSize)
+			if (size1 >= UnmergeableSize && size2 >= UnmergeableSize  && !forceMerge)
 				return false;
 			return Clusters.Merge(category1, category2);
 		}
@@ -127,6 +149,85 @@ namespace Clustering
 			var cc = new ClosestCluster<string>(Clusters);
 			foreach (var cp in cc.FindClosestOutliers(Clusters.NumPartitions, long.MaxValue, UnmergeableSize))
 				Merge(cp.Point1, cp.Point2);
+		}
+
+		protected class RadiusMergeCandidate: IComparable<RadiusMergeCandidate>
+		{
+			public string Label1 { get; set; }
+			public UnsignedPoint Point1 { get; set; }
+
+			public string Label2 { get; set; }
+			public UnsignedPoint Point2 { get; set; }
+
+			public ClusterRadius CombinedRadius { get; set; }
+
+			public double Shrinkage { get; set; }
+
+			public RadiusMergeCandidate(
+				Classification<UnsignedPoint, string> clusters,
+				string label1,
+				ClusterRadius radius1,
+				string label2,
+				ClusterRadius radius2
+			)
+			{
+				Label1 = label1;
+				Point1 = clusters.PointsInClass(Label1).First();
+				Label2 = label2;
+				Point2 = clusters.PointsInClass(Label2).First();
+				CombinedRadius = new ClusterRadius(clusters.PointsInClass(Label1), clusters.PointsInClass(Label2));
+				Shrinkage = CombinedRadius.Shrinkage(radius1, radius2);
+			}
+
+			public int CompareTo(RadiusMergeCandidate other)
+			{
+				return Shrinkage.CompareTo(other.Shrinkage);
+			}
+		}
+
+		/// <summary>
+		/// Compare every cluster to every other cluster and decide if we should merge them based on 
+		/// whether the radius of the combined cluster is less than the sum of the radii of the original clusters.
+		/// </summary>
+		/// <returns>True if any merges were performed, false otherwise.</returns>
+		bool MergeByRadius()
+		{
+			int mergeCount = 0;
+			if (MergeableShrinkage <= 0 || Clusters.NumPartitions == 1)
+				return false;
+			Timer.Start("Merge by radius");
+			var Radii = new Dictionary<string, ClusterRadius>();
+			foreach (var label in Clusters.ClassLabels())
+				Radii[label] = new ClusterRadius(Clusters.PointsInClass(label).ToList());
+			var potentialMerges = new List<RadiusMergeCandidate>();
+			var minShrinkage = double.MaxValue;
+			foreach (var label1 in Clusters.ClassLabels())
+				foreach (var label2 in Clusters.ClassLabels().Where(label => label1.CompareTo(label) == -1))
+				{
+					var potentialMerge = new RadiusMergeCandidate(
+						Clusters,
+						label1,
+						Radii[label1],
+						label2,
+						Radii[label2]
+					);
+					minShrinkage = Math.Min(minShrinkage, potentialMerge.Shrinkage);
+					if (potentialMerge.Shrinkage <= MergeableShrinkage)
+						potentialMerges.Add(potentialMerge);
+				}
+			//TODO: Should we process merges from low shrinkage to high, and regenerate results after each merge? 
+			//      This is in case merging A + B is allowed and B + C is allowed, but 
+			//      after A + B are merged to form D, C + D are not a good merge.
+			//      For now, process all merges that pass the Shrinkage test.
+			foreach (var potentialMerge in potentialMerges)
+			{
+				if (Merge(potentialMerge.Point1, potentialMerge.Point2, true))
+					mergeCount++;
+			}
+			Logger.Info($"{mergeCount} cluster pairs successfully merged by radius, with {potentialMerges.Count} expected.");
+			Logger.Info($"Radius shrinkage values: Best {minShrinkage} vs Permitted {MergeableShrinkage}");
+			Timer.Stop("Merge by radius");
+			return mergeCount > 0;
 		}
 	}
 }

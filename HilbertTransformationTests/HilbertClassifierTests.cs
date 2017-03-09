@@ -657,13 +657,14 @@ namespace HilbertTransformationTests
 			{
 				message += $"Quality: {pair.Value} times {pair.Key} \n";
 			}
-			Console.WriteLine(message);
+			Logger.Info(message);
 			Assert.AreEqual(repeatCount, histogram[SplitQuality.PerfectSplit], message);
 		}
 
 		private string ClassifyTwoClustersReport(int repeatCount, int numPoints, int dimensions, double[] overlapPercents,
 		  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptablePrecision = 0.98, bool useDensityClassifier = true)
 		{
+			Logger.SetupForTests();
 			var report = $"Repeat count = {repeatCount}  N = {numPoints}  D = {dimensions}  Max Coord = {maxCoordinate}  Acc Prec = {acceptablePrecision}\n\nOverlap Percent,Perfect Split,Good Split,Good Over-split,Fair Over-split,Bad Split,Unsplit\n";
 			foreach (var overlapPercent in overlapPercents)
 			{
@@ -686,9 +687,9 @@ namespace HilbertTransformationTests
 				var h = histogram;
 				report += $"{overlapPercent},{h[SplitQuality.PerfectSplit]},{h[SplitQuality.GoodSplit]},{h[SplitQuality.GoodOverSplit]},{h[SplitQuality.FairOverSplit]},{h[SplitQuality.BadSplit]},{h[SplitQuality.Unsplit]}\n";
 
-				Console.WriteLine(report);
+				Logger.Info(report);
 			}
-			Console.WriteLine("DONE!");
+			Logger.Info("DONE!");
 			return report;
 		}
 
@@ -747,11 +748,13 @@ namespace HilbertTransformationTests
 		private Tuple<ClusterMetric<UnsignedPoint,string>, int, int, SplitQuality> ClassifyTwoClustersHelper(int numPoints, int dimensions, double overlapPercent,
 				  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptablePrecision = 0.98, bool useDensityClassifier = true)
 		{
+			Logger.SetupForTests();
 			var bitsPerDimension = maxCoordinate.SmallestPowerOfTwo();
 			var clusterCount = 2;
 			var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
 			var maxClusterSize = (numPoints / clusterCount) + clusterSizeVariation;
 			var outlierSize = 5;
+			var radiusShrinkage = 0.6; // 0.7 merges too many that belong apart!
 			var data = new GaussianClustering
 			{
 				ClusterCount = clusterCount,
@@ -770,7 +773,10 @@ namespace HilbertTransformationTests
 				var count = cc.Count(hIndex.SortedPoints);
 
 				var unmergeableSize = expectedClusters.NumPoints / 6;
-				var densityClassifier = new DensityClassifier(hIndex, count.MaximumSquareDistance, unmergeableSize);
+				var densityClassifier = new DensityClassifier(hIndex, count.MaximumSquareDistance, unmergeableSize)
+				{
+					 MergeableShrinkage = radiusShrinkage
+				};
 
 				actualClusters = densityClassifier.Classify();
 			}
@@ -798,7 +804,7 @@ namespace HilbertTransformationTests
 			else // Assume correct number of clusters.
 				qualitativeResult = SplitQuality.BadSplit;
 
-			Console.Write($"  Quality: {qualitativeResult}  Comparison: {comparison}");
+			Logger.Info($"  Quality: {qualitativeResult}  Comparison: {comparison}");
 			
 			return new Tuple<ClusterMetric<UnsignedPoint, string>, int, int, SplitQuality>(
 				comparison, 

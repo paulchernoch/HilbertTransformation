@@ -164,11 +164,13 @@ Usage: 1. slash [help | -h | -help]
 					if (!alreadyHaveConfig)
 						Configuration = LoadConfig();
 					Cluster();
+					Timer.Log();
 					break;
 				case CommandType.Recluster:
 					if (!alreadyHaveConfig)
 						Configuration = LoadConfig();
 					Recluster();
+					Timer.Log();
 					break;
 			}
 		}
@@ -190,9 +192,12 @@ Usage: 1. slash [help | -h | -help]
 				UseExactClusterDistance = Configuration.HilbertClassifier.UseExactClusterDistance
 			};
 			//TODO: Follow this with the DensityClassifier.
+			Timer.Start("Classify by distance");
 			FinalClassification = classifier.Classify();
+			Timer.Stop("Classify by distance");
 			MergeSquareDistance = classifier.MergeSquareDistance;
 			ReclassifyByDensity();
+			Logger.Info(Summary());
 			SaveData();
 		}
 
@@ -211,10 +216,18 @@ Usage: 1. slash [help | -h | -help]
 				UseExactClusterDistance = Configuration.HilbertClassifier.UseExactClusterDistance
 			};
 			//TODO: Follow this with the DensityClassifier.
+			Timer.Start("Classify by distance");
 			FinalClassification = classifier.Classify();
+			Timer.Stop("Classify by distance");
 			MergeSquareDistance = classifier.MergeSquareDistance;
 			ReclassifyByDensity();
+			Logger.Info(Summary());
 			SaveData();
+		}
+
+		string Summary()
+		{
+			return $"{FinalClassification.NumPoints} points with {InputOrder[0].Dimensions} dimensions were divided into {FinalClassification.NumPartitions} clusters";
 		}
 
 		/// <summary>
@@ -227,8 +240,14 @@ Usage: 1. slash [help | -h | -help]
 			// 0. Decide if we will be doing this or not, based on the configuration.
 			if (!Configuration.DensityClassifier.SkipDensityClassification)
 			{
+				Timer.Start("Reclassify by density");
+				var numberOfClustersSplit = 0;
+
 				// 1. Loop through all clusters in FinalClassification
-				foreach (var clusterId in FinalClassification.ClassLabels())
+				// We will be modifying FinalClassification while iterating over it,
+				// so we need to copy the list of labels up front.
+				var classLabels = FinalClassification.ClassLabels().ToList();
+				foreach (var clusterId in classLabels)
 				{
 					// 2. Decide if the cluster needs reclustering.
 					if (NeedsReclustering(clusterId))
@@ -247,7 +266,8 @@ Usage: 1. slash [help | -h | -help]
 						var densityClassifier = new DensityClassifier(hIndex, MergeSquareDistance, unmergeableSize)
 						{
 						 	NeighborhoodRadiusMultiplier = Configuration.DensityClassifier.NeighborhoodRadiusMultiplier,
-							OutlierSize = Configuration.DensityClassifier.OutlierSize
+							OutlierSize = Configuration.DensityClassifier.OutlierSize,
+							MergeableShrinkage = Configuration.DensityClassifier.MergeableShrinkage
 						};
 
 						// 5. Reclassify.
@@ -258,6 +278,8 @@ Usage: 1. slash [help | -h | -help]
 						// 6. If the number of clusters made from the points is more than one...
 						if (densityClassification.NumPartitions > 1)
 						{
+							numberOfClustersSplit++;
+
 							// 7. ... loop through all HilbertPoints from cluster and find corresponding UnsignedPoints.
 							foreach (var hPoint in densityClassification.Points())
 							{
@@ -275,6 +297,8 @@ Usage: 1. slash [help | -h | -help]
 						}
 					}
 				}
+				Timer.Stop("Reclassify by density");
+				Logger.Info($"Clusters split due to density-based reclassification: {numberOfClustersSplit}");
 			}
 		}
 
@@ -305,6 +329,7 @@ Usage: 1. slash [help | -h | -help]
 		{
 			if (IsDataLoaded)
 				return;
+			Timer.Start("Load data");
 			InitialClassification = new Classification<UnsignedPoint, string>();
 			InputOrder = new List<UnsignedPoint>();
 			InputDataIds = new Dictionary<UnsignedPoint, string>();
@@ -382,6 +407,7 @@ Usage: 1. slash [help | -h | -help]
 				}
 				rownum++;
 			}
+			Timer.Stop("Load data");
 		}
 
 		/// <summary>
@@ -416,6 +442,7 @@ Usage: 1. slash [help | -h | -help]
 			var dataWasSaved = false;
 			if (Configuration.Output.ShouldWrite())
 			{
+				Timer.Start("Save data");
 				TextWriter writer;
 				bool shouldCloseWriter;
 				var d = ","; // Field delimiter
@@ -451,6 +478,7 @@ Usage: 1. slash [help | -h | -help]
 						writer.Close();
 				}
 				dataWasSaved = true;
+				Timer.Stop("Save data");
 			}
 			RecordResult();
 			return dataWasSaved;
@@ -506,7 +534,9 @@ Usage: 1. slash [help | -h | -help]
 			// Compute the BCubed score between the initial and final classification IF there was an initial classification.
 			if (InitialClassification.NumPartitions != InitialClassification.NumPoints)
 			{
+				Timer.Start("Compare classifications");
 				MeasuredChange = CompareClassifications();
+				Timer.Stop("Compare classifications");
 				// Write comparison to the log.
 				Logger.Info($"Comparison between initial and final classification: {MeasuredChange}. Acceptable: {Configuration.AcceptableBCubed}");
 			}

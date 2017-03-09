@@ -52,6 +52,8 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Slash\Logger.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Slash\Timer.cs" />
+    <Compile Include="ClusterRadius.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">

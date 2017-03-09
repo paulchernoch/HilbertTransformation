@@ -214,6 +214,8 @@ namespace Clustering
 			//   4) Find best HilbertIndex and find the one that predicts the lowest number of clusters K (OptimalIndex).
 			//   5) Set the characteristic merge distance S (MergeSquareDistance).
 			//TODO: Support formation and use of more than one HilbertIndex, to respect IndexBudget.IndexCount.
+
+			Timer.Start("Find optimum Hilbert index");
 			var optimum = OptimalIndex.Search(
 				HilbertPoints,
 				IndexConfig.OutlierSize,
@@ -223,17 +225,21 @@ namespace Clustering
 				IndexConfig.MaxIterationsWithoutImprovement,
 				IndexConfig.UseSample
 			);
+			Timer.Stop("Find optimum Hilbert index");
 			BestIndex = optimum.Index;
 			MergeSquareDistance = optimum.MergeSquareDistance;
 
 			//   6) Pass over the points in Hilbert order. Every consescutive pair closer than the distance S is merged into the
 			//      same cluster.
+			Timer.Start("Merge by Hilbert index");
 			MergeByHilbertIndex(BestIndex);
+			Timer.Stop("Merge by Hilbert index");
 
 			//   7) Find the distance from the Centroid of each non-outlier cluster to every other large cluster (ClosestCluster).
 			//   8) For the closest neighboring large clusters, probe deeper and find the pair of points, 
 			//      one drawn from each of two clusters, that is closest and their separation s (square Cartesian distance). 
 			//   9) If a pair of clusters is closer than S (s ≤ S), merge them, transitively. 
+			Timer.Start("Merge neighboring large clusters");
 			var cc = new ClosestCluster<string>(Clusters);
 			var closeClusterPairs = cc.FindClosestClusters(MaxNeighborsToCompare, MergeSquareDistance, OutlierSize, UseExactClusterDistance);
 			var clusterMerges = 0;
@@ -243,13 +249,16 @@ namespace Clustering
 				if (Clusters.Merge(pair.Color1, pair.Color2))
 					clusterMerges++;
 			}
+			Timer.Stop("Merge neighboring large clusters");
 
 			//  10) Merge outliers with neighboring clusters. 
 			//      For all the remaining outliers (small clusters), merge them with the nearest large cluster 
 			//      unless their distance is too great (MergeSquareDistance * OutlierDistanceMultiplier). 
 			//      Do not permit this phase to cause two large clusters to be joined to each other.
+			Timer.Start("Merge outliers");
 			var maxOutlierMergeDistance = (long)(MergeSquareDistance * OutlierDistanceMultiplier);
 			var outlierMerges = MergeOutliers(maxOutlierMergeDistance);
+			Timer.Stop("Merge outliers");
 			var msg = $"   {clusterMerges} Cluster merges, {outlierMerges} Outlier merges";
 			Logger.Info(msg);
 			return Clusters;
