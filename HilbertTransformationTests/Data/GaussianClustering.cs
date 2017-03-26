@@ -178,13 +178,65 @@ namespace HilbertTransformationTests.Data
 			return clusters;
 		}
 
-		/// <summary>
-		/// Add noise points to the data and classify each noise point with the nearest cluster center.
-		/// </summary>
-		/// <param name="noisePointsToAdd">Number of noise points to add.</param>
-		/// <param name="clusterCenters">Cluster centers for each cluster, where the key is the cluster id.</param>
-		/// <param name="clusters">The noise points will be added to these clusters.</param>
-		private void AddNoise(int noisePointsToAdd, Dictionary<string, UnsignedPoint> clusterCenters, Classification<UnsignedPoint, string> clusters)
+        /// <summary>
+        /// Generate random points clumped into individual, well-separated, chains of Gaussian clusters.
+        /// Each chain consists of individiual Gaussian clusters that overlap.
+        /// </summary>
+        /// <returns>Points that are grouped into clusters and stored in a Classification.</returns>
+        public Classification<UnsignedPoint, string> MakeChains(int chainLength)
+        {
+            var clusters = new Classification<UnsignedPoint, string>();
+            r = new FastRandom();
+
+            var minDistance = EllipsoidalGenerator.MinimumSeparation(MaxDistanceStdDev, Dimensions);
+            var centerGenerator = new ChainGenerator(Dimensions, minDistance)
+            {
+                // Keep the centers of the clusters away from the edge, so that points do not go out of bounds and have their coordinates truncated.
+                Minimum = MaxDistanceStdDev,
+                Maximum = MaxCoordinate - MaxDistanceStdDev
+            };
+            var segmentLength = MinDistanceStdDev / 2;
+            var iCluster = 0;
+            foreach (var chain in centerGenerator.Chains(chainLength,segmentLength).Take(ClusterCount).Where(chain => chain.Any()))
+            {
+                var centerPoints = chain.Select(center => new UnsignedPoint(center)).ToList();
+                // The cluster size may be random, or come from ClusterSizes.
+                int clusterSize;
+                if (ClusterSizes.Length > 0)
+                    clusterSize = ClusterSizes[iCluster % ClusterSizes.Length];
+                else
+                    clusterSize = r.Next(MinClusterSize, MaxClusterSize);
+                // Having decided on an overall cluster size, each segment gets an even number of points.
+                var segmentSize = clusterSize / chainLength;
+                var clusterId = iCluster.ToString();
+                // Each point generator is for a different segment of a chain.
+                foreach(var pointGenerator in chain
+                    .Select(segmentCenter => 
+                        new EllipsoidalGenerator(segmentCenter, RandomDoubles(Dimensions, MinDistanceStdDev, MaxDistanceStdDev, r), Dimensions))
+                    )
+                {
+                    foreach(var iPoint in Enumerable.Range(1, segmentSize))
+                    {
+                        clusters.Add(
+                            new UnsignedPoint(pointGenerator.Generate(new int[Dimensions])),
+                            clusterId
+                        );
+                    }
+                }
+                iCluster++;
+            }
+            return clusters;
+        }
+
+
+
+        /// <summary>
+        /// Add noise points to the data and classify each noise point with the nearest cluster center.
+        /// </summary>
+        /// <param name="noisePointsToAdd">Number of noise points to add.</param>
+        /// <param name="clusterCenters">Cluster centers for each cluster, where the key is the cluster id.</param>
+        /// <param name="clusters">The noise points will be added to these clusters.</param>
+        private void AddNoise(int noisePointsToAdd, Dictionary<string, UnsignedPoint> clusterCenters, Classification<UnsignedPoint, string> clusters)
 		{
 			if (noisePointsToAdd <= 0)
 				return;

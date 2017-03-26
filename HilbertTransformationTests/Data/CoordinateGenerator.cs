@@ -439,24 +439,53 @@ namespace HilbertTransformationTests.Data
         /// The values will be changed in place.
         /// This array must have at least as many elements as Dimensions.
         /// </param>
-        /// <returns>The same point with changes made.</returns>
-        public override int[] Generate(int[] point)
+        /// <returns>The same point with changes made, or null, if no point could be found.</returns>
+        public override int[] Generate(int[] p)
         {
-            var minDistSquared = (long) Math.Ceiling(MinimumDistance * MinimumDistance);
+            UnsignedPoint pt;
+            var intPoint = FindSeparatedPoint(out pt);
+            if (intPoint != null)
+            {
+                PreviousPoints.Add(pt);
+                Array.Copy(intPoint, p, Dimensions);
+                return p;
+            }
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Find a point far enough away from the previous points,
+        /// but do not record it yet as a Previous Point.
+        /// </summary>
+        /// <param name="uPoint">UnsignedPoint made from the returned array, or null.</param>
+        /// <returns>A point well-separated from all previous points, or null if none could be found.
+        /// </returns>
+        public int[] FindSeparatedPoint(out UnsignedPoint uPoint)
+        {
+            var minDistSquared = (long)Math.Ceiling(MinimumDistance * MinimumDistance);
             var tries = 0;
-            while (tries < 100) 
+            var point = new int[Dimensions];
+            while (tries < 100)
             {
                 for (var iDim = 0; iDim < AffectedDimensions.Count; iDim++)
                     point[iDim] = Rng.Next(Minimum, Maximum);
                 var pt = new UnsignedPoint(point); // Copies the array.
                 if (!PreviousPoints.Any(p => p.Measure(pt) < minDistSquared))
-                {  
-                    PreviousPoints.Add(pt);
+                {
+                    uPoint = pt;
                     return point;
                 }
                 tries++;
             }
+            uPoint = null;
             return null;
+        }
+
+        public bool IsSeparatedPoint(UnsignedPoint pt)
+        {
+            var minDistSquared = (long)Math.Ceiling(MinimumDistance * MinimumDistance);
+            return !PreviousPoints.Any(p => p.Measure(pt) < minDistSquared);
         }
 
         #region IEnumerable implementation
@@ -478,5 +507,102 @@ namespace HilbertTransformationTests.Data
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// Generate chains of points. No chains overlap, but all the points in a single chain form
+    /// a curve where each point is close to the previous point. The curve can twist and bend back on itself.
+    ///
+    /// </summary>
+    public class ChainGenerator : DiffuseGenerator
+    {
+        /// <summary>
+        /// Create a generator of chains of points.
+        /// </summary>
+        /// <param name="dimensions">Number of dimensions of each point.</param>
+        /// <param name="minDistance">No points from one chain can be closer than this disrtance
+        /// from any points in a previously generated chain.</param>
+        public ChainGenerator(int dimensions, double minDistance): base(dimensions, minDistance)
+        {
+        }
+
+        /// <summary>
+        /// Generate a chain of close points, each seperated by the given segmentLength.
+        /// No points from this chain will be close to any points from previous chains.
+        /// </summary>
+        /// <param name="chainLength"></param>
+        /// <param name="segmentLength"></param>
+        /// <returns>A list of chainLength points (or fewer, if we can't find any more).</returns>
+        public List<int[]> GenerateChain(int chainLength, int segmentLength)
+        {
+            var segSquaredLength = (long)segmentLength * segmentLength;
+            var chain = new List<int[]>();
+            var currentUnsignedChain = new List<UnsignedPoint>();
+            UnsignedPoint uPoint = null;
+            var currentPoint = FindSeparatedPoint(out uPoint);
+            if (currentPoint == null)
+                return chain;
+            currentUnsignedChain.Add(uPoint);
+            chain.Add(currentPoint);
+            var failures = 0;
+            while (chain.Count() < chainLength && failures < 20)
+            {
+                var nextPoint = RandomStep(currentPoint, segmentLength);
+                uPoint = new UnsignedPoint(nextPoint);
+                if (IsSeparatedPoint(uPoint))
+                {
+                    chain.Add(nextPoint);
+                    currentUnsignedChain.Add(uPoint);
+                    currentPoint = nextPoint;
+                }
+                else
+                    failures++;
+            }
+            PreviousPoints.AddRange(currentUnsignedChain);
+            var startToFinishDistance = currentUnsignedChain.First().Distance(currentUnsignedChain.Last());
+            return chain;
+        }
+
+        /// <summary>
+        /// Generate as many random chains of points as needed.
+        /// </summary>
+        /// <param name="chainLength">Number of points in each chain.</param>
+        /// <param name="segmentLength">Distance from each point to the next.</param>
+        /// <returns>A list of points in a chain.</returns>
+        public IEnumerable<List<int[]>> Chains(int chainLength, int segmentLength)
+        {
+            var success = true;
+            while(success)
+            {
+                var chain = GenerateChain(chainLength, segmentLength);
+                success = chain.Count() > 0;
+                yield return chain;
+            }
+        }
+
+        /// <summary>
+        /// Given an initial point, step by a given distance in a random direction to generate a new point.
+        /// </summary>
+        /// <param name="start">Point away from which we are moving.</param>
+        /// <param name="segmentLength">The distance between start and the new point will approximately equal this.</param>
+        /// <returns>A new point that is approximately the given distance from start.</returns>
+        int[] RandomStep(int[] start, int segmentLength)
+        {
+            long remainingSquareLength = segmentLength * segmentLength;
+            var nextPoint = (int[])start.Clone();
+            while (remainingSquareLength > 0)
+            {
+                var maxRemainingLength = (int) Math.Ceiling(Math.Sqrt(remainingSquareLength));
+                var iDim = Rng.Next(0, Dimensions);
+                var step = Rng.Next(0, 2 * maxRemainingLength + 1) - maxRemainingLength;
+                
+                var coordinate = Math.Max(Minimum, Math.Min(Maximum, nextPoint[iDim] + step));
+                step = coordinate - nextPoint[iDim];
+                remainingSquareLength -= step * step;
+                nextPoint[iDim] = coordinate;
+            }
+            return nextPoint;
+        }
+
     }
 }

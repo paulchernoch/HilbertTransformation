@@ -813,5 +813,67 @@ namespace HilbertTransformationTests
 				qualitativeResult
 			);
 		}
-	}
+
+        #region Clusters that are Chains, not spheres
+
+
+        [Test]
+        /// <summary>
+        /// Classifies random data with 20,000 points, 50 clusters of 20 segments each, 100 dimensions.
+        /// </summary>
+        public void Classify_Chains_20000N_50K_20S_100D()
+        {
+            ClassifyChainCase(20000, 50, 20, 100, 0, 10000, 0.98);
+        }
+
+
+        /// <summary>
+        /// Create test data in known chained clusters, perform unattended clustering, and compare the results to the known clusters.
+        /// The test passes if the BCubed value is high enough.
+        /// </summary>
+        /// <param name="numPoints">Number of points to cluster.</param>
+        /// <param name="clusterCount">Cluster count.</param>
+        /// <param name="chainLength">Number of segments in each chain.</param>
+        /// <param name="dimensions">Dimensions per point.</param>
+        /// <param name="clusterSizeVariation">Cluster size variation.
+        ///  The average number of points per cluster is numPoints/clusterCount. 
+        ///  The actual size of a given cluster will be permitted to vary by as much as ± clusterSizeVariation.
+        /// </param>
+        /// <param name="maxCoordinate">All points will have coordinate values in the range 0 to maxCoordinate.</param>
+        /// <param name="acceptableBCubed">The comparison of the actual and expected clusters must yield a BCubed value
+        /// that is this high or higher. A value of 1.0 means a perfect clustering, with no points out of place.</param>
+        private void ClassifyChainCase(int numPoints, int clusterCount, int chainLength, int dimensions,
+                                  int clusterSizeVariation = 0, int maxCoordinate = 1000, double acceptableBCubed = 0.99)
+        {
+            var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
+            var maxClusterSize = (numPoints / clusterCount) + clusterSizeVariation;
+            var data = new GaussianClustering
+            {
+                ClusterCount = clusterCount,
+                Dimensions = dimensions,
+                MaxCoordinate = maxCoordinate,
+                MinClusterSize = minClusterSize,
+                MaxClusterSize = maxClusterSize,
+                MaxDistanceStdDev = 300,
+                MinDistanceStdDev = 150
+            };
+            ClusterChainCore(data, acceptableBCubed, chainLength);
+        }
+
+        private void ClusterChainCore(GaussianClustering data, double acceptableBCubed, int chainLength)
+        {
+            var expectedClusters = data.MakeChains(chainLength);
+            var classifier = new HilbertClassifier(expectedClusters.Points(), 10);
+            classifier.IndexConfig.UseSample = true;
+            var actualClusters = classifier.Classify();
+            var comparison = expectedClusters.Compare(actualClusters);
+
+            var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
+            Console.WriteLine(message);
+            var message2 = $"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}";
+            Console.WriteLine(message2);
+            Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
+        }
+        #endregion
+    }
 }
