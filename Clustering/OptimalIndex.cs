@@ -320,7 +320,7 @@ namespace Clustering
                             // them into so many small pieces that most points end up in outliers.
                             // This leads to a false low count.
                             if (!rejectedSampleSizes.Contains(indexToTry.Count)) { 
-                                sampleSize = Math.Min(points.Count(), 2 * indexToTry.Count);
+                                sampleSize = Math.Min(points.Count(), 3 * indexToTry.Count / 2);
                                 Logger.Info($"Increasing sample size to {sampleSize} because estimated K = {resultsToTry.EstimatedClusterCount} (not trusted)");
                                 var newSampledPoints = Sample(points, sampleSize);
                                 lock (points)
