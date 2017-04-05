@@ -819,11 +819,12 @@ namespace HilbertTransformationTests
 
         [Test]
         /// <summary>
-        /// Classifies random data with 20,000 points, 50 clusters of 20 segments each, 100 dimensions.
+        /// Classifies random data with 100,000 points, 50 clusters of 20 segments each, 100 dimensions.
         /// </summary>
-        public void Classify_Chains_20000N_50K_20S_100D()
+        public void Classify_Chains_100000N_50K_20S_100D()
         {
-            ClassifyChainCase(20000, 50, 20, 100, 0, 10000, 0.98);
+            Logger.SetupForTests();
+            ClassifyChainCase(100000, 50, 20, 100, 0, 10000, 0.98);
         }
 
 
@@ -869,9 +870,15 @@ namespace HilbertTransformationTests
             var comparison = expectedClusters.Compare(actualClusters);
 
             var message = $"   Comparison of clusters: {comparison}.\n   Clusters expected/actual: {expectedClusters.NumPartitions}/{actualClusters.NumPartitions}.";
-            Console.WriteLine(message);
+            Logger.Info(message);
             var message2 = $"   Large clusters: {actualClusters.NumLargePartitions(classifier.OutlierSize)}";
-            Console.WriteLine(message2);
+            Logger.Info(message2);
+            var pointsInOutliers = actualClusters.LabelToPoints.Values
+                .Select(values => values.Count())
+                .Where(count => count < classifier.OutlierSize)
+                .Sum();
+            var message3 = $"   Points in Outliers/Total Point: {pointsInOutliers} / {actualClusters.NumPoints}";
+            Logger.Info(message3);
             Assert.GreaterOrEqual(comparison.BCubed, acceptableBCubed, $"Clustering was not good enough. BCubed = {comparison.BCubed}");
         }
         #endregion

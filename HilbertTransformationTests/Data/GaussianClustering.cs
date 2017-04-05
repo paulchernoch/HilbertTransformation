@@ -195,7 +195,7 @@ namespace HilbertTransformationTests.Data
                 Minimum = MaxDistanceStdDev,
                 Maximum = MaxCoordinate - MaxDistanceStdDev
             };
-            var segmentLength = MinDistanceStdDev / 2;
+            var segmentLength = (int)(MinDistanceStdDev * Math.Sqrt(Dimensions) / 3);
             var iCluster = 0;
             foreach (var chain in centerGenerator.Chains(chainLength,segmentLength).Take(ClusterCount).Where(chain => chain.Any()))
             {

@@ -251,16 +251,19 @@ namespace Clustering
 			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
 			LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
 		    Logger.Info($"Cluster count Starts at: {bestResults}");
+            var startingCount = bestResults.EstimatedClusterCount;
 			queue.AddRemove(bestResults);
 
 			// Decide if we are to sample points or use them all
 			var sampledPoints = points;
+            var sampleSize = points.Count();
 			if (UseSample)
 			{
-				var sampleSize = SampleSize(points, bestResults.EstimatedClusterCount);
+				sampleSize = SampleSize(points, bestResults.EstimatedClusterCount);
 				sampledPoints = Sample(points, sampleSize);
 				Logger.Info($"    Sample is {sampleSize} of {points.Count} points");
 			}
+            var rejectedSampleSizes = new HashSet<int>();
 			
 			var iterationsWithoutImprovement = 0;
 			var parallelOpts = new ParallelOptions { MaxDegreeOfParallelism = EstimateMaxDegreesOfParallelism(sampledPoints) };
@@ -297,20 +300,48 @@ namespace Clustering
 							allPermutations.RemoveAt(allPermutations.Count - 1);
 						}
 					}
-					var indexToTry = new HilbertIndex(sampledPoints, permutationToTry);
+                    IList<HilbertPoint> sampledPointsToUse;
+                    lock(points)
+                    {
+                        sampledPointsToUse = sampledPoints;
+                    }
+					var indexToTry = new HilbertIndex(sampledPointsToUse, permutationToTry);
 					metricResults = Metric(indexToTry);
 					var resultsToTry = new IndexFound(permutationToTry, indexToTry, metricResults.Item1, metricResults.Item2);
 
 					lock(queue)
 					{
-						queue.AddRemove(resultsToTry);
-						var improved = resultsToTry.IsBetterThan(bestResults);
-						if (improved) {
-							bestResults = resultsToTry;
-							Interlocked.Add(ref improvedCount, 1);
-							LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
-							Logger.Info($"Cluster count Improved to: {bestResults}");
-						} 
+                        if (resultsToTry.EstimatedClusterCount < startingCount / 4
+                        && UseSample && sampleSize != points.Count())
+                        {
+                            // If the cluster count has improved too much and we are sampled,
+                            // reject it and increase the sample size.
+                            // Why? If the clusters are irregular, sampling can break
+                            // them into so many small pieces that most points end up in outliers.
+                            // This leads to a false low count.
+                            if (!rejectedSampleSizes.Contains(indexToTry.Count)) { 
+                                sampleSize = Math.Min(points.Count(), 2 * indexToTry.Count);
+                                Logger.Info($"Increasing sample size to {sampleSize} because estimated K = {resultsToTry.EstimatedClusterCount} (not trusted)");
+                                var newSampledPoints = Sample(points, sampleSize);
+                                lock (points)
+                                {
+                                    sampledPoints = newSampledPoints;
+                                }
+                                rejectedSampleSizes.Add(indexToTry.Count);
+                            }
+                        }
+                        else
+                        {
+                            queue.AddRemove(resultsToTry);
+                            var improved = resultsToTry.IsBetterThan(bestResults);
+                            if (improved)
+                            {
+                                bestResults = resultsToTry;
+                                Interlocked.Add(ref improvedCount, 1);
+                                LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
+                                Logger.Info($"Cluster count Improved to: {bestResults}");
+                            }
+                        }
 					}
 
 				});
