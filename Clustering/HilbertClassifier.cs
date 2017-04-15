@@ -163,8 +163,6 @@ namespace Clustering
 		/// </summary>
 		public bool UseExactClusterDistance { get; set; } = false;
 
-		private HilbertIndex BestIndex { get; set; }
-
 		/// <summary>
 		/// This is multiplied by MergeSquareDistance to derive the maximum square distance that an outlier may be
 		/// from a neighboring cluster and still be permitted to merge.
@@ -205,6 +203,12 @@ namespace Clustering
 				IdsToPoints[p.UniqueId] = p;
 		}
 
+        private UnsignedPoint[] HilbertOrderedPoints(IList<int> hilbertSortedIds)
+        {
+            var keySorter = new KeySorter<int, UnsignedPoint>(id => id, point => point.UniqueId);
+            return keySorter.Sort(Clusters.Points().ToList(), hilbertSortedIds, 0);
+        }
+
 		/// <summary>
 		/// Perform unassisted classification of points.
 		/// </summary>
@@ -223,16 +227,18 @@ namespace Clustering
 				IndexConfig.ReducedNoiseSkipBy,
 				IndexConfig.MaxTrials,
 				IndexConfig.MaxIterationsWithoutImprovement,
-				IndexConfig.UseSample
+				IndexConfig.UseSample,
+                true
 			);
 			Timer.Stop("Find optimum Hilbert index");
-			BestIndex = optimum.Index;
+            var hilbertOrderedPoints = HilbertOrderedPoints(optimum.SortedPointIndices.ToList());
+            
 			MergeSquareDistance = optimum.MergeSquareDistance;
 
 			//   6) Pass over the points in Hilbert order. Every consescutive pair closer than the distance S is merged into the
 			//      same cluster.
 			Timer.Start("Merge by Hilbert index");
-			MergeByHilbertIndex(BestIndex);
+			MergeByHilbertIndex(hilbertOrderedPoints);
 			Timer.Stop("Merge by Hilbert index");
 
 			//   7) Find the distance from the Centroid of each non-outlier cluster to every other large cluster (ClosestCluster).
@@ -264,19 +270,16 @@ namespace Clustering
 			return Clusters;
 		}
 
-		/// <summary>
-		/// Merge into one cluster all pairs of points that are adjacent to one another in Hilbert curve order
-		/// if they are not too far apart.
-		/// 
-		/// If the ideal number of clusters is K, this first pass often reduces the points to 2K clusters or fewer,
-		/// excluding the outliers.
-		/// </summary>
-		/// <param name="hIndex">HilbertIndex to use for the ordering of points.</param>
-		private void MergeByHilbertIndex(HilbertIndex hIndex)
+        /// <summary>
+        /// Merge into one cluster all pairs of points that are adjacent to one another in Hilbert curve order
+        /// if they are not too far apart.
+        /// 
+        /// If the ideal number of clusters is K, this first pass often reduces the points to 2K clusters or fewer,
+        /// excluding the outliers.
+        /// </summary>
+        /// <param name="sortedPoints">Points arranged in Hilbert curve order.</param>
+        private void MergeByHilbertIndex(IList<UnsignedPoint> sortedPoints)
 		{
-			var unsortedPoints = Clusters.Points().ToArray();
-			var sorter = new KeySorter<HilbertPoint, UnsignedPoint>(hp => hp.UniqueId, p => p.UniqueId);
-			var sortedPoints = sorter.Sort(unsortedPoints, hIndex.SortedPoints);
 			UnsignedPoint prevPoint = null;
 			UnsignedPoint lastMerged = null;
 			// About "revisitations". If the Hilbert order leaves a cluster to visit an outlier, 

@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryAttributeTests.cs" />
+    <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
     <Compile Include="HilbertPointTests.cs" />
     <Compile Include="CartesianDistanceTests.cs" />
@@ -49,6 +50,7 @@
     <Compile Include="KendallTauCorrelationTests.cs" />
     <Compile Include="DensityMeterTests.cs" />
     <Compile Include="Data\Datasets.cs" />
+    <Compile Include="SizedBucketSortTests.cs" />
     <Compile Include="SlashConfigTests.cs" />
     <Compile Include="SlashCommandTests.cs" />
   </ItemGroup>

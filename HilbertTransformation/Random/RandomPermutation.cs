@@ -45,16 +45,36 @@ namespace HilbertTransformation.Random
             return permutation;
         }
 
-		/// <summary>
-		/// Shuffle some or all of the dimensions.
-		/// </summary>
-		/// <returns>A new permutation array with some or all dimensions shuffled.</returns>
-		/// <param name="startingPermutation">Starting permutation.</param>
-		/// <param name="dimensionsToShuffle">Number of dimensions to shuffle.
-		/// The swaps are independent, so it is likely that some dimensions may be swapped more than once,
-		/// and the number of unique dimensions shuffled may be less than this count.
-		/// </param>
-		public static int[] PartialShuffle(this int[] startingPermutation, int dimensionsToShuffle)
+        /// <summary>
+        /// Randomly shuffle an array of any type of item in-place, using the unbiased Knuth-Fischer-Yates shuffle..
+        /// </summary>
+        /// <typeparam name="T">Type of object to shuffle.</typeparam>
+        /// <param name="items">Items to be shuffled.</param>
+        /// <returns>Same array as input, with items shuffled in-place.</returns>
+        public static T[] Shuffle<T>(this T[] items)
+        {
+            var n = items.Length;
+            while (n > 0)
+            {
+                var k = RandomNumbers.Next(n);   // Use rand(n) rather than rand(count) or the shuffle is not perfectly random!
+                n--;
+                var temp = items[k];
+                items[k] = items[n];
+                items[n] = temp;
+            }
+            return items;
+        }
+
+        /// <summary>
+        /// Shuffle some or all of the dimensions.
+        /// </summary>
+        /// <returns>A new permutation array with some or all dimensions shuffled.</returns>
+        /// <param name="startingPermutation">Starting permutation.</param>
+        /// <param name="dimensionsToShuffle">Number of dimensions to shuffle.
+        /// The swaps are independent, so it is likely that some dimensions may be swapped more than once,
+        /// and the number of unique dimensions shuffled may be less than this count.
+        /// </param>
+        public static int[] PartialShuffle(this int[] startingPermutation, int dimensionsToShuffle)
 		{
 			var dimensions = startingPermutation.Length;
 			var newPermutation = (int[])startingPermutation.Clone();

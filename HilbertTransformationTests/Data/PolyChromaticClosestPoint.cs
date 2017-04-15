@@ -547,7 +547,7 @@ namespace HilbertTransformationTests.Data
 			var sorter = new KeySorter<HilbertPoint, UnsignedPoint>(p => p.UniqueId, p => p.UniqueId);
 			var unsortedPoints = Clusters.Points().ToList();
 			var sortedPoints = index.SortedPoints;
-			SortedPoints = sorter.Sort(unsortedPoints, sortedPoints).ToList();
+			SortedPoints = sorter.Sort(unsortedPoints, sortedPoints, 10).ToList();
 			ValidateIds();
 		}
 

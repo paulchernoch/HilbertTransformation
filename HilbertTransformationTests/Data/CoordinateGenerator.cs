@@ -214,8 +214,11 @@ namespace HilbertTransformationTests.Data
         /// <returns>The same point with changes made.</returns>
         public override int[] Generate(int[] point)
         {
-            for (var iDim = 0; iDim < AffectedDimensions.Count; iDim++)
+            for (var i = 0; i < AffectedDimensions.Count; i++)
+            {
+                var iDim = AffectedDimensions[i];
                 point[iDim] = AddNoise(Center[iDim], StandardDeviation[iDim]);
+            }
             return point;
         }
     }

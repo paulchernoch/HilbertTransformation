@@ -11,9 +11,12 @@ namespace Clustering
 	/// on the foreign key, sorting the combination on the sort-order field, then selecting just the part of the combination
 	/// belonging to the second list.
 	/// 
-	/// Two algorithms are used depending on how dense is the array of keys. If the range from the lowest key to the highest key
-	/// is R and the number of items to sort is N, and R is more thn half of N, then a possibly sparse array is used as the
-	/// basis of a dictionary. Otherwise, a Dictionary(int,T) is used.
+	/// Two algorithms are used depending on how dense is the array of keys. If the range R from the lowest key to the highest key
+	/// is not much higher than N, then a possibly sparse array is used as the basis of a dictionary. 
+    /// Otherwise, a Dictionary(int,T) is used. 
+    /// 
+    /// The ratio is the sparseness. If the sparseness is two, then use a sparse array if 2N >= R.
+    /// A good value for sparseness is log2(N).
 	/// </summary>
 	public class KeySorter<TSorted, TUnsorted>
 	{
@@ -55,14 +58,19 @@ namespace Clustering
 		/// </summary>
 		/// <param name="unsortedItems">Unsorted items.</param>
 		/// <param name="sortedItems">Sorted items.</param>
-		/// <returns>The items frmo unsortedItems, sorted.</returns>
-		public TUnsorted[] Sort(IList<TUnsorted> unsortedItems, IList<TSorted> sortedItems)
+        /// <param name="sparseness">If there are N items to sort, and the range from the lowest to highest id is R, then only
+        /// use a sparse array to sort if sparseness * N >= R.
+        /// If zero is supplied, use Log2(N).</param>
+		/// <returns>The items from unsortedItems, sorted.</returns>
+		public TUnsorted[] Sort(IList<TUnsorted> unsortedItems, IList<TSorted> sortedItems, double sparseness = 2.0)
 		{
 			var count = sortedItems.Count;
 			var sameSortedItems = new TUnsorted[count];
 			var range = KeyRange(sortedItems);
 			var span = range.Item2 - range.Item1 + 1;
-			if (count * 2 < span)
+            if (sparseness == 0.0)
+                sparseness = Math.Log(count, 2);
+			if (count * sparseness < span)
 			{
 				// Sparse Ids - use a regular Dictionary.
 				var idToPositionLookup = new Dictionary<int, int>();

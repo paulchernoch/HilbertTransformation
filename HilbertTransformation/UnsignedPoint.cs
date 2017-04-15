@@ -72,6 +72,7 @@ namespace HilbertTransformation
 
 		private void InitInvariants()
 		{
+            _hashCode = ComputeHashCode(Coordinates);
 			MaxCoordinate = Coordinates.Max();
 			SquareMagnitude = Coordinates.Sum(x => x * (long)x);
 		}
@@ -129,13 +130,14 @@ namespace HilbertTransformation
 		{
 			UniqueId = NextId();
 			Coordinates = coordinates;
-			Dimensions = Coordinates.Length;
+            _hashCode = ComputeHashCode(Coordinates);
+            Dimensions = Coordinates.Length;
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
 
 		/// <summary>
-		/// Construct an UnsignedPoint by supplying all its attributes, even its UniqueId.
+		/// Construct an UnsignedPoint by supplying most of its attributes, even its UniqueId.
 		/// 
 		/// This is useful when permuting a HilbertPoint.
 		/// </summary>
@@ -147,7 +149,8 @@ namespace HilbertTransformation
 		{
 			UniqueId = uniqueId;
 			Coordinates = coordinates;
-			Dimensions = Coordinates.Length;
+            _hashCode = ComputeHashCode(Coordinates);
+            Dimensions = Coordinates.Length;
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
@@ -212,13 +215,25 @@ namespace HilbertTransformation
 		/// </summary>
 		public virtual object Clone() { return new UnsignedPoint(this); }
 
-		#endregion
+        #endregion
 
-		#endregion
+        #endregion
 
-		#region Equality and Hash Code
+        #region Equality and Hash Code
 
-		public override int GetHashCode() { return UniqueId; }
+        private int _hashCode;
+
+        private static int ComputeHashCode(uint[] vector)
+        {
+            uint seed = (uint)vector.Length;
+            foreach (var i in vector)
+            {
+                seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return (int)seed;
+        }
+
+		public override int GetHashCode() { return _hashCode; }
 
 		/// <summary>
 		/// An UnsignedPoint only equals a second point if they share the same UniqueId.

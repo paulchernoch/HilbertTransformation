@@ -36,7 +36,34 @@ namespace Clustering
 		{
 			public Permutation<uint> PermutationUsed { get; private set; }
 
+            /// <summary>
+            /// The Hilbert index corresponding to the permutation.
+            /// 
+            /// If this structure is compacted, Index will be set to null.
+            /// </summary>
 			public HilbertIndex Index { get; private set; }
+
+            private List<int> CompactIndex { get; set; }
+
+            public void Compact()
+            {
+                CompactIndex = Index.SortedPoints.Select(hp => hp.UniqueId).ToList();
+                Index = null;
+            }
+
+            /// <summary>
+            /// Obtains the Ids of the points sorted according to the Hilbert curve order.
+            /// </summary>
+            public IEnumerable<int> SortedPointIndices
+            {
+                get
+                {
+                    if (CompactIndex != null)
+                        return CompactIndex;
+                    else
+                        return Index.SortedPoints.Select(hp => hp.UniqueId);
+                }
+            }
 
 			public int EstimatedClusterCount { get; private set; }
 
@@ -51,7 +78,7 @@ namespace Clustering
 				Index = index;
 				EstimatedClusterCount = estimatedClusterCount;
 				MergeSquareDistance = mergeSquareDistance;
-			}
+            }
 
 			/// <summary>
 			/// Return true if this result is better than the other result.
@@ -137,15 +164,20 @@ namespace Clustering
 
 		private int LowestCountSeen { get; set; } = int.MaxValue;
 
+        /// <summary>
+        /// If true, the IndexFound will be compacted by discarding the HilbertIndex and making a simple list of ids in Hilbert sorted order.
+        /// This is to save memory.
+        /// </summary>
+        public bool ShouldCompact { get; set; }
 
-		#endregion
+        #endregion
 
-		/// <summary>
-		/// A simple strategy that scrambles all the coordinates the first iteration,
-		/// then half the coordinates the next iteration, 
-		/// then a quarter the dimensions the next iteration, etc until five dimensions are reached.
-		/// </summary>
-		public static Func<Permutation<uint>, int, int, Permutation<uint>> ScrambleHalfStrategy = 
+        /// <summary>
+        /// A simple strategy that scrambles all the coordinates the first iteration,
+        /// then half the coordinates the next iteration, 
+        /// then a quarter the dimensions the next iteration, etc until five dimensions are reached.
+        /// </summary>
+        public static Func<Permutation<uint>, int, int, Permutation<uint>> ScrambleHalfStrategy = 
 			(previousPermutation, dimensions, iteration) =>
 		{
 			// Assume that iteration is zero-based.
@@ -165,7 +197,8 @@ namespace Clustering
 		{
 			Metric = metric;
 			PermutationStrategy = strategy;
-		}
+            ShouldCompact = false;
+        }
 
 		/// <summary>
 		/// Create an optimizer which finds the curve that minimizes the number of clusters found using a ClusterCounter.
@@ -190,7 +223,8 @@ namespace Clustering
 				return new Tuple<int, long>(counts.CountExcludingOutliers, counts.MaximumSquareDistance);
 			};
 			PermutationStrategy = strategy;
-		}
+            ShouldCompact = false;
+        }
 
 		#endregion
 
@@ -249,6 +283,8 @@ namespace Clustering
 			// looking for a better one, always accumulating the best in results.
 			var metricResults = Metric(firstIndex);
 			var bestResults = new IndexFound(startingPermutation, firstIndex, metricResults.Item1, metricResults.Item2);
+            if (ShouldCompact)
+                bestResults.Compact();
 			LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
 		    Logger.Info($"Cluster count Starts at: {bestResults}");
             var startingCount = bestResults.EstimatedClusterCount;
@@ -308,8 +344,9 @@ namespace Clustering
 					var indexToTry = new HilbertIndex(sampledPointsToUse, permutationToTry);
 					metricResults = Metric(indexToTry);
 					var resultsToTry = new IndexFound(permutationToTry, indexToTry, metricResults.Item1, metricResults.Item2);
-
-					lock(queue)
+                    if (ShouldCompact)
+                        resultsToTry.Compact();
+                    lock (queue)
 					{
                         if (resultsToTry.EstimatedClusterCount < startingCount / 4
                         && UseSample && sampleSize != points.Count())
@@ -383,7 +420,7 @@ namespace Clustering
 		/// Stops searching early if no improvement is detected.</param>
 		/// <param name="useSample">If true, use a random sample of points in each HilbertIndex tested, to save time.
 		/// May yield a poorer result, but faster.</param>
-		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
+		public static IndexFound Search(IList<HilbertPoint> points, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false, bool shouldCompact = false)
 		{
 			var parallel = 4;
 			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy)
@@ -391,12 +428,13 @@ namespace Clustering
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
 				ParallelTrials = parallel,
-				UseSample = useSample
+				UseSample = useSample,
+                ShouldCompact = shouldCompact
 			};
 			return optimizer.Search(points);
 		}
 
-		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy,  int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false)
+		public static IList<IndexFound> SearchMany(IList<HilbertPoint> points, int indexCount, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy,  int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false, bool shouldCompact = false)
 		{
 			var parallel = 4;
 			var optimizer = new OptimalIndex(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy)
@@ -404,7 +442,8 @@ namespace Clustering
 				MaxIterations = (maxTrials + (parallel / 2)) / parallel,
 				MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
 				ParallelTrials = parallel,
-				UseSample = useSample
+				UseSample = useSample,
+                ShouldCompact = shouldCompact
 			};
 			return optimizer.SearchMany(points, indexCount);
 		}
@@ -459,6 +498,8 @@ namespace Clustering
 			var indexToTry = new HilbertIndex(allPoints, sampled.PermutationUsed);
 			var metricResults = Metric(indexToTry);
 			var resultsToTry = new IndexFound(sampled.PermutationUsed, indexToTry, metricResults.Item1, metricResults.Item2);
+            if (ShouldCompact)
+                resultsToTry.Compact();
 			return resultsToTry;
 		}
 
