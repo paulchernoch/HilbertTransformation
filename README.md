@@ -6,7 +6,7 @@ the journal article "Programming the Hilbert curve", (c) 2004 American Institute
 
 The original C# code was written by Paul Anton Chernoch and may be freely used with attribution.
 
-##How to Perform the transformations:
+## How to Perform the transformations:
  
   A. The using statements
   
@@ -15,6 +15,8 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
  
   B. Hilbert Index to HilbertPoint to N-Dimensional coordinates
    
+  This is how to convert a distance along the Hilbert curve into a D-dimensional point.
+
       int bits = ???;       // Pick so that 2^bits exceeds the largest value in any coordinate.
       int dimensions = ???; // Number of dimensions for the point.
       var index1 = new BigInteger(...);
@@ -23,10 +25,34 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
 	 
   C. Coordinates to Hilbert Index
 	 
+  This is how you transform a point to a HilbertPoint.
+
       var hPoint2 = new HilbertPoint(coordinates, bits);
       BigInteger index2 = hPoint2.Index;
 
-##The Four Transformations
+  If one does not need the transformed index but merely want to sort points in Hilbert order,
+  a memory-efficient, in-place sort is implemented by the HilbertSort class:
+
+      UnsignedPoint[] points = ...
+      PointBalancer balancer = null;
+      HilbertSort.Sort(points, ref balancer);
+
+  The UnsignedPoint class is little more than a vector of unsigned coordinates with some
+  extra space to hold pre-computated values that will speed up Euclidean distance calculations.
+  The PointBalancer shifts coordinates such that their median value falls in the middle of the
+  range, which aids in reducing memory usage and speeds up the sort by reducing the number
+  of bits necessary to represent the Hilbert index.
+
+  The sort algorithm starts by sorting every point using a Hilbert transform of one bit per
+  dimension to form large buckets of points sharing the same low-precision Hilbert index. 
+  Then it sorts each bucket with progressively more bits of precision until every bucket has
+  a single element, or we reach the maximum precision and are faced with true duplicates.
+  This approach means that the full-precision Hilbert transform is needed for comparatively 
+  few points, and at no time do we hold the Hilbert index for all points in memory at the same 
+  time. At any given time, we have one-to-two bits per dimension of space in memory per point,
+  as opposed to doubling the data size during the sort as the former method did.
+
+## The Four Transformations
 
  There are really four transformations that occur:
 
@@ -41,7 +67,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
  However, only the BigInteger index and the Hilbert Axes (multi-dimensional coordinate form) are useful to library users 
  in their analysis. The HilbertPoint class provides the interface to these operations.
 
-##Modeling Floating point data
+## Modeling Floating point data
 
  This transform is most suitable for non-negative integer data. To apply it to floating point numbers, you need to do the following:
 
@@ -64,7 +90,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        c. Since the range is now from zero to 300, the next highest power of two is 512, so choose nine bits of resolution 
           for your HilbertPoints.
 
- ##Unassisted Classification
+ ## Unassisted Classification
 
  In progress.... SLASH, a tool to cluster high-dimensional data using the Hilbert curve.
 
