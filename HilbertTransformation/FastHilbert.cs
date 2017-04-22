@@ -340,7 +340,7 @@ namespace HilbertTransformation
         }
 
         /// <summary>
-        /// Smallest power of two that is greater than or equal to the given number.
+        /// Smallest power of two such that two raised to that power is greater than or equal to the given number.
         /// </summary>
         /// <param name="n">Find the smallest power of two that equals or exceeds this value.</param>
         /// <returns>The power, not the number. 

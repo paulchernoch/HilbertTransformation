@@ -35,6 +35,7 @@
     <Compile Include="BinaryAttributeTests.cs" />
     <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
+    <Compile Include="GridCoarsenessTests.cs" />
     <Compile Include="HilbertPointTests.cs" />
     <Compile Include="CartesianDistanceTests.cs" />
     <Compile Include="Data\GaussianClustering.cs" />
@@ -42,6 +43,7 @@
     <Compile Include="Data\ZigguratGaussianSampler.cs" />
     <Compile Include="Data\CoordinateGenerator.cs" />
     <Compile Include="Data\PolyChromaticClosestPoint.cs" />
+    <Compile Include="LowResHilbertSortTests.cs" />
     <Compile Include="PolyChromaticClosestPointTests.cs" />
     <Compile Include="KeySorterTests.cs" />
     <Compile Include="OptimalIndexTests.cs" />

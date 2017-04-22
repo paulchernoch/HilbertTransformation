@@ -28,13 +28,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Numerics" />
     <Reference Include="YamlDotNet">
       <HintPath>..\packages\YamlDotNet.4.1.0\lib\net35\YamlDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DimensionTransform.cs" />
     <Compile Include="FrugalQuantile.cs" />
+    <Compile Include="GridCoarseness.cs" />
     <Compile Include="HilbertOrderedIndex.cs" />
+    <Compile Include="HilbertSort.cs" />
+    <Compile Include="PointBalancer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Classification.cs" />
     <Compile Include="ClusterMetric.cs" />
