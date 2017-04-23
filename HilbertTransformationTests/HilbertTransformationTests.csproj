@@ -43,6 +43,7 @@
     <Compile Include="Data\ZigguratGaussianSampler.cs" />
     <Compile Include="Data\CoordinateGenerator.cs" />
     <Compile Include="Data\PolyChromaticClosestPoint.cs" />
+    <Compile Include="HilbertSortTests.cs" />
     <Compile Include="LowResHilbertSortTests.cs" />
     <Compile Include="PolyChromaticClosestPointTests.cs" />
     <Compile Include="KeySorterTests.cs" />

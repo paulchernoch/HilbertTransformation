@@ -159,42 +159,6 @@ namespace HilbertTransformationTests
             }
         }
 
-        /// <summary>
-        /// Try to predict how many bits of Hilbert curve are needed to divide the largest bucket
-        /// into pieces no one of which is larger than a given size.
-        /// If the points in the bucket are tightly clustered, more bits will be needed.
-        /// </summary>
-        /// <param name="numPoints">Number of points to generate for the test.</param>
-        /// <param name="dimensions">Number of dimensions for each point.</param>
-        /// <param name="clusterCount">Number of clusters into which to group the points.</param>
-        /// <param name="smallBucketSize">Size of bucket we shall consider small enough to sort.
-        /// The goal is to not create too many Hilbert indices simultaneously to save memory.</param>
-        /// <param name="maxCoordinate">Largest value for any single coordinate value.</param>
-        /// <returns>A prediction of how many bits are needed per dimension.</returns>
-        public int PredictNextBits(int numPoints, int dimensions, int clusterCount, int smallBucketSize, int maxCoordinate)
-        {
-            var clusterSizeVariation = 100;
-            var minClusterSize = (numPoints / clusterCount) - clusterSizeVariation;
-            var maxClusterSize = (numPoints / clusterCount) + clusterSizeVariation;
-            var data = new GaussianClustering
-            {
-                ClusterCount = clusterCount,
-                Dimensions = dimensions,
-                MaxCoordinate = maxCoordinate,
-                MinClusterSize = minClusterSize,
-                MaxClusterSize = maxClusterSize
-            };
-            var clusters = data.MakeClusters();
-            var points = clusters.Points().ToList();
-            PointBalancer balancer = null;
-            var bitsRequired = (maxCoordinate + 1).SmallestPowerOfTwo();
-            var lowresSort = HilbertSort.SortWithTies(points, 1, ref balancer);
-            var largestBucket = lowresSort.OrderByDescending(bucket => bucket.Length).FirstOrDefault();
-            
-            //TODO: Finish this 
-            return 0;
-        }
-
 
         /// <summary>
         /// For uniformly random data, discover how unique shortened versions of the Hilbert index are.

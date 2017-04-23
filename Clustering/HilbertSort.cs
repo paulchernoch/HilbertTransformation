@@ -16,6 +16,8 @@ namespace Clustering
     /// </summary>
     public class HilbertSort
     {
+        public static double RelativeSortCost { get; set; }
+
         /// <summary>
         /// Sort points according to the Hilbert curve order, using the full precision of all coordinate values.
         /// The Hilbert positions by which the points are sorted are not built directly upon the unmodified points,
@@ -93,7 +95,7 @@ namespace Clustering
         }
 
         /// <summary>
-        /// Sorts points in-place according to the Hilbert curve, applying the transform to balanced points.
+        /// Sorts points in-place according to the Hilbert curve, applying the transform to balance points.
         /// </summary>
         /// <param name="points">Points to sort in-place.</param>
         /// <param name="balancer">If supplied, this point balancer is reused.
@@ -103,13 +105,13 @@ namespace Clustering
         /// <returns>The same points array passed in as argument, with values sorted.</returns>
         public static UnsignedPoint[] Sort(UnsignedPoint[] points, ref PointBalancer balancer, Permutation<uint> perm = null)
         {
-            var pointBalancer = balancer ?? new PointBalancer(points);
-            balancer = pointBalancer;
+            balancer = balancer ?? new PointBalancer(points);
             var hilbertPositions = new BigInteger[points.Length];
             var allPoints = new ArraySegment<UnsignedPoint>(points, 0, points.Length);
             var allHilbertPositions = new ArraySegment<BigInteger>(hilbertPositions, 0, hilbertPositions.Length);
             
-            SortSegment(allPoints, allHilbertPositions, pointBalancer, 1, perm);
+            var cost = SortSegment(allPoints, allHilbertPositions, balancer, 1, perm);
+            RelativeSortCost = cost / (double)(points.Length * balancer.BitsPerDimension);
             return points;
         }
 
@@ -126,19 +128,25 @@ namespace Clustering
         /// <param name="bits">Number of bits to use per coordinate when computing the Hilbert position.
         /// Each recursive level increses the number of bits.</param>
         /// <param name="perm">Optional permutation.</param>
-        private static void SortSegment(ArraySegment<UnsignedPoint> points, ArraySegment<BigInteger> hilbertPositions, PointBalancer balancer, int bits, Permutation<uint> perm = null)
+        /// <returns>The recursive cost of the operation, which is governed by how many Hilbert transformation were required,
+        /// times the number of bits per transform. 
+        /// If we sort N points with B bits in the straightforward way (not preserving memory), the cost would be N*B.
+        /// If the cost comes in below that, we have improved on the simple, non-recursive quicksort.</returns>
+        private static int SortSegment(ArraySegment<UnsignedPoint> points, ArraySegment<BigInteger> hilbertPositions, PointBalancer balancer, int bits, Permutation<uint> perm = null)
         {
+            var cost = 0;
             var pointsList = (IList<UnsignedPoint>) points;
             var hpList = (IList<BigInteger>) hilbertPositions;
             // Prepare the sort keys - the Hilbert positions.
             for (var i = 0; i < pointsList.Count; i++)
                 hpList[i] = balancer.ToHilbertPosition(pointsList[i], bits, perm);
             Array.Sort(hilbertPositions.Array, points.Array, points.Offset, points.Count);
+            cost += points.Count * bits;
 
             // If we are already at the highest number of bits, even if two points have the same
             // Hilbert position, we can sort them no further.
             if (bits >= balancer.BitsPerDimension)
-                return;
+                return cost;
 
             var iStart = 0;
             BigInteger? prevPosition = hpList[0];
@@ -151,18 +159,23 @@ namespace Clustering
                     var segmentLength = i - iStart;
                     if (segmentLength > 1)
                     {
-                        var smallerSegment = new ArraySegment<UnsignedPoint>(points.Array, points.Offset + i, segmentLength);
-                        var smallerHilbertKeys = new ArraySegment<BigInteger>(hilbertPositions.Array, hilbertPositions.Offset + i, segmentLength);
-                        // The bucket has more than one point, so we need to sort it recuirsively.
+                        var smallerSegment = new ArraySegment<UnsignedPoint>(points.Array, points.Offset + iStart, segmentLength);
+                        var smallerHilbertKeys = new ArraySegment<BigInteger>(hilbertPositions.Array, hilbertPositions.Offset + iStart, segmentLength);
+                        // The bucket has more than one point, so we need to sort it recursively.
                         var grid = new GridCoarseness((IList<UnsignedPoint>)smallerSegment, balancer.BitsPerDimension);
-                        var targetCount = segmentLength < 20 ? 1 : segmentLength / 10;
+                        var targetCount = segmentLength < 50 ? 0 : segmentLength / 10;
                         var bitsToRecurse = grid.BitsToDivide(targetCount, segmentLength * 2);
-                        SortSegment(smallerSegment, smallerHilbertKeys, balancer, bitsToRecurse, perm);
+                        // The grid sometimes yields the same number of bits twice in a row due to estimation , 
+                        // so force it to at least increase by one. 
+                        if (bitsToRecurse <= bits)
+                            bitsToRecurse = bits + 1;
+                        cost += SortSegment(smallerSegment, smallerHilbertKeys, balancer, bitsToRecurse, perm);
                     }
                     iStart = i;
                 }
                 prevPosition = currentPosition;
             }
+            return cost;
         }
     }
 }

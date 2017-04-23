@@ -21,7 +21,7 @@ namespace Clustering
         /// <summary>
         /// Number of bits required to represent all coordinate values of all points being balanced without loss of precision.
         /// </summary>
-        public int BitsPerDimension {  get { return Transforms[0].BitsPerDimension; } }
+        public int BitsPerDimension {  get { return Transforms[0].MinimumBitsRequired; } }
 
         /// <summary>
         /// Create a PointBalancer and all its component DimensionTransforms, inferring the required BitsPerDimension in the process.

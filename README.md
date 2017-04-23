@@ -50,7 +50,7 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
   This approach means that the full-precision Hilbert transform is needed for comparatively 
   few points, and at no time do we hold the Hilbert index for all points in memory at the same 
   time. At any given time, we have one-to-two bits per dimension of space in memory per point,
-  as opposed to doubling the data size during the sort as the former method did.
+  as opposed to trebling the data size during the sort as the former method did.
 
 ## The Four Transformations
 
