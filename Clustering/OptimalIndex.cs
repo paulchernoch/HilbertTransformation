@@ -27,6 +27,8 @@ namespace Clustering
 	/// The metric used to evaluate the quality of the many indices to be tested may be supplied by the caller,
 	/// as well as the strategy for randomizing the permutation used.
 	/// </summary>
+    /// <remarks>NOTE: This approach uses more memory than necessary. We do not need to convert UnsignedPoints into HilbertPoints
+    /// at all, just sort by the Hilbert position (BigInteger), which saves memory. See class OptimalOrdering.</remarks>
 	public class OptimalIndex
 	{
 		/// <summary>

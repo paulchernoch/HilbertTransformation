@@ -47,7 +47,7 @@ namespace HilbertTransformationTests
             var points = clusters.Points().ToList();
             PointBalancer balancer = null;
 
-            var hiresSort = HilbertSort.Sort(points, ref balancer);
+            var hiresSort = HilbertSort.BalancedSort(points, ref balancer);
             var lowresSort = HilbertSort.SortWithTies(points, lowresBits, ref balancer);
 
             var lowresPositions = new Dictionary<UnsignedPoint, int>();

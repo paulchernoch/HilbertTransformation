@@ -122,7 +122,7 @@ namespace Clustering
 		public ClusterCount Count(IList<HilbertPoint> points)
 		{
 			var neighborDistances = new List<long>();
-			HilbertPoint previousPoint = null;
+            UnsignedPoint previousPoint = null;
 			foreach (var point in points)
 			{
 				if (previousPoint != null)
