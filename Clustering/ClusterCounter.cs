@@ -119,7 +119,7 @@ namespace Clustering
 		/// Estimate how many clusters there are that have a member count equal to or greater than the OutlierSize.
 		/// </summary>
 		/// <param name="points">Points to study.</param>
-		public ClusterCount Count(IList<HilbertPoint> points)
+		public ClusterCount Count(IReadOnlyList<UnsignedPoint> points)
 		{
 			var neighborDistances = new List<long>();
             UnsignedPoint previousPoint = null;

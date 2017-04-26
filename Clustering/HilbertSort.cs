@@ -27,7 +27,7 @@ namespace Clustering
         /// <param name="bitsPerDimension">Bits to use per dimension.</param>
         /// <param name="perm">Optional permutation to apply to the coordinates.</param>
         /// <returns>The points, sorted in Hilbert order.</returns>
-        public static List<UnsignedPoint> Sort(IList<UnsignedPoint> points, int bitsPerDimension, Permutation<uint> perm = null) {
+        public static List<UnsignedPoint> Sort(IReadOnlyList<UnsignedPoint> points, int bitsPerDimension, Permutation<uint> perm = null) {
             if (perm == null)
             {
                 return points.OrderBy(

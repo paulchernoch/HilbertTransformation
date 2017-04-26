@@ -209,31 +209,50 @@ namespace Clustering
             return keySorter.Sort(Clusters.Points().ToList(), hilbertSortedIds, 0);
         }
 
-		/// <summary>
-		/// Perform unassisted classification of points.
-		/// </summary>
-		public Classification<UnsignedPoint, string> Classify()
-		{
-			//   3) Create multiple HilbertIndexes.
-			//   4) Find best HilbertIndex and find the one that predicts the lowest number of clusters K (OptimalIndex).
-			//   5) Set the characteristic merge distance S (MergeSquareDistance).
-			//TODO: Support formation and use of more than one HilbertIndex, to respect IndexBudget.IndexCount.
+        /// <summary>
+        /// Perform unassisted classification of points.
+        /// </summary>
+        public Classification<UnsignedPoint, string> Classify()
+        {
+            //   3) Create multiple HilbertIndexes.
+            //   4) Find best HilbertIndex and find the one that predicts the lowest number of clusters K (OptimalIndex).
+            //   5) Set the characteristic merge distance S (MergeSquareDistance).
+            //TODO: Support formation and use of more than one HilbertIndex, to respect IndexBudget.IndexCount.
+            var useOptimalPermutation = true;
+            UnsignedPoint[] hilbertOrderedPoints;
 
-			Timer.Start("Find optimum Hilbert index");
-			var optimum = OptimalIndex.Search(
-				HilbertPoints,
-				IndexConfig.OutlierSize,
-				IndexConfig.NoiseSkipBy,
-				IndexConfig.ReducedNoiseSkipBy,
-				IndexConfig.MaxTrials,
-				IndexConfig.MaxIterationsWithoutImprovement,
-				IndexConfig.UseSample,
-                true
-			);
-			Timer.Stop("Find optimum Hilbert index");
-            var hilbertOrderedPoints = HilbertOrderedPoints(optimum.SortedPointIndices.ToList());
-            
-			MergeSquareDistance = optimum.MergeSquareDistance;
+            Timer.Start("Find optimum Hilbert ordering");
+            if (!useOptimalPermutation) { 
+                var optimum = OptimalIndex.Search(
+                    HilbertPoints,
+                    IndexConfig.OutlierSize,
+                    IndexConfig.NoiseSkipBy,
+                    IndexConfig.ReducedNoiseSkipBy,
+                    IndexConfig.MaxTrials,
+                    IndexConfig.MaxIterationsWithoutImprovement,
+                    IndexConfig.UseSample,
+                    true
+                );
+                hilbertOrderedPoints = HilbertOrderedPoints(optimum.SortedPointIndices.ToList());
+                MergeSquareDistance = optimum.MergeSquareDistance;
+            }
+            else
+            {
+                var optimum = OptimalPermutation.Search(
+                    Clusters.Points().ToList(),
+                    BitsPerDimension,
+                    IndexConfig.OutlierSize,
+                    IndexConfig.NoiseSkipBy,
+                    IndexConfig.ReducedNoiseSkipBy,
+                    IndexConfig.MaxTrials,
+                    IndexConfig.MaxIterationsWithoutImprovement,
+                    IndexConfig.UseSample,
+                    true
+                );
+                hilbertOrderedPoints = optimum.SortedPoints.ToArray();
+                MergeSquareDistance = optimum.MergeSquareDistance;
+            }
+			Timer.Stop("Find optimum Hilbert ordering");
 
 			//   6) Pass over the points in Hilbert order. Every consescutive pair closer than the distance S is merged into the
 			//      same cluster.

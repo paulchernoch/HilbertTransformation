@@ -12,7 +12,17 @@ namespace HilbertTransformationTests
 	[TestFixture]
 	public class HilbertClassifierTests
 	{
-		[Test]
+
+        [Test]
+        /// <summary>
+        /// Classifies random data with 100,000 points, 100 clusters, 1,000 dimensions - a large case.
+        /// </summary>
+        public void Classify_100000N_100K_1000D()
+        {
+            ClassifyCase(100000, 100, 1000);
+        }
+
+        [Test]
 		/// <summary>
 		/// Classifies random data with 10,000 points, 30 clusters, 100 dimensions.
 		/// </summary>
@@ -451,7 +461,7 @@ namespace HilbertTransformationTests
 		[Test]
 		public void ClassifyManyVaryingNumPoints()
 		{
-			/* Results:
+            /* Results, using OptimalIndex on a MAC:
 					N,K,D,B,Seconds
 					2500,100,100,10,0.3852
 					5000,100,100,10,0.9512
@@ -460,8 +470,19 @@ namespace HilbertTransformationTests
 					50000,100,100,10,13.7236   .... kept finding improved indices
 					100000,100,100,10,39.3096  .... Throttled to 2 threads to avoid out-of-memory
 					200000,100,100,10,186.1292 .... Throttled to 1 thread to avoid out-of-memory, kept finding improved indices
+
+               Using OptimalPermutation on a Windows Surface:
+                    N,K,D,B,Seconds
+                    2500,100,100,10,0.923
+                    5000,100,100,10,1.9922
+                    10000,100,100,10,4.0008
+                    25000,100,100,10,10.4536
+                    50000,100,100,10,11.1932
+                    100000,100,100,10,16.387
+                    200000,100,100,10,27.4966
+                No need to throttle the thread-count, since it uses less memory.
 			 */
-			var N = new[] { 2500, 5000, 10000, 25000, 50000, 100000, 200000 };
+            var N = new[] { 2500, 5000, 10000, 25000, 50000, 100000, 200000, 300000, 400000 };
 			var K = new[] { 100 };
 			var Dims = new[] { 100 };
 			var Bits = new[] { 10 };

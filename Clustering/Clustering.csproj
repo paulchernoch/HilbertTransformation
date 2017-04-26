@@ -39,6 +39,7 @@
     <Compile Include="GridCoarseness.cs" />
     <Compile Include="HilbertOrderedIndex.cs" />
     <Compile Include="HilbertSort.cs" />
+    <Compile Include="OptimalPermutation.cs" />
     <Compile Include="PointBalancer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Classification.cs" />
