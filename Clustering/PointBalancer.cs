@@ -27,7 +27,7 @@ namespace Clustering
         /// Create a PointBalancer and all its component DimensionTransforms, inferring the required BitsPerDimension in the process.
         /// </summary>
         /// <param name="points">Points to be studied so that we know what must be done to balance them.</param>
-        public PointBalancer(IList<UnsignedPoint> points)
+        public PointBalancer(IReadOnlyList<UnsignedPoint> points)
         {
             Transforms = DimensionTransform.CreateMany(
                 points.Select(point => point.Coordinates)    

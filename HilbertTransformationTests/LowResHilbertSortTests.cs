@@ -173,7 +173,7 @@ namespace HilbertTransformationTests
         /// <param name="maxCoordinate">Highest permitted coordinate value.</param>
         public void UniformUniquenessByBits(int numPoints, int dimensions, int smallBucketSize, int maxCoordinate)
         {
-            var points = UniformRandomPoints(numPoints, dimensions, maxCoordinate);
+            var points = TestDataHelper.UniformRandomPoints(numPoints, dimensions, maxCoordinate);
             PointBalancer balancer = null;
             var bitsRequired = (maxCoordinate + 1).SmallestPowerOfTwo();
             var maxBucketSize = new int[bitsRequired];
@@ -210,28 +210,6 @@ namespace HilbertTransformationTests
             //Console.WriteLine(caseDescription);
             //Console.WriteLine($"Buckets: Count = {lowresSort.Count}  Largest = {largestBucket}  Points in Small = {pointsInSmallBuckets}");
             return largestBucket;
-        }
-
-        /// <summary>
-        /// Generate random points whose coordinates are uniformly distributed between zero and maxCoordinate.
-        /// </summary>
-        /// <param name="n">Number of points to generate.</param>
-        /// <param name="dimensions">Dimensions for each point.</param>
-        /// <param name="maxCoordinate">All coordinate values will range between zero and maxCoordinate (inclusive).</param>
-        /// <returns>The random points.</returns>
-        private List<UnsignedPoint> UniformRandomPoints(int n, int dimensions, int maxCoordinate)
-        {
-            var rng = new FastRandom();
-            return Enumerable.Range(0, n)
-                .Select(i => {
-                    return new UnsignedPoint(
-                        Enumerable
-                            .Range(0, dimensions)
-                            .Select(j => (uint) rng.Next(0, maxCoordinate+1))
-                            .ToArray()
-                    );
-                })
-                .ToList();
         }
 
     }

@@ -58,7 +58,7 @@ namespace Clustering
         /// which using the same balancer ensures.</param>
         /// <returns>Sorted list of points.
         /// Points are not sorted in-place.</returns>
-        public static List<UnsignedPoint> BalancedSort(IList<UnsignedPoint> points, ref PointBalancer balancer)
+        public static List<UnsignedPoint> BalancedSort(IReadOnlyList<UnsignedPoint> points, ref PointBalancer balancer)
         {
             var pointBalancer = balancer ?? new PointBalancer(points);
             return points.OrderBy(
@@ -85,7 +85,7 @@ namespace Clustering
         /// which using the same balancer ensures.</param>
         /// <returns>Sorted list of points.
         /// Points are not sorted in-place.</returns>
-        public static List<UnsignedPoint> BalancedSort(IList<UnsignedPoint> points, int bitsPerDimension, ref PointBalancer balancer)
+        public static List<UnsignedPoint> BalancedSort(IReadOnlyList<UnsignedPoint> points, int bitsPerDimension, ref PointBalancer balancer)
         {
             var pointBalancer = balancer ?? new PointBalancer(points);
             return points.OrderBy(
@@ -107,7 +107,7 @@ namespace Clustering
         /// <param name="balancer">If passed in, this balancer is reused, otherwise one is created and returned.</param>
         /// <returns>A List of arrays of points where each array holds points that share the same value of Hilbert position
         /// at the given precision. The arrays themselves are sorted by Hilbert position.</returns>
-        public static List<UnsignedPoint[]> SortWithTies(IList<UnsignedPoint> points, int bitsPerDimension, ref PointBalancer balancer)
+        public static List<UnsignedPoint[]> SortWithTies(IReadOnlyList<UnsignedPoint> points, int bitsPerDimension, ref PointBalancer balancer)
         {
             var pointBalancer = balancer ?? new PointBalancer(points);
             var pointsWithTies = points

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Clustering;
 using HilbertTransformation;
+using HilbertTransformation.Random;
 
 namespace HilbertTransformationTests.Data
 {
@@ -37,6 +38,28 @@ namespace HilbertTransformationTests.Data
                 c.Add(point, pointPlusClass[dimensions].ToString(CultureInfo.InvariantCulture));
             }
             return c;
+        }
+
+        /// <summary>
+        /// Generate random points whose coordinates are uniformly distributed between zero and maxCoordinate.
+        /// </summary>
+        /// <param name="n">Number of points to generate.</param>
+        /// <param name="dimensions">Dimensions for each point.</param>
+        /// <param name="maxCoordinate">All coordinate values will range between zero and maxCoordinate (inclusive).</param>
+        /// <returns>The random points.</returns>
+        public static List<UnsignedPoint> UniformRandomPoints(int n, int dimensions, int maxCoordinate)
+        {
+            var rng = new FastRandom();
+            return Enumerable.Range(0, n)
+                .Select(i => {
+                    return new UnsignedPoint(
+                        Enumerable
+                            .Range(0, dimensions)
+                            .Select(j => (uint)rng.Next(0, maxCoordinate + 1))
+                            .ToArray()
+                    );
+                })
+                .ToList();
         }
     }
 }

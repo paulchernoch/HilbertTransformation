@@ -15,7 +15,7 @@ namespace Clustering
 	public class SlashCommand
 	{
 
-		public enum CommandType { Help, Version, Define, Cluster, Recluster }
+		public enum CommandType { Help, Version, Define, Assess, Cluster, Recluster }
 
 		public const string Version = "0.1";
 
@@ -26,9 +26,10 @@ Purpose: Slash clusters high-dimensional data.
 
 Usage: 1. slash [help | -h | -help]
        2. slash define [config-file] [input-data-file] [output-data-file]
-       3. slash cluster [config-file] [input-data-file] [output-data-file]
-       4. slash recluster [config-file] [input-data-file] [output-data-file]
-       5. slash version
+       3. slash assess [config-file] [input-data-file] [output-data-file]
+       4. slash cluster [config-file] [input-data-file] [output-data-file]
+       5. slash recluster [config-file] [input-data-file] [output-data-file]
+       6. slash version
 
        config-file ....... If omitted, assume slash.yaml is the configuration file.
                            Configuration values are either written to this file
@@ -54,6 +55,9 @@ Usage: 1. slash [help | -h | -help]
        optionally supplied on the command line. The user should edit this file
        to specify important properties like the names of the id field and category field, 
        and whether there is a header record in the input CSV file.
+
+       ASSESS. Assess the clustering tendency of the data. 
+       If the data has not clustering tendency, it is fruitless to cluster it.
 
        CLUSTER. The third usage reads a configuration file and the indicated input data file
        (or standard input), clusters the data and writes the results to the indicated 
@@ -113,6 +117,11 @@ Usage: 1. slash [help | -h | -help]
 		/// </summary>
 		public ClusterMetric<UnsignedPoint,string> MeasuredChange { get; private set; }
 
+        /// <summary>
+        /// If the Assess command is executed, this will be set.
+        /// </summary>
+        public ClusteringTendency Assessor { get; private set; }
+
 		#region Constructors
 
 		/// <summary>
@@ -160,6 +169,12 @@ Usage: 1. slash [help | -h | -help]
 					var definition = new SlashConfig(InputFile, OutputFile);
 					File.WriteAllText(ConfigFile, definition.ToString());
 					break;
+                case CommandType.Assess:
+                    if (!alreadyHaveConfig)
+                        Configuration = LoadConfig();
+                    Assess();
+                    Timer.Log();
+                    break;
 				case CommandType.Cluster:
 					if (!alreadyHaveConfig)
 						Configuration = LoadConfig();
@@ -175,12 +190,27 @@ Usage: 1. slash [help | -h | -help]
 			}
 		}
 
-		#region Clustering
+        #region Assess Clustering tendency
 
-		/// <summary>
-		/// Cluster the data, starting with an initially unclustered classification and combining points into fewer clusters.
-		/// </summary>
-		void Cluster()
+        void Assess()
+        {
+            LoadData();
+            Timer.Start("Assessing Clustering tendency");
+            Assessor = new ClusteringTendency(InputOrder, Configuration.Index.Budget.OutlierSize);
+            Timer.Stop("Assessing Clustering tendency");
+            var resultsMessage = $"The clustering tendency of the {InputOrder.Count} input points has been evaluated:\n   {Assessor}";
+            Logger.Info(resultsMessage);
+            Console.WriteLine(resultsMessage);
+        }
+
+        #endregion
+
+        #region Clustering
+
+        /// <summary>
+        /// Cluster the data, starting with an initially unclustered classification and combining points into fewer clusters.
+        /// </summary>
+        void Cluster()
 		{
 			LoadData();
 			var classifier = new HilbertClassifier(InputOrder, Configuration.Index.BitsPerDimension)
@@ -624,6 +654,7 @@ Usage: 1. slash [help | -h | -help]
 			// Permit using just the first letter of the command.
 			var helpPattern = new Regex(@"^-*h(elp)?$", RegexOptions.IgnoreCase);
 			var versionPattern = new Regex(@"^-*v(ersion)?$", RegexOptions.IgnoreCase);
+            var assessPattern = new Regex(@"^-*a(ssess)?", RegexOptions.IgnoreCase);
 			var clusterPattern = new Regex(@"^-*c(luster)?$", RegexOptions.IgnoreCase);
 			var definePattern = new Regex(@"^-*d(efine)?$", RegexOptions.IgnoreCase);
 			var reclusterPattern = new Regex(@"^-*r(ecluster)?$", RegexOptions.IgnoreCase);
@@ -636,7 +667,9 @@ Usage: 1. slash [help | -h | -help]
 				command = CommandType.Version;
 			else if (definePattern.IsMatch(action))
 				command = CommandType.Define;
-			else if (clusterPattern.IsMatch(action))
+            else if (assessPattern.IsMatch(action))
+                command = CommandType.Assess;
+            else if (clusterPattern.IsMatch(action))
 				command = CommandType.Cluster;
 			else if (reclusterPattern.IsMatch(action))
 				command = CommandType.Recluster;

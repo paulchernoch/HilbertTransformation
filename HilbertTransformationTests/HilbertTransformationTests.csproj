@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryAttributeTests.cs" />
+    <Compile Include="ClusteringTendencyTests.cs" />
     <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
     <Compile Include="GridCoarsenessTests.cs" />

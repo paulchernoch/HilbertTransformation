@@ -34,6 +34,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClusteringTendency.cs" />
     <Compile Include="DimensionTransform.cs" />
     <Compile Include="FrugalQuantile.cs" />
     <Compile Include="GridCoarseness.cs" />
