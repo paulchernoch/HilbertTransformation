@@ -10,8 +10,11 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
  
   A. The using statements
   
+  Reference these namespaces:
+
       using System.Numerics;
       using HilbertTransformation;
+      using Clustering;
  
   B. Hilbert Index to HilbertPoint to N-Dimensional coordinates
    
@@ -31,11 +34,18 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
       BigInteger index2 = hPoint2.Index;
 
   If one does not need the transformed index but merely want to sort points in Hilbert order,
-  a memory-efficient, in-place sort is implemented by the HilbertSort class:
+  in the most memory-efficient (but 5x slower) way, using an in-place sort:
 
       UnsignedPoint[] points = ...
       PointBalancer balancer = null;
-      HilbertSort.Sort(points, ref balancer);
+      HilbertSort.SmallBalancedSort(points, ref balancer);
+
+  For a compromise between the two ways, this way of sorting uses about half as much memory as the HilbertIndex
+  and is faster than it, but uses more memory than SmallUnbalancedSort:
+
+      UnsignedPoint[] points = ...
+      int bitsPerDimension = ?;
+      HilbertSort.Sort(points, bitsPerDimension);     
 
   The UnsignedPoint class is little more than a vector of unsigned coordinates with some
   extra space to hold pre-computated values that will speed up Euclidean distance calculations.
@@ -104,15 +114,14 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
 
  Example output from slash help:
 
-       Slash Version 0.1
+    Slash Version 0.1
 
-       Purpose: Slash clusters high-dimensional data.
-
-       Usage: 1. slash [help | -h | -help]
-              2. slash define [config-file] [input-data-file] [output-data-file]
-              3. slash cluster [config-file] [input-data-file] [output-data-file]
-              4. slash recluster [config-file] [input-data-file] [output-data-file]
-              5. slash version
+    Usage: 1. slash [help | -h | -help]
+           2. slash define [config-file] [input-data-file] [output-data-file]
+           3. slash assess [config-file] [input-data-file] [output-data-file]
+           4. slash cluster [config-file] [input-data-file] [output-data-file]
+           5. slash recluster [config-file] [input-data-file] [output-data-file]
+           6. slash version
 
        config-file ....... If omitted, assume slash.yaml is the configuration file.
                            Configuration values are either written to this file
@@ -138,6 +147,9 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        optionally supplied on the command line. The user should edit this file
        to specify important properties like the names of the id field and category field, 
        and whether there is a header record in the input CSV file.
+
+       ASSESS. Assess the clustering tendency of the data. 
+       If the data has not clustering tendency, it is fruitless to cluster it.
 
        CLUSTER. The third usage reads a configuration file and the indicated input data file
        (or standard input), clusters the data and writes the results to the indicated 
