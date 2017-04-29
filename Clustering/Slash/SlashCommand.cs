@@ -201,6 +201,12 @@ Usage: 1. slash [help | -h | -help]
 
         #region Assess Clustering tendency
 
+        /// <summary>
+        /// A fast command that reads a file of points and evaluates whether the data has a weak or string
+        /// clustering tendency
+        /// 
+        /// Results are stored in Assessor.
+        /// </summary>
         void Assess()
         {
             LoadData();
@@ -236,7 +242,8 @@ Usage: 1. slash [help | -h | -help]
 			Timer.Stop("Classify by distance");
 			MergeSquareDistance = classifier.MergeSquareDistance;
 			ReclassifyByDensity();
-			Logger.Info(Summary());
+            
+            Logger.Info(Summary());
 			SaveData();
 		}
 

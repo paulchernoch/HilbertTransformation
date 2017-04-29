@@ -239,5 +239,10 @@ namespace Clustering
                 costUpdater(costIncrement);
             };
         }
+
+        public static int FindBitsPerDimension(IReadOnlyList<UnsignedPoint> points)
+        {
+            return HilbertPoint.FindBitsPerDimension((int)points.Select(p => p.MaxCoordinate).Max());
+        }
     }
 }

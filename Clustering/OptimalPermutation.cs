@@ -182,6 +182,7 @@ namespace Clustering
         /// </summary>
         /// <param name="metric">Evaluates the quality of the HilbertIndex derived using a given permutation.</param>
         /// <param name="strategy">Strategy to employ that decides how many dimensions to scramble during each iteration.</param>
+        /// <param name="bitsPerDimension">Bits per dimension, which MUST BE POSITIVE. It must be stated, it cannot be derived here.</param>
         public OptimalPermutation(Func<IReadOnlyList<UnsignedPoint>, Tuple<int, long>> metric, Func<Permutation<uint>, int, int, Permutation<uint>> strategy, int bitsPerDimension)
         {
             Metric = metric;
@@ -196,6 +197,7 @@ namespace Clustering
         /// <param name="noiseSkipBy">NoiseSkipBy to use with the ClusterCounter.</param>
         /// <param name="reducedNoiseSkipBy">ReducedNoiseSkipBy to use with the ClusterCounter.</param>
         /// <param name="strategy">Strategy to employ that decides how many dimensions to scramble during each iteration.</param>
+        /// <param name="bitsPerDimension">Bits per dimension which MUST BE STATED, not given as -1.</param>
         public OptimalPermutation(int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, Func<Permutation<uint>, int, int, Permutation<uint>> strategy, int bitsPerDimension)
         {
             var maxOutliers = outlierSize;
@@ -401,6 +403,7 @@ namespace Clustering
         /// keep the one yielding the best Metric, which is the one that estimates the lowest value for the number of clusters.
         /// </summary>
         /// <param name="points">Points to sort.</param>
+        /// <param name="bitsPerDimension">Number of bits needed to represent maximum coordinate value, or -1 if it should be derived.</param>
         /// <param name="outlierSize">OutlierSize that discriminates between clusters worth counting and those that are not.</param>
         /// <param name="noiseSkipBy">NoiseSkipBy value to help smooth out calculations in the presence of noisy data.</param>
         /// <param name="reducedNoiseSkipBy">If few clusters, reduce NoiseSkipBy to this.</param>
@@ -412,6 +415,8 @@ namespace Clustering
         public static PermutationFound Search(IReadOnlyList<UnsignedPoint> points, int bitsPerDimension, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false, bool shouldCompact = false)
         {
             var parallel = 4;
+            if (bitsPerDimension <= 0)
+                bitsPerDimension = HilbertSort.FindBitsPerDimension(points);
             var optimizer = new OptimalPermutation(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy, bitsPerDimension)
             {
                 MaxIterations = (maxTrials + (parallel / 2)) / parallel,
@@ -425,6 +430,8 @@ namespace Clustering
         public static IList<PermutationFound> SearchMany(IReadOnlyList<UnsignedPoint> points, int bitsPerDimension, int indexCount, int outlierSize, int noiseSkipBy, int reducedNoiseSkipBy, int maxTrials, int maxIterationsWithoutImprovement = 3, bool useSample = false, bool shouldCompact = false)
         {
             var parallel = 4;
+            if (bitsPerDimension <= 0)
+                bitsPerDimension = HilbertSort.FindBitsPerDimension(points);
             var optimizer = new OptimalPermutation(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy, bitsPerDimension)
             {
                 MaxIterations = (maxTrials + (parallel / 2)) / parallel,

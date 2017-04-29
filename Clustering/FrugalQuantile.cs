@@ -365,7 +365,7 @@ namespace Clustering
                     StepAdjuster = stepAdjuster ?? FrugalQuantile.LinearStepAdjuster
                 };
                 var estimate = probe.AddRange(shuffledData);
-                Console.WriteLine($"seed = {seed}, estimate = {estimate}");
+                // Console.WriteLine($"seed = {seed}, estimate = {estimate}");
                 return estimate;
             }
             

@@ -75,6 +75,8 @@ namespace Clustering
             }
         }
 
+        public double LargeClusterPercent { get { return 100.0 - OutlierPercent;  } }
+
         /// <summary>
         /// Percent of points in large clusters that are in the largest cluster.
         /// 
@@ -147,7 +149,7 @@ namespace Clustering
 
         public override string ToString()
         {
-            var largeClusterPhrase = LargeClusterCount == 0 ? "No large clusters." : $"{LargestClusterPercent} % of points in {LargeClusterCount} large clusters.";
+            var largeClusterPhrase = LargeClusterCount == 0 ? "No large clusters." : $"{LargeClusterPercent} % of points in {LargeClusterCount} large clusters.";
             var outlierPhrase = OutlierCount == 0 ? " No outliers." : $" {OutlierPercent} % of points in {OutlierCount} outliers.";
             var majorityPhrase = LargeClusterCount == 0 ? "" : $" Largest contains {LargestClusterPercent} % of clustered points.";
             return $"{HowClustered} : {largeClusterPhrase}{outlierPhrase}{majorityPhrase}";
