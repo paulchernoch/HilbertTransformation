@@ -48,12 +48,12 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
       HilbertSort.Sort(points, bitsPerDimension);     
 
   The UnsignedPoint class is little more than a vector of unsigned coordinates with some
-  extra space to hold pre-computated values that will speed up Euclidean distance calculations.
+  extra space to hold pre-computed values that will speed up Euclidean distance calculations.
   The PointBalancer shifts coordinates such that their median value falls in the middle of the
   range, which aids in reducing memory usage and speeds up the sort by reducing the number
   of bits necessary to represent the Hilbert index.
 
-  The sort algorithm starts by sorting every point using a Hilbert transform of one bit per
+  The SmallBalancedSort algorithm starts by sorting every point using a Hilbert transform of one bit per
   dimension to form large buckets of points sharing the same low-precision Hilbert index. 
   Then it sorts each bucket with progressively more bits of precision until every bucket has
   a single element, or we reach the maximum precision and are faced with true duplicates.
@@ -149,7 +149,15 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        and whether there is a header record in the input CSV file.
 
        ASSESS. Assess the clustering tendency of the data. 
-       If the data has not clustering tendency, it is fruitless to cluster it.
+       If the data has no clustering tendency, it is fruitless to cluster it.
+       The assessment will draw one of the following conclusions:
+
+          a. Unclustered - The data is fairly randomly distributed with no large clusters.
+          b. Singly Clustered - All points not in outlying groups are in a single, large cluster.
+          c. Majority Clustered - Of the points that are not outliers, two thirds or more are in a single, large cluster.
+          d. Weakly Clustered - Two-thirds or more of the points are outliers.
+          e. Moderately Clustered - Between one- and two-thirds of the points are outliers.
+          f. Highly Clustered - Fewer than one-third of the points are outliers.
 
        CLUSTER. The third usage reads a configuration file and the indicated input data file
        (or standard input), clusters the data and writes the results to the indicated 

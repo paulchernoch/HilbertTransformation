@@ -58,6 +58,15 @@ Usage: 1. slash [help | -h | -help]
 
        ASSESS. Assess the clustering tendency of the data. 
        If the data has not clustering tendency, it is fruitless to cluster it.
+       The assessment will draw one of the following conclusions:
+
+          a. Unclustered - The data is fairly randomly distributed with no large clusters.
+          b. Singly Clustered - All points not in outlying groups are in a single, large cluster.
+          c. Majority Clustered - Of the points that are not outliers, two thirds or more are in a single, large cluster.
+          d. Weakly Clustered - Two-thirds or more of the points are outliers.
+          e. Moderately Clustered - Between one- and two-thirds of the points are outliers.
+          f. Highly Clustered - Fewer than one-third of the points are outliers.
+
 
        CLUSTER. The third usage reads a configuration file and the indicated input data file
        (or standard input), clusters the data and writes the results to the indicated 
