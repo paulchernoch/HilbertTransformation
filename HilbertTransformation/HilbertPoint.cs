@@ -431,7 +431,7 @@ namespace HilbertTransformation
 				throw new ArgumentOutOfRangeException(
 					nameof(coordinate), 
 					$"Value must be smaller than 2^BitsPerDimension, which is {limit}");
-			var p = Coordinates.ToList();
+			var p = LazyCoordinates().ToList();
 			p.Add(coordinate);
 			return new HilbertPoint(p, BitsPerDimension);
 		}

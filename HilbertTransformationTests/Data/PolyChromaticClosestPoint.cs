@@ -511,7 +511,7 @@ namespace HilbertTransformationTests.Data
 		/// </summary>
 		private void SortPoints() 
 		{
-			var maxValue = Clusters.Points ().SelectMany (p => p.Coordinates).Max ();
+			var maxValue = Clusters.Points ().Select(p => p.MaxCoordinate).Max();
 			var bitsPerDimension = ((int)maxValue + 1).SmallestPowerOfTwo ();
 			var index = new Dictionary<HilbertPoint, UnsignedPoint> ();
 			var hPoints = new List<HilbertPoint> ();

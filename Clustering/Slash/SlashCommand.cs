@@ -544,7 +544,7 @@ Usage: 1. slash [help | -h | -help]
 
 			var sb = new StringBuilder();
 			sb.Append(id).Append(fieldDelimiter).Append(category);
-			foreach (var coordinate in point.Coordinates)
+			foreach (var coordinate in point.LazyCoordinates())
 			{
 				sb.Append(fieldDelimiter).Append(coordinate);
 			}

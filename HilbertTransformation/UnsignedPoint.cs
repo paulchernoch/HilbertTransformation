@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using HilbertTransformation.Random;
+using static System.Math;
 
 namespace HilbertTransformation
 {
@@ -34,25 +35,48 @@ namespace HilbertTransformation
 
 		#region Properties (Coordinates, Dimensions, etc)
 
+        /// <summary>
+        /// Holds the coordinate values for the point.
+        /// 
+        /// A sparse subclass may use this to hold just the non-missing values.
+        /// </summary>
+        protected uint[] _coordinates;
+
 		/// <summary>
 		/// Coordinates of the point in N-space.
+        /// 
+        /// Subclasses that use a sparse representation will be required to fully realize the
+        /// coordinates in a non-sparse array.
 		/// </summary>
-		public uint[] Coordinates { get; private set; }
+		public virtual uint[] Coordinates { 
+			get { return _coordinates; } 
+			protected set { _coordinates = value; } 
+		}
+
+        /// <summary>
+        /// Permit iterating over coordinate values without having to fully realize the array of coordinates, in case
+        /// a subclass is sparse. 
+        /// </summary>
+        public virtual IEnumerable<uint> LazyCoordinates()
+        {
+            foreach (var x in _coordinates)
+                yield return x;
+        }
 
 		/// <summary>
 		/// Number of dimensions for the point.
 		/// </summary>
 		public int Dimensions { get; private set; }
 
-		/// <summary>
-		/// Maximum value in the Coordinates array.
-		/// </summary>
-		public long MaxCoordinate { get; private set; }
+        /// <summary>
+        /// Maximum value in the Coordinates array.
+        /// </summary>
+        public long MaxCoordinate { get; private set; } = 0;
 
-		/// <summary>
-		/// Square of the distance from the point to the origin.
-		/// </summary>
-		public long SquareMagnitude { get; private set; }
+        /// <summary>
+        /// Square of the distance from the point to the origin.
+        /// </summary>
+        public long SquareMagnitude { get; private set; } = 0;
 
 		double _magnitude = double.NaN;
 
@@ -70,11 +94,23 @@ namespace HilbertTransformation
 			}
 		}
 
-		private void InitInvariants()
+        /// <summary>
+        /// This should not be called in any contructor invoked by a subclass that
+        /// overrides LazyCoordinates since that method is not available
+        /// until after the object is contructed. The subclass should call the method
+        /// itself to initialize the hashcode.
+        /// </summary>
+		protected void InitInvariants()
 		{
-            _hashCode = ComputeHashCode(Coordinates);
-			MaxCoordinate = Coordinates.Max();
-			SquareMagnitude = Coordinates.Sum(x => x * (long)x);
+            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
+            if (MaxCoordinate == 0 && SquareMagnitude == 0)
+            {
+                foreach (var x in LazyCoordinates())
+                {
+                    MaxCoordinate = Max(MaxCoordinate, x);
+                    SquareMagnitude += x * (long)x;
+                }
+            }
 		}
 
 		#endregion
@@ -84,9 +120,9 @@ namespace HilbertTransformation
 		/// <summary>
 		/// Access the coordinate values as signed integers.
 		/// </summary>
-		/// <param name="i">Index, which must be between zero and DimensionDefinitions - 1, inclusive.</param>
-		/// <returns>Corrdinate value as an integer.</returns>
-		public int this[int i] { get { return (int)Coordinates[i]; } }
+		/// <param name="i">Index, which must be between zero and Dimensions - 1, inclusive.</param>
+		/// <returns>Coordinate value as an integer.</returns>
+		public virtual int this[int i] { get { return (int)Coordinates[i]; } }
 
 		#endregion
 
@@ -121,7 +157,7 @@ namespace HilbertTransformation
 		}
 
 		/// <summary>
-		/// Conversion constructor used when converting from UnsignedPoint to HilbertPoint.
+		/// Conversion constructor used when converting from UnsignedPoint to HilbertPoint and acquiring a new id.
 		/// </summary>
 		/// <param name="coordinates">Coordinates of the point.</param>
 		/// <param name="maxCoordinate">Maximum value of all items in Coordinates array.</param>
@@ -130,8 +166,8 @@ namespace HilbertTransformation
 		{
 			UniqueId = NextId();
 			Coordinates = coordinates;
-            _hashCode = ComputeHashCode(Coordinates);
             Dimensions = Coordinates.Length;
+            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
@@ -149,11 +185,29 @@ namespace HilbertTransformation
 		{
 			UniqueId = uniqueId;
 			Coordinates = coordinates;
-            _hashCode = ComputeHashCode(Coordinates);
             Dimensions = Coordinates.Length;
+            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
+
+        /// <summary>
+        /// Constructor to support SparsePoint, which has more dimensions than the coordinates array has elements.
+        /// </summary>
+        /// <param name="coordinates">The non-missing coordinates.</param>
+        /// <param name="dimensions">Full number of dimensions.</param>
+        /// <param name="maxCoordinate">Maximum value of any coordinate.</param>
+        /// <param name="squareMagnitude">Square of the distance from the origin.</param>
+        protected UnsignedPoint(uint[] coordinates, int dimensions, long maxCoordinate, long squareMagnitude)
+        {
+            UniqueId = NextId();
+            Coordinates = coordinates;
+            Dimensions = dimensions;
+            MaxCoordinate = maxCoordinate;
+            SquareMagnitude = squareMagnitude;
+            // DO NOT CALL InitInvariants HERE! Subclass must call it, 
+            // because a virtual method is called and the subclass is not ready for it to be called here yet.
+        }
 
 		/// <summary>
 		/// Convert signed integers into unsigned ones.
@@ -223,9 +277,9 @@ namespace HilbertTransformation
 
         private int _hashCode;
 
-        private static int ComputeHashCode(uint[] vector)
+        private static int ComputeHashCode(IEnumerable<uint> vector, int vectorLength)
         {
-            uint seed = (uint)vector.Length;
+            uint seed = (uint)vectorLength;
             foreach (var i in vector)
             {
                 seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -270,7 +324,7 @@ namespace HilbertTransformation
 		/// </summary>
 		/// <param name="other">Second point for distance computation.</param>
 		/// <returns>The square of the distance between the two points.</returns>
-		public long SquareDistance(UnsignedPoint other)
+		public virtual long SquareDistance(UnsignedPoint other)
 		{
 			return SquareDistanceDotProduct(
 				Coordinates, other.Coordinates, SquareMagnitude, other.SquareMagnitude, MaxCoordinate, other.MaxCoordinate
@@ -441,7 +495,7 @@ namespace HilbertTransformation
 		/// <returns>The largest coordinate value.</returns>
 		public int Range()
 		{
-			return (int)Coordinates.Max();
+			return (int)LazyCoordinates().Max();
 		}
 
 
@@ -452,7 +506,7 @@ namespace HilbertTransformation
 
 		public IEnumerable<int> GetCoordinates()
 		{
-			return Coordinates.Select(u => (int)u);
+			return LazyCoordinates().Select(u => (int)u);
 		}
 
 		#endregion
@@ -485,10 +539,12 @@ namespace HilbertTransformation
 			var sb = new StringBuilder();
 			sb.Append('[');
 			var limit = Math.Min(maxCoordinatesToShow == 0 ? Dimensions : maxCoordinatesToShow, Dimensions);
-			for (var dim = 0; dim < limit; dim++)
+            var dim = 0;
+			foreach (var x in LazyCoordinates().Take(limit))
 			{
+                dim++;
 				if (dim > 0) sb.Append(',');
-				sb.Append(Coordinates[dim]);
+				sb.Append(x);
 			}
 			if (limit < Dimensions)
 				sb.Append(",...");
@@ -528,9 +584,9 @@ namespace HilbertTransformation
 				{
 					sums = new double[p.Dimensions];
 				}
-				var coordinates = p.Coordinates;
-				for (var dim = 0; dim < sums.Length; dim++)
-					sums[dim] += coordinates[dim];
+                var dim = 0;
+				foreach (var x in p.LazyCoordinates())
+					sums[dim++] += x;
 				numPoints++;
 			}
 			if (numPoints == 0) return null;
