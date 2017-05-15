@@ -34,6 +34,10 @@
   <ItemGroup>
     <Compile Include="BinaryAttributeTests.cs" />
     <Compile Include="ClusteringTendencyTests.cs" />
+    <Compile Include="Data\NetflixReviews\Movie.cs" />
+    <Compile Include="Data\NetflixReviews\NetFlixData.cs" />
+    <Compile Include="Data\NetflixReviews\Review.cs" />
+    <Compile Include="Data\NetflixReviews\Reviewer.cs" />
     <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
     <Compile Include="GridCoarsenessTests.cs" />
@@ -46,6 +50,7 @@
     <Compile Include="Data\PolyChromaticClosestPoint.cs" />
     <Compile Include="HilbertSortTests.cs" />
     <Compile Include="LowResHilbertSortTests.cs" />
+    <Compile Include="NetflixPrizeTests.cs" />
     <Compile Include="PolyChromaticClosestPointTests.cs" />
     <Compile Include="KeySorterTests.cs" />
     <Compile Include="OptimalIndexTests.cs" />
@@ -68,8 +73,9 @@
       <Name>Clustering</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
+    <None Include="Data\movie-data\README" />
+    <None Include="Data\movie-data\rmse.pl" />
     <None Include="packages.config" />
     <None Include="Data\N1024_D128_K16.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -77,6 +83,11 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\movie-data\movie_titles.txt" />
+    <Content Include="Data\movie-data\probe.txt" />
+    <Content Include="Data\movie-data\qualifying.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

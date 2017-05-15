@@ -27,7 +27,7 @@ namespace HilbertTransformation
 		/// <summary>
 		/// Unique id for point.
 		/// </summary>
-		public int UniqueId { get; private set; }
+		public int UniqueId { get; protected set; }
 
 		private static int NextId() { return Interlocked.Increment(ref _counter); }
 

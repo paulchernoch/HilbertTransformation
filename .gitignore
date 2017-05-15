@@ -3,3 +3,6 @@ bin/Debug/
 obj/
 obj/Debug/
 .DS_Store
+HilbertTransformationTests/Data/movie-data/training_set
+HilbertTransformationTests/Data/movie-data/training_set/
+HilbertTransformationTests/Data/movie-data/training_set/mv*.txt

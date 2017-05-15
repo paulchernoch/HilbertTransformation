@@ -70,7 +70,7 @@ namespace HilbertTransformation
         /// <param name="missingValue">For every coordinate missing a value, assume this value.</param>
         /// <returns>Square of the distance to the origin.</returns>
         private static long SparseSquareMagnitude(Dictionary<int, uint> sparseCoordinates, int dimensions, uint missingValue)
-        {
+        { 
             var missingCount = dimensions - sparseCoordinates.Count;
             var mag = (long) missingValue * missingValue * missingCount;
             foreach(var x in sparseCoordinates.Values)
@@ -78,12 +78,42 @@ namespace HilbertTransformation
             return mag;
         }
 
-        public SparsePoint(Dictionary<int,uint> sparseCoordinates, int dimensions, uint missingValue) : 
+        private static long SparseSquareMagnitude(IList<uint> sparseCoordinates, int dimensions, uint missingValue)
+        {
+            var missingCount = dimensions - sparseCoordinates.Count;
+            var mag = (long)missingValue * missingValue * missingCount;
+            foreach (var x in sparseCoordinates)
+                mag += x * x;
+            return mag;
+        }
+
+        /// <summary>
+        /// Create a SparsePoint from a Dictionary and optionally assign it an auto-incremented id.
+        /// </summary>
+        /// <param name="sparseCoordinates">Key is the zero-based dimension index, value is the coordinate value.</param>
+        /// <param name="dimensions">Total number of dimensions.</param>
+        /// <param name="missingValue">If a dimension is not included in the dictionary, use this value.</param>
+        /// <param name="optionalId">If not -1, use this as the UniqueId instead of an auto-incremented value.</param>
+        public SparsePoint(Dictionary<int,uint> sparseCoordinates, int dimensions, uint missingValue, int optionalId = -1) : 
             base(sparseCoordinates.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToArray(),
                  dimensions, (long)Max(missingValue, sparseCoordinates.Values.Max()), SparseSquareMagnitude(sparseCoordinates, dimensions, missingValue))
         {
+            if (optionalId >= 0)
+                UniqueId = optionalId;
             MissingValue = missingValue;
             DimensionIndices = sparseCoordinates.Keys.OrderBy(k => k).ToArray();
+
+            // Now we are ready to set the hashcode!
+            InitInvariants();
+        }
+
+        public SparsePoint(IEnumerable<int> dimensionIndices, IList<uint> coordinates, int dimensions, uint missingValue, int optionalId = -1) :
+    base(coordinates.ToArray(), dimensions, (long)Max(missingValue, coordinates.Max()), SparseSquareMagnitude(coordinates, dimensions, missingValue))
+        {
+            if (optionalId >= 0)
+                UniqueId = optionalId;
+            MissingValue = missingValue;
+            DimensionIndices = dimensionIndices.ToArray();
 
             // Now we are ready to set the hashcode!
             InitInvariants();
@@ -121,7 +151,7 @@ namespace HilbertTransformation
         public override long SquareDistance(UnsignedPoint other)
         {
             var otherSparsePoint = other as SparsePoint;
-            if (other == null)
+            if (otherSparsePoint == null)
                 return base.SquareDistance(other);
 
             var distance = 0L;
