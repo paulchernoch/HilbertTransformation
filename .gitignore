@@ -3,6 +3,8 @@ bin/Debug/
 obj/
 obj/Debug/
 .DS_Store
+HilbertTransformationTests/Data/mfeat.tar
 HilbertTransformationTests/Data/movie-data/training_set
 HilbertTransformationTests/Data/movie-data/training_set/
 HilbertTransformationTests/Data/movie-data/training_set/mv*.txt
+HilbertTransformationTests/Data/movie-data/qualifying.txt
