@@ -4,6 +4,7 @@ obj/
 obj/Debug/
 .DS_Store
 HilbertTransformationTests/Data/mfeat.tar
+HilbertTransformation/Properties/Data/mfeat/mfeat.xlsx
 HilbertTransformationTests/Data/movie-data/training_set
 HilbertTransformationTests/Data/movie-data/training_set/
 HilbertTransformationTests/Data/movie-data/training_set/mv*.txt
