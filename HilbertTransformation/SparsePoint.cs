@@ -12,6 +12,9 @@ namespace HilbertTransformation
     /// </summary>
     public class SparsePoint : UnsignedPoint
     {
+
+        #region Attributes (DimensionIndices, Coordinates, MissingValue)
+
         /// <summary>
         /// Each index in this array corresponds to a value in _coordinates.
         /// Together they specify the sparse values in the point.
@@ -59,33 +62,11 @@ namespace HilbertTransformation
         /// </summary>
         public uint MissingValue { get; private set; } = 0;
 
+        #endregion
 
 
-        /// <summary>
-        /// Compute the square of the distance to the origin when many values are missing.
-        /// </summary>
-        /// <param name="sparseCoordinates">Coordinates that have values. The key is the dimension index, the
-        /// value is the coordinate value.</param>
-        /// <param name="dimensions">Number of total dimensions, many of which may lack values.</param>
-        /// <param name="missingValue">For every coordinate missing a value, assume this value.</param>
-        /// <returns>Square of the distance to the origin.</returns>
-        private static long SparseSquareMagnitude(Dictionary<int, uint> sparseCoordinates, int dimensions, uint missingValue)
-        { 
-            var missingCount = dimensions - sparseCoordinates.Count;
-            var mag = (long) missingValue * missingValue * missingCount;
-            foreach(var x in sparseCoordinates.Values)
-                mag += x * x;
-            return mag;
-        }
 
-        private static long SparseSquareMagnitude(IList<uint> sparseCoordinates, int dimensions, uint missingValue)
-        {
-            var missingCount = dimensions - sparseCoordinates.Count;
-            var mag = (long)missingValue * missingValue * missingCount;
-            foreach (var x in sparseCoordinates)
-                mag += x * x;
-            return mag;
-        }
+        #region Constructors and Clone
 
         /// <summary>
         /// Create a SparsePoint from a Dictionary and optionally assign it an auto-incremented id.
@@ -119,14 +100,20 @@ namespace HilbertTransformation
             InitInvariants();
         }
 
+        protected SparsePoint(SparsePoint original): base(original)
+        {
+            DimensionIndices = original.DimensionIndices;
+            MissingValue = original.MissingValue;
+        }
+
         /// <summary>
         /// Clone this instance, but generate a new UniqueId.
         /// </summary>
         public override object Clone() {
-            //TODO: Define clone
-            throw new NotImplementedException("Clone not implemented");
-            
+            return new SparsePoint(this);
         }
+
+        #endregion
 
 
         /// <summary>
@@ -143,6 +130,34 @@ namespace HilbertTransformation
             }
         }
 
+        #region Distance 
+
+        /// <summary>
+        /// Compute the square of the distance to the origin when many values are missing.
+        /// </summary>
+        /// <param name="sparseCoordinates">Coordinates that have values. The key is the dimension index, the
+        /// value is the coordinate value.</param>
+        /// <param name="dimensions">Number of total dimensions, many of which may lack values.</param>
+        /// <param name="missingValue">For every coordinate missing a value, assume this value.</param>
+        /// <returns>Square of the distance to the origin.</returns>
+        private static long SparseSquareMagnitude(Dictionary<int, uint> sparseCoordinates, int dimensions, uint missingValue)
+        {
+            var missingCount = dimensions - sparseCoordinates.Count;
+            var mag = (long)missingValue * missingValue * missingCount;
+            foreach (var x in sparseCoordinates.Values)
+                mag += x * x;
+            return mag;
+        }
+
+        private static long SparseSquareMagnitude(IList<uint> sparseCoordinates, int dimensions, uint missingValue)
+        {
+            var missingCount = dimensions - sparseCoordinates.Count;
+            var mag = (long)missingValue * missingValue * missingCount;
+            foreach (var x in sparseCoordinates)
+                mag += x * x;
+            return mag;
+        }
+
         /// <summary>
         /// Square of the cartesian distance between two points.
         /// </summary>
@@ -150,40 +165,87 @@ namespace HilbertTransformation
         /// <returns>The square of the distance between the two points.</returns>
         public override long SquareDistance(UnsignedPoint other)
         {
+            var distance = 0L;
             var otherSparsePoint = other as SparsePoint;
             if (otherSparsePoint == null)
-                return base.SquareDistance(other);
-
-            var distance = 0L;
-            var i = 0;
-            var j = 0;
-            while (i < this.DimensionIndices.Length && j < otherSparsePoint.DimensionIndices.Length)
             {
-                long delta;
-                var indexDiff = DimensionIndices[i] - otherSparsePoint.DimensionIndices[j];
-                if (indexDiff == 0)
+                // This point is sparse but the other is not.
+                //
+                //  Distance = |A|² + |B|²  - 2A·B
+                //
+                //  Assume that A is this sparse vector. If MissingValue = 0, then the vector dot product 
+                //  A*B is zero for most coordinates. Thus we only need to correct for the few coordinates
+                //  which are not zero.
+                var dotProduct = 0L;
+                distance = SquareMagnitude + other.SquareMagnitude;
+                if (MissingValue == 0)
                 {
-                    var x = DimensionIndices.Length == 0 ? MissingValue : _coordinates[i];
-                    var y = otherSparsePoint.DimensionIndices.Length == 0 ? otherSparsePoint.MissingValue : otherSparsePoint._coordinates[j];
-                    delta = (long)x - (long)y;
-                    i++;
-                    j++;
-                }
-                else if (indexDiff < 0)
-                {
-                    var x = DimensionIndices.Length == 0 ? MissingValue : _coordinates[i];
-                    delta = (long)x - MissingValue;
-                    i++;
+                    for (var iSparse = 0; iSparse < _coordinates.Length; iSparse++)
+                        dotProduct += (long)_coordinates[iSparse] * other[DimensionIndices[iSparse]];      
                 }
                 else
                 {
-                    var y = otherSparsePoint.DimensionIndices.Length == 0 ? otherSparsePoint.MissingValue : otherSparsePoint._coordinates[j];
-                    delta = (long)y - MissingValue;
-                    j++;
+                    var iSparse = 0;
+                    var iDimSparse = DimensionIndices[iSparse];
+                    var xSparse = (long) _coordinates[iSparse];
+                    for (var iDim = 0; iDim < Dimensions; iDim++)
+                    {
+                        long x;
+                        if (iDim == iDimSparse)
+                        {
+                            x = xSparse;
+                            iSparse++;
+                            if (iSparse < DimensionIndices.Length)
+                            {
+                                iDimSparse = DimensionIndices[iSparse];
+                                xSparse = _coordinates[iSparse];
+                            }
+                        }
+                        else
+                            x =  MissingValue;
+                        dotProduct += x * other.Coordinates[iDim];
+                    }
                 }
-                distance += delta * delta;
+                distance -= 2 * dotProduct;
             }
-
+            else
+            {
+                // Both points are sparse
+                var i = 0;
+                var j = 0;
+                while (i < DimensionIndices.Length || j < otherSparsePoint.DimensionIndices.Length)
+                {
+                    long delta;
+                    int indexDiff;
+                    if (i >= DimensionIndices.Length)
+                        indexDiff = 1;
+                    else if (j >= otherSparsePoint.DimensionIndices.Length)
+                        indexDiff = -1;
+                    else
+                        indexDiff = DimensionIndices[i] - otherSparsePoint.DimensionIndices[j];
+                    if (indexDiff == 0)
+                    {
+                        var x = DimensionIndices.Length == 0 ? MissingValue : _coordinates[i];
+                        var y = otherSparsePoint.DimensionIndices.Length == 0 ? otherSparsePoint.MissingValue : otherSparsePoint._coordinates[j];
+                        delta = (long)x - (long)y;
+                        i++;
+                        j++;
+                    }
+                    else if (indexDiff < 0)
+                    {
+                        var x = DimensionIndices.Length == 0 ? MissingValue : _coordinates[i];
+                        delta = (long)x - MissingValue;
+                        i++;
+                    }
+                    else
+                    {
+                        var y = otherSparsePoint.DimensionIndices.Length == 0 ? otherSparsePoint.MissingValue : otherSparsePoint._coordinates[j];
+                        delta = (long)y - MissingValue;
+                        j++;
+                    }
+                    distance += delta * delta;
+                }
+            }
             return distance;
         }
 
@@ -196,4 +258,6 @@ namespace HilbertTransformation
             return actualSqDistance.CompareTo(squareDistance);
         }
     }
+
+    #endregion
 }

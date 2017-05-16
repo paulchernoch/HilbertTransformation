@@ -28,7 +28,7 @@ namespace HilbertTransformationTests.Data.NetflixReviews
             Timer.Start(title);
             var numMoviesLoaded = LoadFiles(dataDirectory);
             Timer.Stop(title);
-            title = "Make SparsePoints";
+            title = "Make SparsePoints for Netflix Movie data";
             Timer.Start(title);
             Points = ReviewersById.Values.Select(r => r.ToPoint(Dimensions)).ToList();
             Timer.Stop(title);

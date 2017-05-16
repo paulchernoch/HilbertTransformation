@@ -260,7 +260,7 @@ namespace HilbertTransformation
 		/// </summary>
 		/// <param name="original">Source from which to copy.</param>
 		protected UnsignedPoint(UnsignedPoint original)
-			:this((uint[])original.Coordinates.Clone(), original.MaxCoordinate, original.SquareMagnitude)
+			:this((uint[])original._coordinates.Clone(), original.MaxCoordinate, original.SquareMagnitude)
 		{
 		}
 

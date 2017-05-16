@@ -17,7 +17,7 @@ namespace HilbertTransformationTests
         /// Verify that the Netflix Prize test data can be read, parsed, and converted into objects.
         /// </summary>
         [Test]
-        public void LoadNetflixData()
+        public void LoadNetflixDataAndNotRunOutOfMemory()
         {
             // NOTE: Test data is not stored in source control - too many files.
             //       Hardcoded to look under the temp directory.
@@ -25,6 +25,7 @@ namespace HilbertTransformationTests
             var logDirectory = @"c:\temp\movie-data";
             Logger.SetupForTests(Path.Combine(logDirectory, "LoadNetflixData.log"));
             var netflixData = new NetFlixData(testDataDirectory);
+            Timer.Log();
             var filesRead = netflixData.Dimensions;
             var expectedMovieCount = 17770;
             var actualMovieCount = netflixData.Movies.Count;
