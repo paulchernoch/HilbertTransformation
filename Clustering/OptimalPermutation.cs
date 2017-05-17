@@ -252,6 +252,19 @@ namespace Clustering
         }
 
         /// <summary>
+        /// Approximate number of bytes of storage required for the point and its Hilbert transform, assuming a 64-bit application.
+        /// The actual number will be higher than this, but not by much.
+        /// </summary>
+        /// <param name="numPoints">Number of points.</param>
+        /// <param name="dimensions">Number of dimensions for each point.</param>
+        /// <param name="bitsPerDimension">Bits used to encode each dimension.</param>
+        /// <returns>Approximate number of bytes of storage required.</returns>
+        private static long ProblemSize(int numPoints, int dimensions, int bitsPerDimension)
+        {
+            return ((long)numPoints * dimensions * (bitsPerDimension + 32) / 8L) + (64 * 2 * numPoints);
+        }
+
+        /// <summary>
         /// Search many Hilbert orderings of the points, each based on a different permutation of the dimensions, and
         /// keep the ones yielding the best Metrics, likely those that estimate the lowest values
         /// for the number of clusters.
@@ -271,16 +284,25 @@ namespace Clustering
 
             if (startingPermutation == null)
                 startingPermutation = new Permutation<uint>(dimensions);
-            var firstCurve = HilbertSort.Sort(points, BitsPerDimension, startingPermutation);
+            List<UnsignedPoint> firstCurve;
+            if (ProblemSize(points.Count, dimensions, BitsPerDimension) < 1500000000L)
+                firstCurve = HilbertSort.Sort(points, BitsPerDimension, startingPermutation);
+            else
+            {
+                // Used for larger problems.
+                firstCurve = SmallBucketSort<UnsignedPoint>.Sort(points, point => point.Coordinates.HilbertIndex(BitsPerDimension));
+            }
 
             // Measure our first index, then loop through random permutations 
             // looking for a better one, always accumulating the best in results.
             var metricResults = Metric(firstCurve);
             var bestResults = new PermutationFound(startingPermutation, firstCurve, metricResults.Item1, metricResults.Item2);
         
-            LowestCountSeen = Math.Min(LowestCountSeen, bestResults.EstimatedClusterCount);
+            LowestCountSeen = Min(LowestCountSeen, bestResults.EstimatedClusterCount);
             Logger.Info($"Cluster count Starts at: {bestResults}");
             var startingCount = bestResults.EstimatedClusterCount;
+            if (MaxIterations <= 1)
+                return new List<PermutationFound> { bestResults };
             queue.AddRemove(bestResults);
 
             // Decide if we are to sample points or use them all
@@ -417,9 +439,10 @@ namespace Clustering
             var parallel = 4;
             if (bitsPerDimension <= 0)
                 bitsPerDimension = HilbertSort.FindBitsPerDimension(points);
+            var maxIterations = maxTrials == 1 ? 1 : (maxTrials + (parallel / 2)) / parallel;
             var optimizer = new OptimalPermutation(outlierSize, noiseSkipBy, reducedNoiseSkipBy, ScrambleHalfStrategy, bitsPerDimension)
             {
-                MaxIterations = (maxTrials + (parallel / 2)) / parallel,
+                MaxIterations = maxIterations,
                 MaxIterationsWithoutImprovement = maxIterationsWithoutImprovement,
                 ParallelTrials = parallel,
                 UseSample = useSample

@@ -63,6 +63,7 @@
     <Compile Include="SizedBucketSortTests.cs" />
     <Compile Include="SlashConfigTests.cs" />
     <Compile Include="SlashCommandTests.cs" />
+    <Compile Include="SmallBucketSortTests.cs" />
     <Compile Include="SparsePointTests.cs" />
   </ItemGroup>
   <ItemGroup>

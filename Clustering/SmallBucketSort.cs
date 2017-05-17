@@ -63,7 +63,7 @@ namespace Clustering
         /// <summary>
         /// Obtains the sort key for an item.
         /// </summary>
-        public Func<TItem,IComparable<TItem>> Ordering { get; set; }
+        public Func<TItem,IComparable> Ordering { get; set; }
 
         /// <summary>
         /// Obtains the hashcode to use for an item to distinguish it from other items
@@ -77,12 +77,28 @@ namespace Clustering
 
         #endregion
 
-        public SmallBucketSort(IList<TItem> items, Func<TItem, IComparable<TItem>> ordering)
+        public SmallBucketSort(IList<TItem> items, Func<TItem, IComparable> ordering)
         {
             Items = items;
             MaxBuckets = (int) (2 * Sqrt(Count));
             Ordering = ordering;
             Hash = (item) => item.GetHashCode();
+        }
+
+        /// <summary>
+        /// Sort the items by a sort key derived by calling the supplied delegate on each item.
+        /// 
+        /// The list is copied during the sort operation, so items are not sorted in place.
+        /// </summary>
+        /// <typeparam name="T">Type of item to be sorted.</typeparam>
+        /// <param name="items">Items to be sorted.</param>
+        /// <param name="ordering">Delegate that extracts the sort key from an item.</param>
+        /// <returns>A new List of the original items, now sorted.</returns>
+        public static List<T> Sort<T>(IReadOnlyList<T> items, Func<T, IComparable> ordering)
+        {
+            var unsortedItems = items.ToList();
+            var sorter = new SmallBucketSort<T>(unsortedItems, ordering);
+            return sorter.Sort();
         }
 
         /// <summary>
@@ -175,14 +191,6 @@ namespace Clustering
                 hashes.Add(hash);
             }
             return items;
-        }
-
-        private void Sort(IList<TItem> items)
-        {
-            var sortKeys = new Dictionary<TItem, IComparable<TItem>>();
-            foreach(var item in items)
-                sortKeys[item] = Ordering(item);
-            //var adapter = ArrayList.Adapter(items);
         }
 
     }
