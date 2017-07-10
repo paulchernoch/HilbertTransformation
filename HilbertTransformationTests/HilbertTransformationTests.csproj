@@ -39,6 +39,7 @@
     <Compile Include="Data\NetflixReviews\NetFlixData.cs" />
     <Compile Include="Data\NetflixReviews\Review.cs" />
     <Compile Include="Data\NetflixReviews\Reviewer.cs" />
+    <Compile Include="FastRandomTests.cs" />
     <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
     <Compile Include="GridCoarsenessTests.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="KendallTauCorrelationTests.cs" />
     <Compile Include="DensityMeterTests.cs" />
     <Compile Include="Data\Datasets.cs" />
+    <Compile Include="ShellSortTests.cs" />
     <Compile Include="SizedBucketSortTests.cs" />
     <Compile Include="SlashConfigTests.cs" />
     <Compile Include="SlashCommandTests.cs" />
