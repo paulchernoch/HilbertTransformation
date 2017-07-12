@@ -174,6 +174,6 @@ The original C# code was written by Paul Anton Chernoch and may be freely used w
        and the final categories is logged to indicate how different the new clustering
        is from the original clustering.
 
-       VERSION. Print out the program's version number.
+       VERSION. Print out the program version number.
 
 
