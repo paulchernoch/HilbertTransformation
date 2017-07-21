@@ -35,10 +35,16 @@
   <ItemGroup>
     <Compile Include="BinaryAttributeTests.cs" />
     <Compile Include="ClusteringTendencyTests.cs" />
+    <Compile Include="Data\HyperbolicInterpolator.cs" />
+    <Compile Include="Data\Interpolator.cs" />
+    <Compile Include="Data\LagrangeQuadraticInterpolator.cs" />
+    <Compile Include="Data\LinearInterpolator.cs" />
     <Compile Include="Data\NetflixReviews\Movie.cs" />
     <Compile Include="Data\NetflixReviews\NetFlixData.cs" />
     <Compile Include="Data\NetflixReviews\Review.cs" />
     <Compile Include="Data\NetflixReviews\Reviewer.cs" />
+    <Compile Include="Data\ZipfDistribution.cs" />
+    <Compile Include="FastRandomTests.cs" />
     <Compile Include="FrugalQuantileTests.cs" />
     <Compile Include="GaussianClusteringTests.cs" />
     <Compile Include="GridCoarsenessTests.cs" />
@@ -60,11 +66,14 @@
     <Compile Include="KendallTauCorrelationTests.cs" />
     <Compile Include="DensityMeterTests.cs" />
     <Compile Include="Data\Datasets.cs" />
+    <Compile Include="PseudoLRUTests.cs" />
+    <Compile Include="ShellSortTests.cs" />
     <Compile Include="SizedBucketSortTests.cs" />
     <Compile Include="SlashConfigTests.cs" />
     <Compile Include="SlashCommandTests.cs" />
     <Compile Include="SmallBucketSortTests.cs" />
     <Compile Include="SparsePointTests.cs" />
+    <Compile Include="ZipfDistributionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HilbertTransformation\HilbertTransformation.csproj">
