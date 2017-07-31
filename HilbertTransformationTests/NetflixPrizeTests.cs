@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Math;
 
 namespace HilbertTransformationTests
 {
@@ -19,30 +20,46 @@ namespace HilbertTransformationTests
         ///       Hardcoded to look under the temp directory.
         /// </summary>
         public static string TestDataDirectory = @"c:\temp\movie-data\training_set";
+
+        public static string ProbeDataDirectory = @"c:\temp\movie-data";
+
+        public static string LogDirectory = @"c:\temp\movie-data";
+
+        private NetFlixData AllNetflixData;
+
+        [SetUp]
+        public void BeforeTest()
+        {
+            Logger.SetupForTests(Path.Combine(LogDirectory, "LoadNetflixData.log"));
+            AllNetflixData = new NetFlixData(TestDataDirectory, ProbeDataDirectory);
+            Timer.Log();
+        }
+
         /// <summary>
         /// Verify that the Netflix Prize test data can be read, parsed, and converted into objects.
         /// </summary>
         [Test]
         public void LoadNetflixDataAndNotRunOutOfMemory()
         {
-            var logDirectory = @"c:\temp\movie-data";
-            Logger.SetupForTests(Path.Combine(logDirectory, "LoadNetflixData.log"));
-            var netflixData = new NetFlixData(TestDataDirectory);
-            Timer.Log();
-            var filesRead = netflixData.Dimensions;
+            var filesRead = AllNetflixData.Dimensions;
             var expectedMovieCount = 17770;
-            var actualMovieCount = netflixData.Movies.Count;
+            var actualMovieCount = AllNetflixData.Movies.Count;
             Assert.AreEqual(expectedMovieCount, actualMovieCount, $"{actualMovieCount} movies loaded, expected {expectedMovieCount}");
+        }
+
+        [Test]
+        public void RMSErrorFromChoosingMeanRatingsIsCorrect()
+        {
+            var expectedRmsError = 1.0519; // Rounded
+            var actualRmsError = AllNetflixData.RMSError;
+            Assert.LessOrEqual(Abs(expectedRmsError - actualRmsError), 0.001, $"{actualRmsError} RMS error found, expected {expectedRmsError}");
         }
 
         [Test]
         public void ClusterNetflixData()
         {
-            var logDirectory = @"c:\temp\movie-data";
-            Logger.SetupForTests(Path.Combine(logDirectory, "ClusterNetflixData.log"));
-            var netflixData = new NetFlixData(TestDataDirectory);
-
-            var classifier = new HilbertClassifier(netflixData.Points, 3);
+            throw new Exception("Test not fully written");
+            var classifier = new HilbertClassifier(AllNetflixData.Points, 3);
             classifier.IndexConfig.IndexCount = 1;
             Timer.Start("Clustering Netflix data");
             var actualClusters = classifier.Classify();

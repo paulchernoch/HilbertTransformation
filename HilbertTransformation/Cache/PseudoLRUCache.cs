@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using static System.Math;
 
-namespace Clustering.Cache
+namespace HilbertTransformation.Cache
 {
     /// <summary>
     /// Cache items with a policy of evicting the approximately least recently used objects.
@@ -49,7 +49,7 @@ namespace Clustering.Cache
             An attempt is made to lock at the item level when possible to reduce contention over locks against the cache.
          */
 
-        #region CacheItem factory support
+        #region Private: CacheItem factory support
 
         /// <summary>
         /// Permits us to keep any but PseudoLRUCache from calling the CacheItem constructor. 
@@ -70,7 +70,7 @@ namespace Clustering.Cache
             #region CacheItem factory support
 
             /// <summary>
-            /// Calling this will force the static CacheItem initializer run.
+            /// Calling this will force the static CacheItem initializer to be run.
             /// </summary>
             internal static void Initialize() { }
 
@@ -81,12 +81,16 @@ namespace Clustering.Cache
 
             #endregion
 
+            #region Private: Synchronization and Parent Cache
+
             /// <summary>
             /// Used to lock at the item level, instead of the cache level
             /// </summary>
             private readonly object _ItemLocker = new object();
 
             private PseudoLRUCache<TItem> Cache { get; set; }
+
+            #endregion
 
             public int LastAccess { get; private set; }
 
@@ -97,7 +101,7 @@ namespace Clustering.Cache
                 Item = item;
             }
 
-            #region The Item that is being cached (or null, if item has been ejected).
+            #region Public: Item access (Item, GetOrCreate).
 
             private TItem _Item;
 
@@ -147,8 +151,6 @@ namespace Clustering.Cache
                 }
             }
 
-            #endregion
-
             /// <summary>
             /// Get the cached item, but if it is null, create it first by calling the supplied delegate.
             /// </summary>
@@ -175,6 +177,10 @@ namespace Clustering.Cache
                 return Item = newItem;
             }
 
+            #endregion
+
+            #region Public: Comparison and Status (CompareTo, IsOlderThan, IsCached)
+
             /// <summary>
             /// Sort items in descending order by LastAccess, so that the oldest item is sorted into last position.
             /// </summary>
@@ -200,8 +206,15 @@ namespace Clustering.Cache
                     return _Item != null;
                 }
             }
+
+            #endregion
         }
 
+        #region Private Synchronization, "timing" and RandomNumbers
+
+        /// <summary>
+        /// Synchronization token.
+        /// </summary>
         private readonly object _Locker = new object();
 
         /// <summary>
@@ -211,29 +224,81 @@ namespace Clustering.Cache
         /// </summary>
         private int _AccessCounter = 0;
 
-        #region Cache Hit Ratio and Cache Miss Ratio
+        /// <summary>
+        /// Increment and return the access counter.
+        /// A recently accessed object will have a higher count than an object accessed father back in time.
+        /// </summary>
+        private int NextAccessCount => Interlocked.Increment(ref _AccessCounter);
+
+        private FastRandom RandomNumbers { get; } = new FastRandom();
+
+        #endregion
+
+        #region Public: Cache Performance (HitRatio and MissRatio)
+
+        #region Private Hit/Miss attributes and methods
 
         private int _MissCounter = 0;
 
         private int _HitCounter = 0;
 
+        /// <summary>
+        /// Count of number of accesses that found that the item was already in the cache.
+        /// </summary>
         private int Hit() => Interlocked.Increment(ref _HitCounter);
 
+        /// <summary>
+        /// Count of number of accesses that found that the item was NOT in the cache
+        /// and needed to be loaded or recreated.
+        /// </summary>
         private int Miss() => Interlocked.Increment(ref _MissCounter);
-
-        public double HitRatio { get { return _HitCounter + _MissCounter == 0 ? Double.NaN : _HitCounter / (double)(_HitCounter + _MissCounter); } }
-        public double MissRatio { get { return _HitCounter + _MissCounter == 0 ? Double.NaN : _MissCounter / (double)(_HitCounter + _MissCounter); } }
 
         #endregion
 
-        #region Item storage related properties
+        /// <summary>
+        /// Fraction from zero to one of the number of accesses that Hit an item in the cache
+        /// without needing to reload it.
+        /// </summary>
+        public double HitRatio { get { return _HitCounter + _MissCounter == 0 ? Double.NaN : _HitCounter / (double)(_HitCounter + _MissCounter); } }
 
-        private readonly int CandidateSize = 16;
+        /// <summary>
+        /// Fraction from zero to one of the number of Misses where the item could not be found
+        /// in the cache hence it needed to be reloaded or recreated.
+        /// </summary>
+        public double MissRatio { get { return _HitCounter + _MissCounter == 0 ? Double.NaN : _MissCounter / (double)(_HitCounter + _MissCounter); } }
+
+        public double Hits { get { return _HitCounter; } }
+        public double Misses { get { return _MissCounter; } }
+
+        #endregion
+
+        #region Public: Status (Size, Capacity, IsFull, IsEmpty)
 
         /// <summary>
         /// Maximum number of items that may be stored in the cache.
         /// </summary>
         public int Capacity => Storage.Length;
+
+        /// <summary>
+        /// Number of items in the cache, which may be less than Capacity, but not more.
+        /// </summary>
+        public int Size { get; private set; }
+
+        /// <summary>
+        /// True if the cache is full, false if it has not reached capacity.
+        /// </summary>
+        public bool IsFull => Size == Capacity;
+
+        /// <summary>
+        /// True if the cache is empty, false if it contains at least one item.
+        /// </summary>
+        public bool IsEmpty => Size == 0;
+
+        #endregion
+
+        #region Private: Item storage (RingCapacity, Storage, AddPosition, PositionToIndex, etc)
+
+        private readonly int CandidateSize = 16;
 
         /// <summary>
         /// Capacity reduced by the number of eviction candidates, which do not participate in the ring buffer.
@@ -257,25 +322,9 @@ namespace Clustering.Cache
         private CacheItem[] Storage { get; set; }
 
         /// <summary>
-        /// Number of items in the cache, which may be less than Capacity, but not more.
-        /// </summary>
-        public int Size { get; private set; }
-
-        /// <summary>
         /// Zero-based index into the Storage array where the next item to be added will go.
         /// </summary>
         private int AddPosition { get; set; }
-
-        /// <summary>
-        /// True if the cache is full, false if it has not reached capacity.
-        /// </summary>
-        public bool IsFull => Size == Capacity;
-
-
-        /// <summary>
-        /// True if the cache is empty, false if it contains at least one item.
-        /// </summary>
-        public bool IsEmpty => Size == 0;
 
         /// <summary>
         /// Convert a logical cache position from zero to Size - 1 to its index in the Storage array, accounting for the
@@ -300,21 +349,7 @@ namespace Clustering.Cache
 
         #endregion
 
-        /// <summary>
-        /// When randomly searching for an approximate least recently used item, 
-        /// try this many new randomly chosen items in addition to the known eviction Candidates. 
-        /// </summary>
-        public int RandomSearchSize { get; set; } = 10;
-
-        private FastRandom RandomNumbers { get; } = new FastRandom();
-
-        /// <summary>
-        /// Increment and return the access counter.
-        /// A recently accessed object will have a higher count than an object accessed father back in time.
-        /// </summary>
-        private int NextAccessCount => Interlocked.Increment(ref _AccessCounter);
-
-        #region Construct and Initialize a PseudoLRUCache
+        #region Public: Configure (constructor, Init, RandomSearchSize)
 
         public PseudoLRUCache(int capacity)
         {
@@ -329,7 +364,15 @@ namespace Clustering.Cache
             Size = 0;
         }
 
+        /// <summary>
+        /// When randomly searching for an approximate least recently used item, 
+        /// try this many new randomly chosen items in addition to the known eviction Candidates. 
+        /// </summary>
+        public int RandomSearchSize { get; set; } = 10;
+
         #endregion
+
+        #region Public: Principal API (Add, Clear, EvictAll, Resize)
 
         /// <summary>
         /// Add an item to the cache and return a holder for it.
@@ -343,13 +386,76 @@ namespace Clustering.Cache
         }
 
         /// <summary>
+        /// Remove all items from the Cache.
+        /// 
+        /// This does not null out the references found in each CacheItem.
+        /// </summary>
+        public void Clear()
+        {
+            lock (_Locker)
+            {
+                Init(Capacity);
+            }
+        }
+
+        /// <summary>
+        /// Evict all items from the cache and Clear it.
+        /// </summary>
+        public void EvictAll()
+        {
+            //TODO: This call has the greatest likelihood of causing a deadlock of any method in the class.
+            lock (_Locker)
+            {
+                for(var i = 0; i < Capacity; i++)
+                {
+                    var evictee = Storage[i];
+                    if (evictee != null)
+                        evictee.Item = null;
+                }
+                Clear();
+            }
+        }
+
+        /// <summary>
+        /// Resize the cache. If the new size is smaller than the old size, some items will be evicted from the cache. 
+        /// The eviction will not follow the ideal policy. Instead, the items at the end of the cache (which may or may not be the oldest)
+        /// will be evicted.
+        /// </summary>
+        /// <param name="newCapacity">Capacity of teh cache after resizing.
+        /// This size may not be smaller than CandidateSize + RandomSearchSize + 10;</param>
+        public void Resize(int newCapacity)
+        {
+            newCapacity = Max(newCapacity, CandidateSize + RandomSearchSize + 10);
+            var newStorage = new PseudoLRUCache<TItem>.CacheItem[newCapacity];
+            var newIndex = newCapacity - 1;
+            for (var position = 0; position < Size; position++)
+            {
+                var oldIndex = PositionToIndex(position);
+                if (newIndex >= 0)
+                    newStorage[newIndex] = Storage[oldIndex];
+                else
+                    Storage[oldIndex].Item = null;
+                newIndex--;
+            }
+            Storage = newStorage;
+            Size = Min(newCapacity, Size);
+            AddPosition = newCapacity - 1 - Size;
+            if (AddPosition < 0)
+                AddPosition = RingCapacity - 1;  // Ring buffer wrap-around
+        }
+
+        #endregion
+
+        #region Private: Algorithm details (Add, SortCandidatesPartially, FindItemToEvict, Evict)
+
+        /// <summary>
         /// Add the item holder to the cache. 
         /// If the cache is already full, Evict an item first.
         /// </summary>
         /// <param name="cacheItem">Item to add.</param>
         private void Add(CacheItem cacheItem)
         {
-            lock(_Locker)
+            lock (_Locker)
             {
                 if (IsFull)
                 {
@@ -435,17 +541,8 @@ namespace Clustering.Cache
             return evictedItem;
         }
 
-        /// <summary>
-        /// Remove all items from the Cache.
-        /// 
-        /// This does not null out the references found in each CacheItem.
-        /// </summary>
-        public void Clear()
-        {
-            lock (_Locker)
-            {
-                Init(Capacity);
-            }
-        }
+        #endregion
+
+
     }
 }

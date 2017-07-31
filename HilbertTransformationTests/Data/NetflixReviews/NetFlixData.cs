@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using static System.Math;
 using System.Threading.Tasks;
 
 namespace HilbertTransformationTests.Data.NetflixReviews
@@ -16,22 +16,48 @@ namespace HilbertTransformationTests.Data.NetflixReviews
 
         public List<Reviewer> ReviewersSorted { get; set; }
 
+        /// <summary>
+        /// Movies, sorted by MovieId. Since there should be no gaps and MovieIds begin at one, to find a movie by id,
+        /// use Movies[movieId-1].
+        /// </summary>
         public List<Movie> Movies { get; set; } = new List<Movie>();
+
+        public Probe ReviewsToGuess { get; set; }
 
         public int Dimensions { get { return Movies.Count; } }
 
-        public List<SparsePoint> Points { get; set; }
+        public List<UnsignedPoint> Points { get; set; }
 
-        public NetFlixData(string dataDirectory)
+        public double RMSError { get; private set; }
+
+        public NetFlixData(string dataDirectory, string probeDataDirectory)
         {
+            HyperContrastedPoint.Cache.Resize(30000);
             var title = "Load Netflix Movie data";
             Timer.Start(title);
             var numMoviesLoaded = LoadFiles(dataDirectory);
             Timer.Stop(title);
+
+            title = "Load Probe";
+            Timer.Start(title);
+            var probeFilename = Path.Combine(probeDataDirectory, "probe.txt");
+            ReviewsToGuess = new Probe(probeFilename);
+            Timer.Stop(title);
+
+            title = "Time to compute RMS Error for Mean";
+            Timer.Start(title);
+            RMSError = ComputeRMSErrorForMean();
+            var message = $"Value of RMS Error for mean = {RMSError}";
+            Logger.Info(message);
+            Timer.Stop(title);
+
             title = "Make SparsePoints for Netflix Movie data";
             Timer.Start(title);
             Points = ReviewersById.Values.Select(r => r.ToPoint(Dimensions)).ToList();
             Timer.Stop(title);
+
+            // Cache statistics
+            Logger.Info($"Cache Hit Ratio: {HyperContrastedPoint.Cache.HitRatio}. Hits = {HyperContrastedPoint.Cache.Hits}");
         }
 
         public string RatingFilePrefix { get; set; } = "mv_";
@@ -58,6 +84,10 @@ namespace HilbertTransformationTests.Data.NetflixReviews
                 movieId++;
                 var movieFilePath = Path.Combine(dataDirectory, MovieReviewFileName(movieId));
                 foundFile = LoadFile(movieFilePath);
+            }
+            foreach (var movie in Movies)
+            {
+                movie.DoneAdding(ReviewersById);
             }
             return movieId - 1; // Last successfully read movie file, since the current one was the first to fail.
         }
@@ -101,6 +131,37 @@ namespace HilbertTransformationTests.Data.NetflixReviews
                 return false;
             }
             return true;
+        }
+
+        public int? GetReview(int reviewerId, int movieId)
+        {
+            var reviewer = ReviewersById[reviewerId];
+            return reviewer.Review(movieId);
+        }
+
+        /// <summary>
+        /// Compute the RMS error that we see if we use the mean rating in place of the true rating for all probe queries.
+        /// </summary>
+        /// <returns>The root mean square error across all probe queries if we use the mean rating for each movie in place of the true rating.</returns>
+        private double ComputeRMSErrorForMean()
+        {
+            var squareError = 0.0;
+            var queryCount = 0;
+            foreach(var query in ReviewsToGuess.ReviewersByMovie.Select(pair => new { MovieId = pair.Key, ReviewerIds = pair.Value }))
+            {
+                var movie = Movies[query.MovieId - 1];
+                var meanReview = movie.MeanRating;
+                foreach (var reviewer in query.ReviewerIds.Select(reviewerId => ReviewersById[reviewerId]))
+                {
+                    var trueReview = GetReview(reviewer.ReviewerId, query.MovieId);
+                    if (trueReview == null)
+                        throw new ApplicationException($"Expected reviewer {reviewer.ReviewerId} to have a review for movie {query.MovieId}");
+                    
+                    squareError += (trueReview.Value - meanReview) * (trueReview.Value - meanReview);
+                    queryCount++;
+                }
+            }
+            return Sqrt(squareError / queryCount);
         }
     }
 }

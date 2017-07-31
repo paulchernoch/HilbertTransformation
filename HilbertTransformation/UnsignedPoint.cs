@@ -29,7 +29,7 @@ namespace HilbertTransformation
 		/// </summary>
 		public int UniqueId { get; protected set; }
 
-		private static int NextId() { return Interlocked.Increment(ref _counter); }
+		protected static int NextId() { return Interlocked.Increment(ref _counter); }
 
 		#endregion
 
@@ -76,7 +76,7 @@ namespace HilbertTransformation
         /// <summary>
         /// Square of the distance from the point to the origin.
         /// </summary>
-        public long SquareMagnitude { get; private set; } = 0;
+        public long SquareMagnitude { get; protected set; } = 0;
 
 		double _magnitude = double.NaN;
 
@@ -100,18 +100,33 @@ namespace HilbertTransformation
         /// until after the object is contructed. The subclass should call the method
         /// itself to initialize the hashcode.
         /// </summary>
-		protected void InitInvariants()
-		{
-            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
-            if (MaxCoordinate == 0 && SquareMagnitude == 0)
+		protected void InitInvariants(bool lazy = false)
+        {
+            if (lazy)
             {
-                foreach (var x in LazyCoordinates())
+                _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
+                if (MaxCoordinate == 0 && SquareMagnitude == 0)
                 {
-                    MaxCoordinate = Max(MaxCoordinate, x);
-                    SquareMagnitude += x * (long)x;
+                    foreach (var x in LazyCoordinates())
+                    {
+                        MaxCoordinate = Max(MaxCoordinate, x);
+                        SquareMagnitude += x * (long)x;
+                    }
                 }
             }
-		}
+            else
+            {
+                _hashCode = ComputeHashCode(_coordinates, Dimensions);
+                if (MaxCoordinate == 0 && SquareMagnitude == 0)
+                {
+                    foreach (var x in _coordinates)
+                    {
+                        MaxCoordinate = Max(MaxCoordinate, x);
+                        SquareMagnitude += x * (long)x;
+                    }
+                }
+            }
+        }
 
 		#endregion
 
@@ -165,9 +180,9 @@ namespace HilbertTransformation
 		protected UnsignedPoint(uint[] coordinates, long maxCoordinate, long squareMagnitude)
 		{
 			UniqueId = NextId();
-			Coordinates = coordinates;
-            Dimensions = Coordinates.Length;
-            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
+			_coordinates = coordinates;
+            Dimensions = _coordinates.Length;
+            _hashCode = ComputeHashCode(coordinates, Dimensions);
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
@@ -183,31 +198,13 @@ namespace HilbertTransformation
 		/// <param name="uniqueId">Unique identifier.</param>
 		protected UnsignedPoint(uint[] coordinates, long maxCoordinate, long squareMagnitude, int uniqueId)
 		{
-			UniqueId = uniqueId;
-			Coordinates = coordinates;
-            Dimensions = Coordinates.Length;
-            _hashCode = ComputeHashCode(LazyCoordinates(), Dimensions);
+			UniqueId = uniqueId >= 0 ? uniqueId : NextId();
+			_coordinates = coordinates;
+            Dimensions = _coordinates.Length;
+            _hashCode = ComputeHashCode(coordinates, Dimensions);
 			MaxCoordinate = maxCoordinate;
 			SquareMagnitude = squareMagnitude;
 		}
-
-        /// <summary>
-        /// Constructor to support SparsePoint, which has more dimensions than the coordinates array has elements.
-        /// </summary>
-        /// <param name="coordinates">The non-missing coordinates.</param>
-        /// <param name="dimensions">Full number of dimensions.</param>
-        /// <param name="maxCoordinate">Maximum value of any coordinate.</param>
-        /// <param name="squareMagnitude">Square of the distance from the origin.</param>
-        protected UnsignedPoint(uint[] coordinates, int dimensions, long maxCoordinate, long squareMagnitude)
-        {
-            UniqueId = NextId();
-            Coordinates = coordinates;
-            Dimensions = dimensions;
-            MaxCoordinate = maxCoordinate;
-            SquareMagnitude = squareMagnitude;
-            // DO NOT CALL InitInvariants HERE! Subclass must call it, 
-            // because a virtual method is called and the subclass is not ready for it to be called here yet.
-        }
 
 		/// <summary>
 		/// Convert signed integers into unsigned ones.
@@ -260,7 +257,7 @@ namespace HilbertTransformation
 		/// </summary>
 		/// <param name="original">Source from which to copy.</param>
 		protected UnsignedPoint(UnsignedPoint original)
-			:this((uint[])original._coordinates.Clone(), original.MaxCoordinate, original.SquareMagnitude)
+			:this((uint[])original.Coordinates.Clone(), original.MaxCoordinate, original.SquareMagnitude)
 		{
 		}
 

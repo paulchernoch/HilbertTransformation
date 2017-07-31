@@ -52,8 +52,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cache\PseudoLRUCache.cs" />
-    <Compile Include="Cache\Sorting.cs" />
     <Compile Include="ClusteringTendency.cs" />
     <Compile Include="DimensionTransform.cs" />
     <Compile Include="FrugalQuantile.cs" />

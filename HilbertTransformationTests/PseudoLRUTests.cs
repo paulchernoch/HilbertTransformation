@@ -1,4 +1,4 @@
-﻿using Clustering.Cache;
+﻿using HilbertTransformation.Cache;
 using HilbertTransformationTests.Data;
 using NUnit.Framework;
 using System;
@@ -69,6 +69,40 @@ namespace HilbertTransformationTests
                     Assert.IsTrue(notCachedCount == 1, $"{notCachedCount} items are not cached after adding {i} when cache IS FULL.");
                 }
             }
+        }
+
+        [Test]
+        public void ResizingCacheBelowSizeEvictsManyItems()
+        {
+            var capacity = 100;
+            var cache = new PseudoLRUCache<string>(capacity);
+            var items = new List<PseudoLRUCache<string>.CacheItem>();
+            for (var i = 1; i <= capacity - 5; i++)
+                items.Add(cache.Add(i.ToString()));
+
+            Assert.IsFalse(cache.IsFull, "Before Resize, cache should not be full");
+            cache.Resize(90);
+            Assert.IsTrue(cache.IsFull, "After Resize, cache should be full");
+            var actualEjectedCount = items.Count(i => !i.IsCached);
+            var expectedEjectedCount = 5;
+            Assert.AreEqual(expectedEjectedCount, actualEjectedCount, $"Should have ejected {expectedEjectedCount}, instead {actualEjectedCount}");
+        }
+
+        [Test]
+        public void ResizingFullCacheAboveSizeEvictsNoItems()
+        {
+            var capacity = 100;
+            var cache = new PseudoLRUCache<string>(capacity);
+            var items = new List<PseudoLRUCache<string>.CacheItem>();
+            for (var i = 1; i <= capacity; i++)
+                items.Add(cache.Add(i.ToString()));
+
+            Assert.IsTrue(cache.IsFull, "Before Resize, cache should be full");
+            cache.Resize(110);
+            Assert.IsFalse(cache.IsFull, "After Resize, cache should NOT be full");
+            var actualEjectedCount = items.Count(i => !i.IsCached);
+            var expectedEjectedCount = 0;
+            Assert.AreEqual(expectedEjectedCount, actualEjectedCount, $"Should have ejected {expectedEjectedCount}, instead {actualEjectedCount}");
         }
 
         /// <summary>

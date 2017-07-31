@@ -41,6 +41,7 @@
     <Compile Include="Data\LinearInterpolator.cs" />
     <Compile Include="Data\NetflixReviews\Movie.cs" />
     <Compile Include="Data\NetflixReviews\NetFlixData.cs" />
+    <Compile Include="Data\NetflixReviews\Probe.cs" />
     <Compile Include="Data\NetflixReviews\Review.cs" />
     <Compile Include="Data\NetflixReviews\Reviewer.cs" />
     <Compile Include="Data\ZipfDistribution.cs" />

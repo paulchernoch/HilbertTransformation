@@ -1,4 +1,4 @@
-﻿using Clustering.Cache;
+﻿using HilbertTransformation.Cache;
 using HilbertTransformation.Random;
 using NUnit.Framework;
 using System;

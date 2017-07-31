@@ -70,9 +70,23 @@ namespace HilbertTransformationTests.Data.NetflixReviews
             }
         }
 
+        /// <summary>
+        /// Get the rating (1 to 5) given by this reviewer for the given movie, if known, or null.
+        /// </summary>
+        /// <param name="movieId">Movie whose rating is sought.</param>
+        /// <returns>A one to five rating, or null, if this reviewer has not reviewed the movie.</returns>
+        public int? Review(int movieId)
+        {
+            var position = MovieIds.BinarySearch(movieId);
+            if (position >= 0)
+                return Ratings[position];
+            else
+                return null;
+        }
+
         public int Count { get { return MovieIds.Count; } }
 
-        public SparsePoint Point { get; private set; }
+        public UnsignedPoint Point { get; private set; }
 
         /// <summary>
         /// Create a point from a sparse set of (x,y) pairs where the x is the MovieId minus one (to make it zero-based) and the
@@ -80,17 +94,33 @@ namespace HilbertTransformationTests.Data.NetflixReviews
         /// </summary>
         /// <param name="dimensions">Total number of dimensions, including those which are missing a value, hence have 
         /// no corresponding pair (MovieId,Rating).</param>
-        /// <returns>A new SparsePoint, whose UniqueId is the ReviewerId.</returns>
-        public SparsePoint ToPoint(int dimensions)
+        /// <returns>A new HyperContrastedPoint or SparsePoint, whose UniqueId is the ReviewerId.</returns>
+        public UnsignedPoint ToPoint(int dimensions)
         {
             if (Point == null)
-                Point = new SparsePoint(
-                    MovieIds.Select(movieId => movieId - 1), 
-                    Ratings.Select(rating => (uint)rating).ToList(), 
-                    dimensions,
-                    0U, 
-                    ReviewerId
-                );
+            {
+                var useHyperContrastedPoints = true;
+                if (useHyperContrastedPoints)
+                {
+                    Point = new HyperContrastedPoint(
+                        MovieIds.Select(movieId => movieId - 1).ToList(),
+                        Ratings.Select(rating => (uint)rating).ToList(),
+                        dimensions,
+                        new[] { 0U, 6U },
+                        ReviewerId
+                    );
+                }
+                else
+                {
+                    Point = new SparsePoint(
+                        MovieIds.Select(movieId => movieId - 1).ToList(),
+                        Ratings.Select(rating => (uint)rating).ToList(),
+                        dimensions,
+                        0U,
+                        ReviewerId
+                    );
+                }
+            }
             return Point;
         }
 

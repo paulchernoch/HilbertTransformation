@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using static System.Math;
 
-namespace Clustering.Cache
+namespace HilbertTransformation.Cache
 {
     /// <summary>
     /// Shellsort implementation using Marcin Ciura's gap sequence: [1, 4, 10, 23, 57, 132, 301, 701, 1750].
