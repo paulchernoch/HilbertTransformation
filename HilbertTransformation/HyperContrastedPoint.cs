@@ -27,7 +27,16 @@ namespace HilbertTransformation
 
         public override uint[] Coordinates
         {
-            get { return CoordinateHolder.GetOrCreate(() => LazyCoordinates().ToArray()); }
+            get {
+                return CoordinateHolder.GetOrCreate(() =>
+                {
+                    var coordinates = new uint[Dimensions];
+                    var iDim = 0;
+                    foreach(var coordinate in CoordinateSequence(DimensionIndices, SparseCoordinates, Dimensions, MissingValues, RandomNumbers))
+                        coordinates[iDim++] = coordinate;
+                    return coordinates;
+                });
+            }
             protected set { CoordinateHolder.Item = value; }
         }
 
@@ -60,9 +69,18 @@ namespace HilbertTransformation
 
         #region Coordinate Iteration
 
+        /// <summary>
+        /// Iterate over all coordinates.
+        /// </summary>
+        /// <remarks>
+        /// For this class, there is tension between memory and speed. It is best to let the Cache
+        /// deal with this and therefore this implementation of LazyCoordinates is not really lazy - 
+        /// it instantiates an array if necessary.
+        /// </remarks>
+        /// <returns>Enumerator over all coordinate values.</returns>
         public override IEnumerable<uint> LazyCoordinates()
         {
-            return CoordinateSequence(DimensionIndices, SparseCoordinates, Dimensions, MissingValues, RandomNumbers);
+            return Coordinates;
         }
 
         private static IEnumerable<uint> CoordinateSequence(

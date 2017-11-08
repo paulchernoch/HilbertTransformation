@@ -57,7 +57,7 @@ namespace HilbertTransformationTests.Data.NetflixReviews
             Timer.Stop(title);
 
             // Cache statistics
-            Logger.Info($"Cache Hit Ratio: {HyperContrastedPoint.Cache.HitRatio}. Hits = {HyperContrastedPoint.Cache.Hits}");
+            Logger.Info($"Cache Hit Ratio: {HyperContrastedPoint.Cache.HitRatio}. Hits = {HyperContrastedPoint.Cache.Hits}. Misses = {HyperContrastedPoint.Cache.Misses}");
         }
 
         public string RatingFilePrefix { get; set; } = "mv_";

@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="BinaryAttributeTests.cs" />
     <Compile Include="ClusteringTendencyTests.cs" />
+    <Compile Include="CompressionTests.cs" />
     <Compile Include="Data\HyperbolicInterpolator.cs" />
     <Compile Include="Data\Interpolator.cs" />
     <Compile Include="Data\LagrangeQuadraticInterpolator.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Data\CoordinateGenerator.cs" />
     <Compile Include="Data\PolyChromaticClosestPoint.cs" />
     <Compile Include="HilbertSortTests.cs" />
+    <Compile Include="HyperContrastedPointTests.cs" />
     <Compile Include="LowResHilbertSortTests.cs" />
     <Compile Include="NetflixPrizeTests.cs" />
     <Compile Include="PolyChromaticClosestPointTests.cs" />
